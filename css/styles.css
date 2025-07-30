@@ -4932,3 +4932,64 @@ body {
         font-size: 0.75rem;
     }
 }
+
+/* Footer responsivo sutil */
+.responsive-footer {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.responsive-footer .footer-content {
+    padding: 8px 16px;
+    text-align: center;
+}
+
+.responsive-footer .footer-text {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 300;
+    letter-spacing: 0.5px;
+    opacity: 0.8;
+}
+
+/* Mostrar footer solo en pantallas pequeñas */
+@media (max-width: 768px) {
+    .responsive-footer {
+        display: block;
+    }
+    
+    /* Ajustar el contenido principal para evitar que se superponga con el footer */
+    .main-container {
+        padding-bottom: 40px;
+    }
+}
+
+/* Tema oscuro */
+:root[data-theme="dark"] .responsive-footer {
+    background: rgba(255, 255, 255, 0.05);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .responsive-footer .footer-text {
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+/* Ajustes para pantallas muy pequeñas */
+@media (max-width: 480px) {
+    .responsive-footer .footer-content {
+        padding: 6px 12px;
+    }
+    
+    .responsive-footer .footer-text {
+        font-size: 0.7rem;
+    }
+}
