@@ -4,22 +4,38 @@ recirculationToggle.addEventListener('change', async () => {
 });
 async function clickOnRecirculation(param, byPass = false) {
     const recirculationToggle = document.getElementById('recirculationToggle');
-    // Enviar el estado del botón al servidor
+    
+    // Si es llamada por bypass (desde updateControlVariables), no hacer nada si hay interacción activa
+    if (byPass && userInteractionLock) {
+        return;
+    }
 
     const value = param !== null ? param : recirculationToggle.checked;
 
     const message = {
-        CMD_recirculacion: recirculationToggle.checked
+        CMD_recirculacion: value
     };
-    const originalValue = !recirculationToggle.checked; // Guardar el valor original
+    const originalValue = !value; // Guardar el valor original
+    
     try {
         if (!byPass) {
-            await openModal(() => sendValue(JSON.stringify(message), recirculationToggle.checked, recirculationToggle.checked ?'Recirculación activada': 'Recirculación desactivada'));
+            // Bloquear actualizaciones cuando se abre el modal
+            lockUserInteraction();
+            
+            await openModal(() => sendValue(message, value, value ?'Recirculación activada': 'Recirculación desactivada'));
+            
+            // Desbloquear después de confirmar
+            unlockUserInteraction();
         }
-        state.recirculacion = recirculationToggle.checked; // Asignar el resultado de la promesa a `state.recirculacion`
+        
+        state.recirculacion = value;
+        recirculationToggle.checked = value;
         // console.log(`Recirculación: ${state.recirculacion ? 'Activada' : 'Desactivada'}`);
     } catch (error) {
-        state.recirculacion = originalValue; // Si el modal se cierra, asignar `false`
+        // Desbloquear si se cancela el modal
+        unlockUserInteraction();
+        
+        state.recirculacion = originalValue;
         recirculationToggle.checked = originalValue;
         // console.log('Recirculación cancelada');
     }
@@ -34,6 +50,12 @@ temperatureBtn.addEventListener('click', async () => {
 async function clickOnTemperature(param, byPass = false) {
     const temperatureBtn = document.getElementById('temperatureBtn');
     const temperatureInput = document.getElementById('temperatureInput');
+    
+    // Si es llamada por bypass (desde updateControlVariables), no hacer nada si hay interacción activa
+    if (byPass && userInteractionLock) {
+        return;
+    }
+    
     const value = param !== null ? param : temperatureBtn.checked;
     const originalValue = !value;
 
@@ -41,23 +63,30 @@ async function clickOnTemperature(param, byPass = false) {
         CMD_control_temperatura: value
     };
 
-    state.control_temperatura = value;
-    temperatureBtn.checked = value;
-
     try {
         if (!byPass) {
-            await openModal(() => sendValue(JSON.stringify(message), value, value ? 'Temperatura activada': 'Temperatura desactivada'));
+            // Bloquear actualizaciones cuando se abre el modal
+            lockUserInteraction();
+            
+            await openModal(() => sendValue(message, value, value ? 'Temperatura activada': 'Temperatura desactivada'));
+            
+            // Desbloquear después de confirmar
+            unlockUserInteraction();
         }
-        state.control_temperatura = temperatureBtn.checked; // Asignar el resultado de la promesa a `state.recirculacion`
-        // console.log(`Recirculación: ${state.recirculacion ? 'Activada' : 'Desactivada'}`);
+        
+        state.control_temperatura = value;
+        temperatureBtn.checked = value;
         temperatureBtn.classList.toggle('active');
         temperatureInput.classList.toggle('active', state.control_temperatura);
+        // console.log(`Temperatura: ${state.control_temperatura ? 'Activada' : 'Desactivada'}`);
     } catch (error) {
-        state.control_temperatura = originalValue; // Si el modal se cierra, asignar `false`
+        // Desbloquear si se cancela el modal
+        unlockUserInteraction();
+        
+        state.control_temperatura = originalValue;
         temperatureBtn.checked = originalValue;
-        // console.log('Recirculación cancelada');
+        // console.log('Temperatura cancelada');
     }
-
 }
 
 
@@ -71,19 +100,35 @@ async function clickOnNaturalPressure(param, byPass = false) {
     const naturalPressureInput = document.getElementById('naturalPressureInput');
     const carbonicMacerationInput = document.getElementById('carbonicMacerationInput');
 
+    // Si es llamada por bypass (desde updateControlVariables), no hacer nada si hay interacción activa
+    if (byPass && userInteractionLock) {
+        return;
+    }
+
     const value = param !== null ? param : naturalPressureBtn.checked;
 
-    const message = {
+    let  message = {
         CMD_presion_natural: value
     };
+    if (value) {
+        message['CMD_maceracion'] =  false;
+    }
     const originalValue = !value; // Guardar el valor original
 
     try {
         if (!byPass) {
-            await openModal(() => sendValue(JSON.stringify(message), value, value ? 'Presion natural activada': 'Presion natural desactivada'));
+            // Bloquear actualizaciones cuando se abre el modal
+            lockUserInteraction();
+            
+            await openModal(() => sendValue(message, value, value ? 'Presion natural activada': 'Presion natural desactivada'));
+            
+            // Desbloquear después de confirmar
+            unlockUserInteraction();
         }
+        
         naturalPressureBtn.checked = value;
-        state.presion_natural = naturalPressureBtn.checked; // Asignar el resultado de la promesa a `state.recirculacion`
+        state.presion_natural = value;
+        
         if (state.presion_natural) {
             naturalPressureBtn.classList.add('active');
             naturalPressureInput.classList.add('active');
@@ -91,6 +136,7 @@ async function clickOnNaturalPressure(param, byPass = false) {
             naturalPressureBtn.classList.remove('active');
             naturalPressureInput.classList.remove('active');
         }
+        
         // Si se activa la presión natural, desactiva la maceración carbónica
         if (state.presion_natural) {
             carbonicMacerationBtn.checked = false;
@@ -99,9 +145,12 @@ async function clickOnNaturalPressure(param, byPass = false) {
             carbonicMacerationInput.classList.remove('active');
         }
     } catch (error) {
-        state.presion_natural = originalValue; // Si el modal se cierra, asignar `false`
+        // Desbloquear si se cancela el modal
+        unlockUserInteraction();
+        
+        state.presion_natural = originalValue;
         naturalPressureBtn.checked = originalValue;
-        // console.log('Recirculación cancelada');
+        // console.log('Presión natural cancelada');
     }
 }
 
@@ -115,18 +164,36 @@ async function clickOnCarbonicMaceration(param, byPass = false) {
     const naturalPressureInput = document.getElementById('naturalPressureInput');
     const carbonicMacerationInput = document.getElementById('carbonicMacerationInput');
 
+    // Si es llamada por bypass (desde updateControlVariables), no hacer nada si hay interacción activa
+    if (byPass && userInteractionLock) {
+        return;
+    }
+
     const value = param !== null ? param : carbonicMacerationBtn.checked;
     const originalValue = !value; // Guardar el valor original
 
     const message = {
         CMD_maceracion: value
     };
+
+    if (value) {
+        message['CMD_presion_natural'] =  false;
+    }
+    
     try {
         if (!byPass) {
-            await openModal(() => sendValue(JSON.stringify(message), value, value ? 'Maceracion activada': 'Maceracion desactivada'));
+            // Bloquear actualizaciones cuando se abre el modal
+            lockUserInteraction();
+            
+            await openModal(() => sendValue(message, value, value ? 'Maceracion activada': 'Maceracion desactivada'));
+            
+            // Desbloquear después de confirmar
+            unlockUserInteraction();
         }
+        
         carbonicMacerationBtn.checked = value;
-        state.maceracion = carbonicMacerationBtn.checked; // Asignar el resultado de la promesa a `state.recirculacion`
+        state.maceracion = value;
+        
         if (state.maceracion) {
             carbonicMacerationBtn.classList.add('active');
             carbonicMacerationInput.classList.add('active');
@@ -134,7 +201,8 @@ async function clickOnCarbonicMaceration(param, byPass = false) {
             carbonicMacerationBtn.classList.remove('active');
             carbonicMacerationInput.classList.remove('active');
         }
-        // Si se activa la presión natural, desactiva la maceración carbónica
+        
+        // Si se activa la maceración carbónica, desactiva la presión natural
         if (state.maceracion) {
             naturalPressureBtn.checked = false;
             state.presion_natural = false;
@@ -142,9 +210,12 @@ async function clickOnCarbonicMaceration(param, byPass = false) {
             naturalPressureInput.classList.remove('active');
         }
     } catch (error) {
-        state.maceracion = originalValue; // Si el modal se cierra, asignar `false`
+        // Desbloquear si se cancela el modal
+        unlockUserInteraction();
+        
+        state.maceracion = originalValue;
         carbonicMacerationBtn.checked = originalValue;
-        // console.log('Recirculación cancelada');
+        // console.log('Maceración carbónica cancelada');
     }
 }
 
@@ -176,7 +247,18 @@ document.querySelectorAll('.input-group1').forEach(group => {
 
         // Si el valor es válido, cambia el botón a verde y luego vuelve al color original
         if (isValid && message) {
-            await openModal(() => sendValue(JSON.stringify(message), true, 'Valor enviado'));
+            try {
+                // Bloquear actualizaciones cuando se abre el modal
+                lockUserInteraction();
+                
+                await openModal(() => sendValue(message, true, 'Valor enviado'));
+                
+                // Desbloquear después de confirmar
+                unlockUserInteraction();
+            } catch (error) {
+                // Desbloquear si se cancela el modal
+                unlockUserInteraction();
+            }
         }
     });
 });
@@ -203,28 +285,57 @@ async function actionPlay(byPass = false) {
     
     try {
         if (!byPass) {
-            await openModal(() => sendValue(JSON.stringify(message), true, 'Proceso iniciado'));
+            // Bloquear actualizaciones cuando se abre el modal
+            lockUserInteraction();
+            
+            await openModal(() => sendValue(message, true, 'Proceso iniciado'));
+            
+            // Desbloquear después de confirmar
+            unlockUserInteraction();
         }
     } catch (error) {
-        
+        // Desbloquear si se cancela el modal
+        unlockUserInteraction();
     }
-
 }
+
 async function actionStop(byPass = false) {
     const message = {
         stop: true
     };
     try {
         if (!byPass) {
-            await openModal(() => sendValue(JSON.stringify(message), true, 'Proceso detenido'));
+            // Bloquear actualizaciones cuando se abre el modal
+            lockUserInteraction();
+            
+            await openModal(() => sendValue(message, true, 'Proceso detenido'));
+            
+            // Desbloquear después de confirmar
+            unlockUserInteraction();
         }
     } catch (error) {
-
+        // Desbloquear si se cancela el modal
+        unlockUserInteraction();
     }
 }
-async function actionClose() {
+
+async function actionClose(byPass = false) {
     const message = {
         cancelar: true
     };
-    await openModal(() => sendValue(JSON.stringify(message)));
+
+    try {
+        if (!byPass) {
+            // Bloquear actualizaciones cuando se abre el modal
+            lockUserInteraction();
+            
+            await openModal(() => sendValue(message, true, 'Proceso cancelado'));
+            
+            // Desbloquear después de confirmar
+            unlockUserInteraction();
+        }
+    } catch (error) {
+        // Desbloquear si se cancela el modal
+        unlockUserInteraction();
+    }
 }

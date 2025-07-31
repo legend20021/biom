@@ -5,7 +5,7 @@ document.getElementById('calibrate-pressure').addEventListener('click', async fu
         const message = {
             CMD_calibrar_presion: true
         };
-        const res = await openModal(() => sendValue(JSON.stringify(message)), true, 'Calibrando presión...');
+        const res = await openModal(() => sendValue(message), true, 'Calibrando presión...');
 
         if (res) {
             const progress = document.getElementById('pressure-progress');
@@ -65,7 +65,7 @@ async function calibratePH(nivel) {
             CMD_calibrar_ph_alto: true
         }
     }
-    const res = await openModal(() => sendValue(JSON.stringify(message), true, 'Calibrando pH...'));
+    const res = await openModal(() => sendValue(message, true, 'Calibrando pH...'));
     if(res) {
         const progress = document.getElementById('ph-progress');
         const button = event.target;
@@ -107,7 +107,7 @@ async function calibrateMasaTemp() {
         CMD_calibrar_temperatura_masa: true,
         PAR_calibrar_temperatura_masa: input.value,
     };
-    const res = await openModal(() => sendValue(JSON.stringify(message)));
+    const res = await openModal(() => sendValue(message));
     if(res) {
         // Efectos visuales
         showTempNotification(`Temperatura de masa calibrada a ${temperature}°C`);
@@ -124,7 +124,7 @@ async function calibrateLixTemp() {
         CMD_calibrar_temperatura_lixiviados: true,
         PAR_calibrar_temperatura_lixiviados: input.value
     };
-    const res = await openModal(() => sendValue(JSON.stringify(message)));
+    const res = await openModal(() => sendValue(message));
     if(res) {
         // Efectos visuales
         showTempNotification(`Temperatura de lixiviado calibrada a ${temperature}°C`);

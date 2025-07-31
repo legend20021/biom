@@ -94,8 +94,64 @@ function selectMenuItem(element, content) {
 // Función para mostrar/ocultar el menú
 function toggleMenu() {
     const sidebar = document.getElementById("sidebar");
-    sidebar.classList.toggle("show"); // Alterna entre mostrar y ocultar el menú
+    const overlay = document.getElementById("sidebarOverlay");
+    const mainContent = document.querySelector(".main-content");
+    const menuButton = document.getElementById("menuButton");
+    
+    const isOpen = sidebar.classList.contains("show");
+    
+    if (isOpen) {
+        // Cerrar sidebar
+        sidebar.classList.remove("show");
+        overlay.classList.remove("show");
+        mainContent.classList.remove("sidebar-open");
+        menuButton.classList.remove("active");
+    } else {
+        // Abrir sidebar
+        sidebar.classList.add("show");
+        overlay.classList.add("show");
+        mainContent.classList.add("sidebar-open");
+        menuButton.classList.add("active");
+    }
 }
+
+// Función para cerrar el sidebar
+function closeSidebar() {
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("sidebarOverlay");
+    const mainContent = document.querySelector(".main-content");
+    const menuButton = document.getElementById("menuButton");
+    
+    sidebar.classList.remove("show");
+    overlay.classList.remove("show");
+    mainContent.classList.remove("sidebar-open");
+    menuButton.classList.remove("active");
+}
+
+// Event listener para cerrar el sidebar al hacer clic en el overlay
+document.addEventListener("DOMContentLoaded", function() {
+    const overlay = document.getElementById("sidebarOverlay");
+    const mainContent = document.querySelector(".main-content");
+    
+    // Asegurar estado inicial correcto
+    if (overlay) {
+        overlay.classList.remove("show");
+        overlay.addEventListener("click", closeSidebar);
+    }
+    if (mainContent) {
+        mainContent.classList.remove("sidebar-open");
+    }
+});
+
+// Event listener para cerrar el sidebar con la tecla ESC
+document.addEventListener("keydown", function(event) {
+    if (event.key === "Escape") {
+        const sidebar = document.getElementById("sidebar");
+        if (sidebar.classList.contains("show")) {
+            closeSidebar();
+        }
+    }
+});
 //actualizarModo(); //EJECUTA LA FUNCION PARA SABER SI ESTOY EN MODO MANUAL O AUTOMATICO
 
 // Función para recargar la página
@@ -109,24 +165,40 @@ function reloadPage() {
 document.addEventListener("click", function(event) {
     const sidebar = document.getElementById("sidebar");
     const menuButton = document.getElementById("menuButton");
+    const overlay = document.getElementById("sidebarOverlay");
 
     // Verificar si el clic fue fuera del sidebar y del botón del menú
     if (!sidebar.contains(event.target) &&
         !menuButton.contains(event.target) &&
+        !overlay.contains(event.target) &&
         sidebar.classList.contains("show")
     ) {
-        sidebar.classList.remove("show");
+        closeSidebar();
     }
 });
 
 // Evitar que los clics dentro del sidebar cierren el menú
 document.getElementById("sidebar").addEventListener("click", function(event) {
-    // Solo detenemos la propagación si el clic no fue en un enlace
-    if (!event.target.closest("a")) {
+    // Cerrar sidebar al hacer clic en enlaces de navegación
+    if (event.target.closest("a.nav-link")) {
+        // Pequeño delay para permitir que la navegación se complete
+        setTimeout(() => {
+            closeSidebar();
+        }, 150);
+    } else if (!event.target.closest("button") && !event.target.closest("input")) {
+        // Solo detenemos la propagación si no es un botón o input
         event.stopPropagation();
     }
 });
 
+
+//event listener para scrollTop para hacer scroll hacia arriba
+document.getElementById('scrollTop').addEventListener('click', function() {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+});
 
 
 // JavaScript para manejar la visibilidad de las secciones

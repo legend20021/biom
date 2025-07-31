@@ -56,9 +56,9 @@ const deleteUser = async (index) => {
         eliminar_tg: deletedUser.id,
     };
 
-    sendValue(JSON.stringify(message), false, `Se ha eliminado el usuario ${deletedUser.name}`);
+    sendValue(message, false, `Se ha eliminado el usuario ${deletedUser.name}`);
     
-    console.log(JSON.stringify({ action: "eliminar", user: deletedUser }));
+    console.log({ action: "eliminar", user: deletedUser });
     renderUserTable();
     showNotification(`Se ha eliminado el usuario ${deletedUser.name}`);
 };

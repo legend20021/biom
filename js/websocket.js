@@ -4,6 +4,16 @@ let gateway = `ws://${window.location.hostname}/ws`;
 let websocket;
 let num_clientes_conectados = 0;
 let simulationInterval = null; // Variable para guardar la referencia del setInterval
+let userInteractionLock = false; // Bloquear actualizaciones durante interacción del usuario
+let pendingUserActions = new Map(); // Almacenar acciones pendientes del usuario
+
+// Variables para control de reconexión
+let reconnectAttempts = 0;
+let maxReconnectAttempts = 10;
+let reconnectInterval = null;
+let isReconnecting = false;
+let lastMessageTimestamp = 0;
+let connectionCheckInterval = null;
 
 // Estado global
 const state = {
@@ -49,6 +59,7 @@ function setInitialStateValues() {
     (state.tiempo_horas = 0),
     (state.tiempo_minutos = 0),
     (state.temperatura_sp = 0),
+    (state.temperatura_sp = 0),
     (state.grafica_temperatura_masa = []),
     (state.grafica_temperatura_lixiviados = []),
     (state.grafica_presion = []),
@@ -62,27 +73,27 @@ function setInitialStateValues() {
     (state.modalFunction = () => {});
 }
 
-// Enviar un comando al WebSocket
-// function sendCommand(device, state) {
-//   if (websocket.readyState === WebSocket.OPEN) {
-//     const command = JSON.stringify({ device, state });
-//     websocket.send(command);
-//   } else {
-//     console.log(`Error al enviar el comando: WebSocket no está abierto. Estado actual: ${websocket.readyState}`);
-//     const text = "Error al enviar el comando";
-//     showNotification(text, "error");
-//   }
-// }
-
 // Enviar un valor al WebSocket
 function sendValue(value, success = false, text = "") {
   console.log(`Enviando valor al WebSocket: ${value}`);
-  if (websocket.readyState === WebSocket.OPEN) {
+  
+  // Verificar si es un WebSocket real o simulado
+  if (websocket && websocket instanceof WebSocket) {
+    // WebSocket real
+    if (websocket.readyState === WebSocket.OPEN) {
+      websocket.send(JSON.stringify(value));
+    } else {
+      console.log(`Error al enviar el comando: WebSocket no está abierto. Estado actual: ${websocket.readyState}`);
+      const errorText = "Error al enviar el comando";
+      showNotification(errorText, "error");
+    }
+  } else if (websocket && websocket.send) {
+    // WebSocket simulado - siempre puede enviar
     websocket.send(JSON.stringify(value));
   } else {
-    console.log(`Error al enviar el comando: WebSocket no está abierto. Estado actual: ${websocket.readyState}`);
-    const text = "Error al enviar el comando";
-    showNotification(text, "error");
+    console.log("Error: WebSocket no está disponible");
+    const errorText = "Error: WebSocket no está disponible";
+    showNotification(errorText, "error");
   }
 
   if (success != null && text != null && text != "") {
@@ -96,6 +107,17 @@ function sendValue(value, success = false, text = "") {
 
 // Actualizar elementos de la UI
 function updateUIElements(data) {
+  // Si hay una interacción del usuario activa, no actualizar los controles
+  if (userInteractionLock) {
+    console.log("Actualizaciones pausadas: usuario interactuando");
+    // Solo actualizar datos de sensores, no los controles
+    updateSensorDataOnly(data);
+    return;
+  }
+
+    num_clientes_conectados = data.num_clientes_conectados || 0;
+    updateConnectionStatus(true, num_clientes_conectados);
+
   if (data.wifiNetworks) {
     state.wifiNetworks = data.wifiNetworks;
     renderWifiTable();
@@ -201,44 +223,236 @@ function updateUIElements(data) {
   updateIndicators();
 }
 
+// Función para actualizar solo datos de sensores durante interacción del usuario
+function updateSensorDataOnly(data) {
+  // Solo actualizar valores de sensores, no controles
+  state.temperature = data.temperatura_masa;
+  state.temperatureLix = data.temperatura_lixiviados;
+  state.pressure = data.presion;
+  state.ph = data.pH;
+  state.temperatura_sp = data.temperatura_sp;
+  
+  // Actualizar gráficas si existen
+  if (data.grafica_temperatura_masa) state.grafica_temperatura_masa = data.grafica_temperatura_masa;
+  if (data.grafica_temperatura_lixiviados) state.grafica_temperatura_lixiviados = data.grafica_temperatura_lixiviados;
+  if (data.grafica_presion) state.grafica_presion = data.grafica_presion;
+  if (data.grafica_ph) state.grafica_ph = data.grafica_ph;
+  
+  // Solo actualizar indicadores visuales, no controles
+  upateTemperature();
+  updateTimer();
+  actualizarGrafica();
+  updateIndicators();
+}
+
+// Funciones para manejar el bloqueo de actualizaciones
+function lockUserInteraction() {
+  userInteractionLock = true;
+  console.log("Actualizaciones pausadas: modal abierto");
+}
+
+function unlockUserInteraction() {
+  userInteractionLock = false;
+  console.log("Actualizaciones reanudadas: modal cerrado");
+}
+
+// Funciones para manejo de reconexión
+function startReconnection() {
+  const isDemoMode = localStorage.getItem("demoMode") === "true";
+  
+  // No intentar reconexión en modo demo
+  if (isDemoMode) {
+    console.log("Modo demo activo - no se intenta reconexión");
+    return;
+  }
+
+  if (isReconnecting) {
+    console.log("Ya hay un proceso de reconexión en curso");
+    return;
+  }
+
+  isReconnecting = true;
+  reconnectAttempts = 0;
+  
+  console.log("Iniciando proceso de reconexión...");
+  showNotification("Conexión perdida. Intentando reconectar...", "warning");
+  
+  attemptReconnection();
+}
+
+function attemptReconnection() {
+  const isDemoMode = localStorage.getItem("demoMode") === "true";
+  
+  // Verificar si cambió a modo demo durante la reconexión
+  if (isDemoMode) {
+    console.log("Modo demo activado durante reconexión - cancelando intentos");
+    stopReconnection();
+    return;
+  }
+
+  if (reconnectAttempts >= maxReconnectAttempts) {
+    console.log("Máximo número de intentos de reconexión alcanzado");
+    showNotification("No se pudo restablecer la conexión. Verifique su red.", "error");
+    stopReconnection();
+    return;
+  }
+
+  reconnectAttempts++;
+  console.log(`Intento de reconexión ${reconnectAttempts}/${maxReconnectAttempts}`);
+  
+  // Limpiar la conexión anterior si existe
+  if (websocket) {
+    websocket.onopen = null;
+    websocket.onclose = null;
+    websocket.onerror = null;
+    websocket.onmessage = null;
+    
+    if (websocket.readyState === WebSocket.CONNECTING || websocket.readyState === WebSocket.OPEN) {
+      websocket.close();
+    }
+  }
+
+  // Intentar nueva conexión
+  try {
+    initWebSocket();
+    
+    // Programar el siguiente intento si este falla
+    reconnectInterval = setTimeout(() => {
+      if (isReconnecting && !isConnected) {
+        attemptReconnection();
+      }
+    }, Math.min(1000 * Math.pow(2, reconnectAttempts), 30000)); // Backoff exponencial, máximo 30s
+    
+  } catch (error) {
+    console.error("Error durante intento de reconexión:", error);
+    setTimeout(() => {
+      if (isReconnecting) {
+        attemptReconnection();
+      }
+    }, 2000);
+  }
+}
+
+function stopReconnection() {
+  isReconnecting = false;
+  reconnectAttempts = 0;
+  
+  if (reconnectInterval) {
+    clearTimeout(reconnectInterval);
+    reconnectInterval = null;
+  }
+  
+  console.log("Proceso de reconexión detenido");
+}
+
+function onReconnectionSuccess() {
+  console.log("Reconexión exitosa");
+  showNotification("Conexión restablecida", "success");
+  stopReconnection();
+}
+
+// Función para detectar conexión perdida por falta de mensajes
+function startConnectionMonitoring() {
+  const isDemoMode = localStorage.getItem("demoMode") === "true";
+  
+  if (isDemoMode) {
+    return; // No monitorear en modo demo
+  }
+
+  // Verificar cada 10 segundos si hemos recibido mensajes recientes
+  connectionCheckInterval = setInterval(() => {
+    const isDemoMode = localStorage.getItem("demoMode") === "true";
+    
+    if (isDemoMode) {
+      stopConnectionMonitoring();
+      return;
+    }
+
+    const now = Date.now();
+    const timeSinceLastMessage = now - lastMessageTimestamp;
+    
+    // Si han pasado más de 15 segundos sin mensajes y estamos "conectados"
+    if (timeSinceLastMessage > 10000 && isConnected && websocket && websocket.readyState === WebSocket.OPEN) {
+      console.log("Posible conexión perdida detectada - no se han recibido mensajes");
+      updateConnectionStatus(false);
+      startReconnection();
+    }
+  }, 10000);
+}
+
+function stopConnectionMonitoring() {
+  if (connectionCheckInterval) {
+    clearInterval(connectionCheckInterval);
+    connectionCheckInterval = null;
+  }
+}
+
 //Inicializar el WebSocket
 function initWebSocket() {
   updateConnectionStatus(false);
   console.log("Intentando abrir una conexión WebSocket...", gateway);
-  websocket = new WebSocket(gateway);
-  //envia una notificación para indicar que se está intentando conectar
-  showNotification("Conectando al servidor...", "info");
+  
+  try {
+    websocket = new WebSocket(gateway);
+  } catch (error) {
+    console.error("Error al crear WebSocket:", error);
+    if (!isReconnecting) {
+      showNotification("Error al conectar con el servidor", "error");
+      startReconnection();
+    }
+    return;
+  }
+
+  // Solo mostrar notificación de conexión si no es un intento de reconexión
+  if (!isReconnecting) {
+    showNotification("Conectando al servidor...", "info");
+  }
 
   websocket.onopen = () => {
     console.log("Conexión WebSocket abierta");
     updateConnectionStatus(true);
-    //muestra una notificación de conexión exitosa
-    showNotification("Conexión exitosa al servidor", "success");
+    lastMessageTimestamp = Date.now();
+    
+    if (isReconnecting) {
+      onReconnectionSuccess();
+    } else {
+      showNotification("Conexión exitosa al servidor", "success");
+    }
+    
+    // Iniciar monitoreo de conexión
+    startConnectionMonitoring();
   };
 
   websocket.onerror = (event) => {
     console.error("Error en la conexión WebSocket:", event);
     updateConnectionStatus(false);
-    // muestra una notificación de error
-    showNotification("Error en la conexión WebSocket", "error");
+    
+    if (!isReconnecting) {
+      showNotification("Error en la conexión WebSocket", "error");
+      startReconnection();
+    }
   };
 
-  websocket.onclose = () => {
-    console.log("Conexión WebSocket cerrada. No se realiza reintento de conexión");
+  websocket.onclose = (event) => {
+    console.log("Conexión WebSocket cerrada:", event.code, event.reason);
     updateConnectionStatus(false);
-    // setTimeout(initWebSocket, 1000);
-    // muestra una notificación de cierre
-    showNotification("Conexión WebSocket cerrada", "warning");
+    stopConnectionMonitoring();
+    
+    const isDemoMode = localStorage.getItem("demoMode") === "true";
+    
+    if (!isDemoMode && !isReconnecting) {
+      showNotification("Conexión WebSocket cerrada", "warning");
+      startReconnection();
+    } else if (isDemoMode) {
+      console.log("Modo demo activo - no se intenta reconexión");
+    }
   };
 
   websocket.onmessage = (event) => {
     try {
+      lastMessageTimestamp = Date.now();
       const data = JSON.parse(event.data);
       console.log(data);
-
-      // Actualizar número de estaciones conectadas
-      num_clientes_conectados = data.num_clientes_conectados || 0;
-      updateConnectionStatus(true, num_clientes_conectados);
       // Actualizar UI con los datos recibidos
       updateUIElements(data);
     } catch (error) {
@@ -247,7 +461,7 @@ function initWebSocket() {
   };
 }
 
-const NUM_PUNTOS = 12 * 6; // 3 días * 24 horas * 6 puntos/hora (cada 10 min)
+const NUM_PUNTOS = 12 * 4; // 3 días * 24 horas * 6 puntos/hora (cada 10 min)
 
 function generarSerieAleatoria(min, max, cantidad) {
   const serie = [];
@@ -258,6 +472,9 @@ function generarSerieAleatoria(min, max, cantidad) {
   return serie;
 }
 
+// Variable para trackear si es la primera vez que se generan los datos
+let isFirstDataGeneration = true;
+
 const labels = Array.from({ length: NUM_PUNTOS }, (_, i) => {
   i++;
   return parseInt(i / 6) + "h " + (i % 6) * 10 + "m";
@@ -266,6 +483,7 @@ const labels = Array.from({ length: NUM_PUNTOS }, (_, i) => {
 function initWebSocketSimulated() {
   setInitialStateValues();
   updateControlVariables();
+  isFirstDataGeneration = true; // Resetear para la nueva simulación
   console.log("Simulando conexión WebSocket...");
   websocket = {
     readyState: WebSocket.OPEN,
@@ -276,9 +494,6 @@ function initWebSocketSimulated() {
       try {
         const data = JSON.parse(event.data);
         console.log(data);
-        // Actualizar número de estaciones conectadas
-        num_clientes_conectados = data.num_clientes_conectados || 0;
-        updateConnectionStatus(true, num_clientes_conectados);
         // Actualizar UI con los datos recibidos
         updateUIElements(data);
       } catch (error) {
@@ -289,6 +504,33 @@ function initWebSocketSimulated() {
 
   // Simular recepción de datos cada 5 segundos
   simulationInterval = setInterval(() => {
+    let graficaData = {};
+    
+    if (isFirstDataGeneration) {
+      // Primera vez: generar series completas
+      graficaData = {
+        grafica_temperatura_masa: generarSerieAleatoria(25, 30, NUM_PUNTOS),
+        grafica_temperatura_lixiviados: generarSerieAleatoria(25, 30, NUM_PUNTOS),
+        grafica_presion: generarSerieAleatoria(35, 65, NUM_PUNTOS),
+        grafica_ph: generarSerieAleatoria(3.4, 3.7, NUM_PUNTOS),
+      };
+      isFirstDataGeneration = false;
+    } else {
+      // Siguientes veces: agregar solo un punto nuevo a cada serie
+      const nuevoTempMasa = +(Math.random() * (30 - 25) + 25).toFixed(2);
+      const nuevoTempLix = +(Math.random() * (30 - 25) + 25).toFixed(2);
+      const nuevaPresion = +(Math.random() * (65 - 35) + 35).toFixed(2);
+      const nuevoPh = +(Math.random() * (3.7 - 3.4) + 3.4).toFixed(2);
+      
+      // Crear las nuevas series agregando un punto al final para que crezca el array
+      graficaData = {
+        grafica_temperatura_masa: [...state.grafica_temperatura_masa, nuevoTempMasa],
+        grafica_temperatura_lixiviados: [...state.grafica_temperatura_lixiviados, nuevoTempLix],
+        grafica_presion: [...state.grafica_presion, nuevaPresion],
+        grafica_ph: [...state.grafica_ph, nuevoPh],
+      };
+    }
+
     const data = {
       presion: parseFloat((Math.random() * (60 - 35) + 35).toFixed(1)),
       temperatura_masa: parseFloat((Math.random() * (32 - 20) + 20).toFixed(1)),
@@ -320,10 +562,7 @@ function initWebSocketSimulated() {
 
       valor_temperatura_masa: 12,
       valor_temperatura_lixiviados: 15,
-      grafica_temperatura_masa: generarSerieAleatoria(25, 30, NUM_PUNTOS),
-      grafica_temperatura_lixiviados: generarSerieAleatoria(25, 30, NUM_PUNTOS),
-      grafica_presion: generarSerieAleatoria(35, 65, NUM_PUNTOS),
-      grafica_ph: generarSerieAleatoria(3.4, 3.7, NUM_PUNTOS),
+      ...graficaData,
       wifiNetworks: [
         { id: 1, name: "Red1", intensity: "Fuerte" },
         { id: 2, name: "Red2", intensity: "Media" },
@@ -339,7 +578,7 @@ function initWebSocketSimulated() {
     if (websocket.onmessage) {
       websocket.onmessage({ data: JSON.stringify(data) });
     }
-  }, 8000);
+  }, 5000);
 
   console.log("Conexión WebSocket simulada abierta");
   updateConnectionStatus(false);
@@ -399,23 +638,38 @@ function toggleDemoMode() {
   localStorage.setItem("demoMode", !isDemoMode);
   updateDemoButton();
   
+  // Detener procesos de reconexión si están activos
+  stopReconnection();
+  stopConnectionMonitoring();
+  
   // Limpiar el intervalo de simulación si existe
   if (simulationInterval) {
-    simulateStop();
     clearInterval(simulationInterval);
     simulationInterval = null;
   }
   
-  //si esta activado el modo demo, inicializa el websocket simulado y cierra la conexion real
-  if (!isDemoMode) {
-    initWebSocketSimulated();
-    if (websocket && websocket.readyState === WebSocket.OPEN) {
+  // Cerrar la conexión actual antes de cambiar de modo
+  if (websocket) {
+    if (websocket instanceof WebSocket && websocket.readyState === WebSocket.OPEN) {
+      console.log("Cerrando WebSocket real...");
       websocket.close();
+    } else if (websocket.send) {
+      console.log("Limpiando WebSocket simulado...");
+      // Para websocket simulado, simplemente lo eliminamos
     }
-    
+    websocket = null; // Limpiar la referencia
+  }
+  
+  // Resetear la generación de datos
+  isFirstDataGeneration = true;
+  
+  // Inicializar el modo apropiado
+  if (!isDemoMode) {
+    console.log("Cambiando a modo demo...");
+    initWebSocketSimulated();
   } else {
+    console.log("Cambiando a modo real...");
     initWebSocket();
-    
   }
 }
 
@@ -451,7 +705,6 @@ function updateDemoButton() {
         if (demoIndicator) {
           demoIndicator.style.display = "none";
         }
-
   }
 
 }
@@ -461,26 +714,40 @@ updateDemoButton();
 
 function simulateStart() {
     //le envia al websocket onmessage un objeto con los datos simulados
-    const data = {
-      start: true,
-      stop: false,
-      tiempo_horas: 2,
-      tiempo_minutos: 15,
-      temperatura_sp: 90,
-      recirculacion: false,
-      presion_natural: false,
-      maceracion: false,
-      control_temperatura: false,
-      calibrar_presion: false,
-      calibrar_temperatura_masa: false,
-      calibrar_temperatura_lixiviados: false,
-      calibrar_ph_bajo: false,
-      calibrar_ph_medio: false,
-      calibrar_ph_alto: false,
-    };
-    if (websocket && websocket.onmessage) {
-      websocket.onmessage({ data: JSON.stringify(data) });
-    }
+    // const data = {
+    //   start: true,
+    //   stop: false,
+    //   tiempo_horas: 2,
+    //   tiempo_minutos: 15,
+    //   temperatura_sp: 90,
+    //   recirculacion: false,
+    //   presion_natural: false,
+    //   maceracion: false,
+    //   control_temperatura: false,
+    //   calibrar_presion: false,
+    //   calibrar_temperatura_masa: false,
+    //   calibrar_temperatura_lixiviados: false,
+    //   calibrar_ph_bajo: false,
+    //   calibrar_ph_medio: false,
+    //   calibrar_ph_alto: false,
+    //   num_clientes_conectados: 2,
+    //   setpoint_presion: 20,
+    //   setpoint_temperatura: 45,
+    //   valor_temperatura_masa: 23,
+    //   valor_temperatura_lixiviados: 44,
+    //   setpoint_presion: 23,
+    //   setpoint_temperatura: 12,
+    //   setpoint_temperatura: 33,
+      
+    //   pH: 5,
+    //   temperatura_masa: 23,
+    //   temperatura_lixiviados: 22,
+    //   presion: 19,
+    // };
+    initWebSocketSimulated();
+    // if (websocket && websocket.onmessage) {
+    //   websocket.onmessage({ data: JSON.stringify(data) });
+    // }
 
 }
 
@@ -502,6 +769,24 @@ function simulateStop() {
       calibrar_ph_bajo: false,
       calibrar_ph_medio: false,
       calibrar_ph_alto: false,
+      grafica_temperatura_masa: [],
+      grafica_temperatura_lixiviados: [],
+      grafica_presion: [],
+      grafica_ph: [],
+      guardar: false,
+      num_clientes_conectados: 0,
+      setpoint_presion: 0,
+      setpoint_temperatura: 0,
+      valor_temperatura_masa: 0,
+      valor_temperatura_lixiviados: 0,
+      setpoint_presion: 0,
+      setpoint_temperatura: 0,
+      setpoint_temperatura: 0,
+      
+      pH: 0,
+      temperatura_masa: 0,
+      temperatura_lixiviados: 0,
+      presion: 0,
     };
     if (websocket && websocket.onmessage) {
       websocket.onmessage({ data: JSON.stringify(data) });
@@ -511,6 +796,21 @@ function simulateStop() {
         clearInterval(simulationInterval);
         simulationInterval = null;
     }
-
+    updateUIElements(data);
+    updateConnectionStatus(false);
 }
+
+// Limpiar todos los intervalos y procesos cuando se cierra la página
+window.addEventListener('beforeunload', () => {
+  stopReconnection();
+  stopConnectionMonitoring();
+  
+  if (simulationInterval) {
+    clearInterval(simulationInterval);
+  }
+  
+  if (websocket && websocket instanceof WebSocket) {
+    websocket.close();
+  }
+});
 

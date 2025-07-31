@@ -50,7 +50,7 @@ const connectToWifi = (networkName) => {
         };
         console.log("Detalles de conexión:", connectionDetails);
 
-        await openModal(() => sendValue(JSON.stringify(connectionDetails), true, `Conectado a ${networkName}`));
+        await openModal(() => sendValue(connectionDetails, true, `Conectado a ${networkName}`));
         
         clearWifiInputs();
 

@@ -7,51 +7,51 @@ let inputChartData = {
       borderColor: "rgb(255, 99, 132)",
       backgroundColor: "rgba(255, 99, 132, 0.4)",
       borderWidth: 2,
-      radius: 2,
+      radius: 4,
       tension: 0.4,
       yAxisID: "y_temp",
-      pointBackgroundColor: 'white',
-      pointBorderWidth: 2,
-      pointHoverRadius: 6,
+      pointBackgroundColor: "rgb(255, 99, 132)",
+      pointBorderWidth: 0,
+      pointHoverRadius: 2,
     },
     {
       label: "Temperatura Lixiviados (°C)",
       data: [],
-      borderColor: "rgb(255, 159, 64)",
+            borderColor: "rgb(255, 159, 64)",
       backgroundColor: "rgba(255, 159, 64, 0.4)",
       borderWidth: 2,
-      radius: 2,
+      radius: 4,
       tension: 0.4,
       yAxisID: "y_temp",
-      pointBackgroundColor: 'white',
-      pointBorderWidth: 2,
-      pointHoverRadius: 6,
+      pointBackgroundColor: "rgb(255, 159, 64)",
+      pointBorderWidth: 0,
+      pointHoverRadius: 2,
     },
     {
-      label: "Presión (bar)",
+      label: "Presión (psi)",
       data: [],
-      borderColor: "rgb(54, 162, 235)",
+            borderColor: "rgb(54, 162, 235)",
       backgroundColor: "rgba(54, 162, 235, 0.4)",
       borderWidth: 2,
-      radius: 2,
+      radius: 4,
       tension: 0.4,
       yAxisID: "y_presion",
-      pointBackgroundColor: 'white',
-      pointBorderWidth: 2,
-      pointHoverRadius: 6,
+      pointBackgroundColor: "rgb(54, 162, 235)",
+      pointBorderWidth: 0,
+      pointHoverRadius: 2,
     },
     {
       label: "pH",
       data: [],
-      borderColor: "rgb(75, 192, 192)",
+            borderColor: "rgb(75, 192, 192)",
       backgroundColor: "rgba(75, 192, 192, 0.4)",
       borderWidth: 2,
-      radius: 2,
+      radius: 4,
       tension: 0.4,
       yAxisID: "y_ph",
-      pointBackgroundColor: 'white',
-      pointBorderWidth: 2,
-      pointHoverRadius: 6,
+      pointBackgroundColor: "rgb(75, 192, 192)",
+      pointBorderWidth: 0,
+      pointHoverRadius: 2,
     },
   ],
 };
@@ -64,25 +64,53 @@ const originalData = {
 
 // Variable para trackear si estamos en modo filtrado
 let isFiltered = false;
+// Variable para trackear la cantidad de puntos filtrados actualmente
+let currentFilterPoints = null;
+// Variable para recordar qué datasets están intencionalmente ocultos por el usuario
+let userHiddenDatasets = new Set();
+
+// Variables para control de granularidad
+let currentGranularity = 1; // 1 = cada 10min, 3 = cada 30min, 6 = cada hora, etc.
+let aggregatedData = {
+  labels: [],
+  datasets: []
+};
 
 function actualizarGrafica() {
-  // Solo actualizar con datos del state si no estamos en modo filtrado
-  if (!isFiltered) {
-    inputChartData.datasets[0].data = [...state.grafica_temperatura_masa];
-    inputChartData.datasets[1].data = [...state.grafica_temperatura_lixiviados];
-    inputChartData.datasets[2].data = [...state.grafica_presion];
-    inputChartData.datasets[3].data = [...state.grafica_ph];
-    
-    // Actualizar originalData SOLO cuando recibimos datos nuevos del state
-    updateOriginalData();
-  }
+  // Siempre actualizar inputChartData y originalData con los nuevos datos del state
+  inputChartData.datasets[0].data = [...state.grafica_temperatura_masa];
+  inputChartData.datasets[1].data = [...state.grafica_temperatura_lixiviados];
+  inputChartData.datasets[2].data = [...state.grafica_presion];
+  inputChartData.datasets[3].data = [...state.grafica_ph];
   
-  myChart.update();
-  updateYAxisRanges();
+  // Actualizar originalData con los datos nuevos del state
+  updateOriginalData();
+  
+  // Actualizar rangos Y sin hacer update del chart aún
+  updateYAxisRanges(false);
+  
+  // Si estamos en modo filtrado, reaplicar el filtro con los datos actualizados
+  if (isFiltered && currentFilterPoints !== null) {
+    applyCurrentFilter();
+    updateChartTitle();
+    // Usar una animación más suave para actualizaciones de datos filtrados
+    myChart.update('active');
+  } else {
+    // Aplicar granularidad a todos los datos
+    applyGranularity(currentGranularity);
+  }
 }
 
 // Función para actualizar originalData solo con datos nuevos del state
 function updateOriginalData() {
+  // Actualizar inputChartData.labels para que coincida con la cantidad de datos
+  if (inputChartData.datasets[0] && inputChartData.datasets[0].data.length > 0) {
+    const numPuntos = inputChartData.datasets[0].data.length;
+    inputChartData.labels = Array.from({ length: numPuntos }, (_, i) => {
+      return parseInt(i / 6) + "h " + (i % 6) * 10 + "m";
+    });
+  }
+  
   // Solo actualizar si tenemos datos válidos
   if (inputChartData.labels && inputChartData.labels.length > 0) {
     originalData.labels = [...inputChartData.labels];
@@ -95,6 +123,14 @@ function updateOriginalData() {
 
 // Función para inicializar originalData cuando haya datos disponibles
 function initializeOriginalData() {
+  // Actualizar inputChartData.labels para que coincida con la cantidad de datos
+  if (inputChartData.datasets[0] && inputChartData.datasets[0].data.length > 0) {
+    const numPuntos = inputChartData.datasets[0].data.length;
+    inputChartData.labels = Array.from({ length: numPuntos }, (_, i) => {
+      return parseInt(i / 6) + "h " + (i % 6) * 10 + "m";
+    });
+  }
+  
   if (inputChartData.labels && inputChartData.labels.length > 0) {
     originalData.labels = [...inputChartData.labels];
     originalData.datasets = inputChartData.datasets.map((ds) => ({
@@ -104,39 +140,236 @@ function initializeOriginalData() {
   }
 }
 
-function findMaxValue(data) {
-  return Math.max(...data.filter(val => val !== null && !isNaN(val)), 0);
+// Función para agregar datos según granularidad
+function aggregateData(sourceData, granularity) {
+  if (granularity === 1 || !sourceData.labels || sourceData.labels.length === 0) {
+    return {
+      labels: [...sourceData.labels],
+      datasets: sourceData.datasets.map(ds => ({
+        ...ds,
+        data: [...ds.data]
+      }))
+    };
+  }
+
+  const aggregatedLabels = [];
+  const aggregatedDatasets = sourceData.datasets.map(ds => ({
+    ...ds,
+    data: []
+  }));
+
+  // Agregar datos en grupos según granularidad
+  for (let i = 0; i < sourceData.labels.length; i += granularity) {
+    const group = sourceData.labels.slice(i, i + granularity);
+    if (group.length > 0) {
+      // Usar el primer label del grupo para representar el período
+      aggregatedLabels.push(group[0]);
+      
+      // Calcular promedio para cada dataset
+      sourceData.datasets.forEach((dataset, datasetIndex) => {
+        const groupData = dataset.data.slice(i, i + granularity);
+        const validData = groupData.filter(val => val !== null && !isNaN(val) && val !== undefined);
+        
+        if (validData.length > 0) {
+          const average = validData.reduce((sum, val) => sum + val, 0) / validData.length;
+          aggregatedDatasets[datasetIndex].data.push(Math.round(average * 100) / 100); // Redondear a 2 decimales
+        } else {
+          aggregatedDatasets[datasetIndex].data.push(null);
+        }
+      });
+    }
+  }
+
+  return {
+    labels: aggregatedLabels,
+    datasets: aggregatedDatasets
+  };
 }
 
-function updateYAxisRanges() {
+// Función para aplicar granularidad y actualizar gráfica
+function applyGranularity(granularity) {
+  currentGranularity = granularity;
+  
+  // Determinar qué datos usar como fuente
+  let sourceData;
+  if (isFiltered && currentFilterPoints !== null) {
+    // Si estamos filtrados, usar los datos filtrados como fuente
+    const total = originalData.labels.length;
+    const inicio = Math.max(total - currentFilterPoints, 0);
+    sourceData = {
+      labels: originalData.labels.slice(inicio),
+      datasets: originalData.datasets.map(ds => ({
+        ...ds,
+        data: ds.data.slice(inicio)
+      }))
+    };
+  } else {
+    // Usar todos los datos originales
+    sourceData = originalData;
+  }
+  
+  // Agregar datos según granularidad
+  aggregatedData = aggregateData(sourceData, granularity);
+  
+  // Actualizar gráfica con datos agregados
+  myChart.data.labels = [...aggregatedData.labels];
+  myChart.data.datasets.forEach((dataset, index) => {
+    if (aggregatedData.datasets[index]) {
+      dataset.data = [...aggregatedData.datasets[index].data];
+    }
+  });
+  
+  updateChartTitle();
+  updateYAxisRanges();
+  myChart.update();
+  
+  // Actualizar indicador de granularidad en el UI
+  updateGranularityUI();
+}
+
+// Función para actualizar el UI de granularidad
+function updateGranularityUI() {
+  // Actualizar botones de granularidad
+  document.querySelectorAll('.granularity-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  // Marcar el botón activo
+  const activeBtn = document.querySelector(`[data-granularity="${currentGranularity}"]`);
+  if (activeBtn) {
+    activeBtn.classList.add('active');
+  }
+}
+
+// Función para actualizar la UI de los botones de filtro
+function updateFilterUI(cantidad) {
+  // Actualizar botones de filtro
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  // Marcar el botón activo
+  const activeBtn = document.querySelector(`[data-filter="${cantidad}"]`);
+  if (activeBtn) {
+    activeBtn.classList.add('active');
+  }
+}
+
+// Función para cambiar granularidad manualmente
+function setGranularity(granularity) {
+  applyGranularity(granularity);
+  
+  const granularityNames = {
+    1: '10 min',
+    3: '30 min', 
+    6: '1 hora',
+    12: '2 horas',
+    18: '3 horas'
+  };
+  
+  showNotification(`Granularidad cambiada a: ${granularityNames[granularity]}`, 'success');
+}
+
+// Función helper para reaplicar el filtro actual cuando llegan datos nuevos
+function applyCurrentFilter() {
+  if (!currentFilterPoints || !originalData.labels || originalData.labels.length === 0) {
+    return;
+  }
+  
+  // Usar la función de granularidad que ya maneja filtros
+  applyGranularity(currentGranularity);
+}
+
+function updateYAxisRanges(shouldUpdate = true) {
   const activeDatasets = myChart.data.datasets.filter((dataset, idx) => 
     !myChart.getDatasetMeta(idx).hidden
   );
 
   if (activeDatasets.length > 0) {
+    // Función helper para calcular rango dinámico
+    function calculateDynamicRange(values) {
+      if (values.length === 0) return { min: 0, max: 10 };
+      
+      const validValues = values.filter(val => val !== null && !isNaN(val) && val !== undefined);
+      if (validValues.length === 0) return { min: 0, max: 10 };
+      
+      const min = Math.min(...validValues);
+      const max = Math.max(...validValues);
+      
+      // Si todos los valores son iguales, crear un rango simétrico
+      if (min === max) {
+        const center = min;
+        const margin = Math.max(Math.abs(center * 0.2), 5); // 20% del valor o mínimo 5
+        return {
+          min: Math.max(0, center - margin),
+          max: center + margin
+        };
+      }
+      
+      // Calcular el rango de datos
+      const range = max - min;
+      const margin = Math.max(range * 0.15, Math.max(max * 0.1, 2)); // 15% del rango o 10% del max, mínimo 2
+      
+      return {
+        min: Math.max(0, min - margin),
+        max: max + margin
+      };
+    }
+
+    // Ajustar escala de temperatura
     const tempDatasets = activeDatasets.filter(ds => ds.yAxisID === 'y_temp');
     if (tempDatasets.length > 0) {
-      const maxTemp = Math.max(...tempDatasets.map(ds => findMaxValue(ds.data)));
-      myChart.options.scales.y_temp.min = 0;
-      myChart.options.scales.y_temp.max = maxTemp + 5;
+      const allTempValues = tempDatasets.flatMap(ds => ds.data);
+      const tempRange = calculateDynamicRange(allTempValues);
+      myChart.options.scales.y_temp.min = Math.floor(tempRange.min);
+      myChart.options.scales.y_temp.max = Math.ceil(tempRange.max);
     }
 
+    // Ajustar escala de presión
     const presionDatasets = activeDatasets.filter(ds => ds.yAxisID === 'y_presion');
     if (presionDatasets.length > 0) {
-      const maxPresion = Math.max(...presionDatasets.map(ds => findMaxValue(ds.data)));
-      myChart.options.scales.y_presion.min = 0;
-      myChart.options.scales.y_presion.max = maxPresion + 5;
+      const allPresionValues = presionDatasets.flatMap(ds => ds.data);
+      const presionRange = calculateDynamicRange(allPresionValues);
+      myChart.options.scales.y_presion.min = Math.floor(presionRange.min);
+      myChart.options.scales.y_presion.max = Math.ceil(presionRange.max);
     }
 
+    // Ajustar escala de pH con rango más ajustado
     const phDatasets = activeDatasets.filter(ds => ds.yAxisID === 'y_ph');
     if (phDatasets.length > 0) {
-      const maxPh = Math.max(...phDatasets.map(ds => findMaxValue(ds.data)));
-      myChart.options.scales.y_ph.min = 0;
-      myChart.options.scales.y_ph.max = maxPh + 5;
+      const allPhValues = phDatasets.flatMap(ds => ds.data);
+      const validPhValues = allPhValues.filter(val => val !== null && !isNaN(val) && val !== undefined);
+      
+      if (validPhValues.length > 0) {
+        const minPh = Math.min(...validPhValues);
+        const maxPh = Math.max(...validPhValues);
+        
+        // Para pH, usar rangos más ajustados
+        if (minPh === maxPh) {
+          // Si todos los valores son iguales, crear un rango de ±0.5
+          const center = minPh;
+          myChart.options.scales.y_ph.min = Math.max(0, Math.floor((center - 0.5) * 10) / 10);
+          myChart.options.scales.y_ph.max = Math.ceil((center + 0.5) * 10) / 10;
+        } else {
+          // Calcular rango con margen más pequeño para pH
+          const range = maxPh - minPh;
+          const margin = Math.max(range * 0.2, 0.3); // 20% del rango o mínimo 0.3
+          
+          myChart.options.scales.y_ph.min = Math.max(0, Math.floor((minPh - margin) * 10) / 10);
+          myChart.options.scales.y_ph.max = Math.ceil((maxPh + margin) * 10) / 10;
+        }
+      } else {
+        // Valores por defecto si no hay datos válidos
+        myChart.options.scales.y_ph.min = 0;
+        myChart.options.scales.y_ph.max = 7;
+      }
     }
   }
 
-  myChart.update();
+  // Solo actualizar si se solicita explícitamente
+  if (shouldUpdate) {
+    myChart.update();
+  }
 }
 
 // Función para actualizar colores de la gráfica según el tema
@@ -182,8 +415,33 @@ function updateChartTheme() {
   myChart.update('none');
 }
 
-// Hacer la función disponible globalmente
+// Función para actualizar el título con el conteo de puntos
+function updateChartTitle() {
+  if (!myChart || !myChart.data.datasets[0]) return;
+  
+  const totalPuntos = myChart.data.datasets[0].data.length;
+  const mainTitle = "Temperatura, Presión y pH en el tiempo";
+  
+  // Determinar el texto de granularidad
+  const granularityText = {
+    1: "10 min",
+    3: "30 min",
+    6: "1 hora", 
+    12: "2 horas",
+    18: "3 horas"
+  };
+  
+  const currentGranularityText = granularityText[currentGranularity] || "10 min";
+  const subtitle = `${totalPuntos} puntos - Granularidad: ${currentGranularityText}`;
+  
+  myChart.options.plugins.title.text = [mainTitle, subtitle];
+}
+
+// Hacer las funciones disponibles globalmente
 window.updateChartTheme = updateChartTheme;
+window.updateChartTitle = updateChartTitle;
+window.setGranularity = setGranularity;
+window.applyGranularity = applyGranularity;
 
 const config = {
   type: "line",
@@ -203,7 +461,10 @@ const config = {
     plugins: {
       title: {
         display: true,
-        text: "Temperatura, Presión y pH en el tiempo (cada punto = 10 min)",
+        text: [
+          "Temperatura, Presión y pH en el tiempo",
+          "0 puntos mostrados - Un punto = 10 min"
+        ],
         color: '#333333', // Color inicial para tema claro
         font: {
           size: 16,
@@ -212,7 +473,8 @@ const config = {
         padding: 20
       },
       legend: {
-        position: "top",
+        position: "bottom",
+        align: "center",
         onClick: function(e, legendItem, legend) {
           const index = legendItem.datasetIndex;
           const ci = legend.chart;
@@ -224,9 +486,20 @@ const config = {
               const otherMeta = ci.getDatasetMeta(idx);
               otherMeta.hidden = idx !== index;
             });
+            
+            // Actualizar escalas Y para el nuevo dataset visible en mobile
+            updateResponsiveDisplay();
           } else {
             const meta = ci.getDatasetMeta(index);
+            const wasHidden = meta.hidden;
             meta.hidden = !meta.hidden;
+            
+            // Trackear qué datasets están intencionalmente ocultos por el usuario
+            if (meta.hidden) {
+              userHiddenDatasets.add(index);
+            } else {
+              userHiddenDatasets.delete(index);
+            }
           }
 
           updateYAxisRanges();
@@ -240,6 +513,9 @@ const config = {
             size: 12,
             weight: '600'
           }
+        },
+        padding: {
+          bottom: 20 // Añadir espacio entre la leyenda y la gráfica
         }
       },
       tooltip: {
@@ -257,7 +533,16 @@ const config = {
           y: {min: 'original', max: 'original'},
           y_temp: {min: 'original', max: 'original'},
           y_presion: {min: 'original', max: 'original'},
-          y_ph: {min: 'original', max: 'original'}
+          y_ph: {min: 'original', max: 'original'},
+          x: {
+            min: 0,
+            max: function(chart) {
+              // Permitir zoom hasta que se muestren mínimo 6 puntos
+              const totalPoints = chart.data.labels ? chart.data.labels.length : 0;
+              return Math.max(totalPoints - 1, 5); // Asegurar que el máximo sea al menos 5 (índice del punto 6)
+            },
+            minRange: 5 // Rango mínimo de 6 puntos (índices 0-5)
+          }
         },
         pan: {
           enabled: true,
@@ -268,7 +553,7 @@ const config = {
             enabled: true,
           },
           drag: {
-            enabled: true,
+            enabled: false,
             backgroundColor: 'rgba(54, 162, 235, 0.3)',
             borderColor: 'rgb(54, 162, 235)',
             borderWidth: 1
@@ -296,7 +581,34 @@ const config = {
         },
         ticks: {
           callback: function(value, index) {
-            return index % 6 === 0 ? this.getLabelForValue(value) : "";
+            const totalLabels = this.chart.data.labels.length;
+            let interval;
+            
+            // Si no hay datos, no mostrar nada
+            if (totalLabels === 0) return "";
+            
+            // Si solo hay 1 o 2 datos, mostrar todos
+            if (totalLabels <= 2) return this.getLabelForValue(value);
+            
+            // Determinar el intervalo según la cantidad total de datos
+            if (totalLabels <= 6) { // 1 hora o menos
+              interval = 1; // Mostrar todos los labels disponibles
+            } else if (totalLabels <= 12) { // 2 horas o menos
+              interval = 3; // Mostrar cada 30 minutos (cada 3 puntos)
+            } else if (totalLabels <= 36) { // 6 horas o menos
+              interval = 6; // Mostrar cada hora (cada 6 puntos)
+            } else if (totalLabels <= 72) { // 12 horas o menos
+              interval = 12; // Mostrar cada 2 horas (cada 12 puntos)
+            } else {
+              interval = 18; // Mostrar cada 3 horas (cada 18 puntos)
+            }
+            
+            // Garantizar que siempre se muestre al menos el primer y último label
+            if (index === 0 || index === totalLabels - 1) {
+              return this.getLabelForValue(value);
+            }
+            
+            return index % interval === 0 ? this.getLabelForValue(value) : "";
           },
           maxRotation: 45,
           minRotation: 0,
@@ -309,7 +621,6 @@ const config = {
       y_temp: {
         type: "linear",
         position: "left",
-        beginAtZero: true,
         title: {
           display: true,
           text: "Temperatura (°C)",
@@ -330,10 +641,9 @@ const config = {
       y_presion: {
         type: "linear",
         position: "right",
-        beginAtZero: true,
         title: {
           display: true,
-          text: "Presión (bar)",
+          text: "Presión (psi)",
           color: '#666666', // Color inicial para tema claro
           font: {
             size: 13,
@@ -351,7 +661,6 @@ const config = {
       y_ph: {
         type: "linear",
         position: "right",
-        beginAtZero: true,
         offset: true,
         title: {
           display: true,
@@ -421,21 +730,12 @@ function updateResponsiveDisplay() {
   const isMobile = width < 768;
 
   myChart.data.datasets.forEach(dataset => {
-    dataset.radius = isMobile ? 0 : 2;
-    dataset.pointHoverRadius = isMobile ? 4 : 6;
+    dataset.radius = isMobile ? 4 : 4;
+    dataset.pointHoverRadius = isMobile ? 4 : 4;
   });
 
-  myChart.options.scales.y_presion.display = !isMobile || 
-    (isMobile && myChart.data.datasets.some((ds, idx) => 
-      ds.yAxisID === 'y_presion' && !myChart.getDatasetMeta(idx).hidden
-    ));
-  
-  myChart.options.scales.y_ph.display = !isMobile || 
-    (isMobile && myChart.data.datasets.some((ds, idx) => 
-      ds.yAxisID === 'y_ph' && !myChart.getDatasetMeta(idx).hidden
-    ));
-
   if (isMobile) {
+    // En mobile, asegurar que solo un dataset esté visible
     let foundActive = false;
     myChart.data.datasets.forEach((dataset, idx) => {
       const meta = myChart.getDatasetMeta(idx);
@@ -447,16 +747,94 @@ function updateResponsiveDisplay() {
         }
       }
     });
+
+    // Mostrar solo la escala Y del dataset visible
+    const visibleDataset = myChart.data.datasets.find((dataset, idx) => 
+      !myChart.getDatasetMeta(idx).hidden
+    );
+
+    if (visibleDataset) {
+      const visibleYAxisID = visibleDataset.yAxisID;
+      
+      // Ocultar todas las escalas Y primero
+      myChart.options.scales.y_temp.display = false;
+      myChart.options.scales.y_presion.display = false;
+      myChart.options.scales.y_ph.display = false;
+      
+      // Mostrar solo la escala del dataset visible
+      if (myChart.options.scales[visibleYAxisID]) {
+        myChart.options.scales[visibleYAxisID].display = true;
+        
+        // En mobile, posicionar la escala siempre a la izquierda para mejor UX
+        myChart.options.scales[visibleYAxisID].position = 'left';
+      }
+    }
+  } else {
+    // En desktop, restaurar datasets pero respetar los que el usuario ocultó intencionalmente
+    myChart.data.datasets.forEach((dataset, idx) => {
+      const meta = myChart.getDatasetMeta(idx);
+      // Solo mostrar si no está intencionalmente oculto por el usuario
+      if (!userHiddenDatasets.has(idx)) {
+        meta.hidden = false;
+      }
+    });
+
+    // En desktop, mostrar escalas según datasets visibles
+    myChart.options.scales.y_presion.display = myChart.data.datasets.some((ds, idx) => 
+      ds.yAxisID === 'y_presion' && !myChart.getDatasetMeta(idx).hidden
+    );
+    
+    myChart.options.scales.y_ph.display = myChart.data.datasets.some((ds, idx) => 
+      ds.yAxisID === 'y_ph' && !myChart.getDatasetMeta(idx).hidden
+    );
+
+    myChart.options.scales.y_temp.display = myChart.data.datasets.some((ds, idx) => 
+      ds.yAxisID === 'y_temp' && !myChart.getDatasetMeta(idx).hidden
+    );
+
+    // Restaurar posiciones originales en desktop
+    myChart.options.scales.y_temp.position = 'left';
+    myChart.options.scales.y_presion.position = 'right';
+    myChart.options.scales.y_ph.position = 'right';
   }
 
   myChart.options.scales.x.ticks.callback = function(value, index) {
-    return index % (isMobile ? 12 : 6) === 0 ? this.getLabelForValue(value) : "";
+    const totalLabels = this.chart.data.labels.length;
+    let interval;
+    
+    // Si no hay datos, no mostrar nada
+    if (totalLabels === 0) return "";
+    
+    // Si solo hay 1 o 2 datos, mostrar todos
+    if (totalLabels <= 2) return this.getLabelForValue(value);
+    
+    // Determinar el intervalo según la cantidad total de datos y si es móvil
+    if (totalLabels <= 6) { // 1 hora o menos
+      interval = 1; // Mostrar todos los labels disponibles
+    } else if (totalLabels <= 12) { // 2 horas o menos
+      interval = isMobile ? 2 : 3; // Mobile: cada 20min, Desktop: cada 30 min
+    } else if (totalLabels <= 36) { // 6 horas o menos
+      interval = isMobile ? 4 : 6; // Mobile: cada 40min, Desktop: cada hora
+    } else if (totalLabels <= 72) { // 12 horas o menos
+      interval = isMobile ? 4 : 12; // Mobile: cada hora, Desktop: cada 2 horas
+    } else {
+      interval = isMobile ? 4 : 18; // Mobile: cada 80min, Desktop: cada 3 horas
+    }
+    
+    // Garantizar que siempre se muestre al menos el primer y último label
+    if (index === 0 || index === totalLabels - 1) {
+      return this.getLabelForValue(value);
+    }
+    
+    return index % interval === 0 ? this.getLabelForValue(value) : "";
   };
 
   myChart.options.plugins.title.font.size = isMobile ? 14 : 16;
   myChart.options.plugins.legend.labels.font.size = isMobile ? 10 : 12;
+  myChart.options.plugins.legend.padding.bottom = isMobile ? 15 : 20; // Menos padding en móvil
 
   updateYAxisRanges();
+  updateChartTitle(); // Actualizar título con conteo inicial
   myChart.update('none');
 }
 
@@ -471,13 +849,25 @@ function descargarGrafica() {
   tempCtx.fillStyle = '#FFFFFF';
   tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
   
+  // Colores fijos para exportación (siempre oscuros para mejor legibilidad en fondo blanco)
+  const exportColors = {
+    title: '#333333',
+    text: '#666666', 
+    grid: 'rgba(0,0,0,0.1)'
+  };
+  
+  // Obtener el estado de visibilidad actual de cada dataset
+  const datasetVisibility = myChart.data.datasets.map((dataset, idx) => 
+    !myChart.getDatasetMeta(idx).hidden
+  );
+
   const exportConfig = {
     type: "line",
     data: {
       labels: myChart.data.labels,
-      datasets: myChart.data.datasets.map((dataset) => ({
+      datasets: myChart.data.datasets.map((dataset, idx) => ({
         ...dataset,
-        hidden: false 
+        hidden: !datasetVisibility[idx] // Aplicar el estado de visibilidad actual
       }))
     },
     options: {
@@ -496,6 +886,8 @@ function descargarGrafica() {
         ...config.options.plugins,
         title: {
           ...config.options.plugins.title,
+          text: myChart.options.plugins.title.text, // Usar el título actual con el conteo
+          color: exportColors.title, // Forzar color oscuro
           font: {
             size: 24,
             weight: 'bold'
@@ -504,25 +896,100 @@ function descargarGrafica() {
         legend: {
           ...config.options.plugins.legend,
           labels: {
+            ...config.options.plugins.legend.labels,
+            color: exportColors.text, // Forzar color oscuro
             font: {
               size: 20,
               weight: 'bold'
             }
+          },
+          padding: {
+            bottom: 25 // Más espacio en la exportación
           }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          titleColor: exportColors.title,
+          bodyColor: exportColors.text,
+          borderColor: '#e0e0e0',
+          borderWidth: 1
         }
       },
       scales: {
-        ...config.options.scales,
         x: {
           ...config.options.scales.x,
+          title: {
+            ...config.options.scales.x.title,
+            color: exportColors.text // Forzar color oscuro
+          },
           ticks: {
             ...config.options.scales.x.ticks,
+            color: exportColors.text, // Forzar color oscuro
             callback: function(value, index) {
+              const totalLabels = this.chart.data.labels.length;
+              let interval;
               
-              return index % 6 === 0 ? this.getLabelForValue(value) : "";
+              // Determinar el intervalo según la cantidad total de datos
+              if (totalLabels <= 12) { // 2 horas o menos
+                interval = 3; // Mostrar cada 30 minutos (cada 3 puntos)
+              } else if (totalLabels <= 36) { // 6 horas o menos
+                interval = 6; // Mostrar cada hora (cada 6 puntos)
+              } else {
+                interval = 12; // Mostrar cada 2 horas (cada 12 puntos)
+              }
+              
+              return index % interval === 0 ? this.getLabelForValue(value) : "";
+            }
+          },
+          grid: {
+            ...config.options.scales.x.grid,
+            color: exportColors.grid
+          }
+        },
+        // Solo incluir escalas Y para los datasets visibles
+        ...(myChart.data.datasets.some((ds, idx) => ds.yAxisID === 'y_temp' && datasetVisibility[idx]) && {
+          y_temp: {
+            ...config.options.scales.y_temp,
+            title: {
+              ...config.options.scales.y_temp.title,
+              color: exportColors.text // Forzar color oscuro
+            },
+            ticks: {
+              ...config.options.scales.y_temp.ticks,
+              color: exportColors.text // Forzar color oscuro
+            },
+            grid: {
+              ...config.options.scales.y_temp.grid,
+              color: exportColors.grid
             }
           }
-        }
+        }),
+        ...(myChart.data.datasets.some((ds, idx) => ds.yAxisID === 'y_presion' && datasetVisibility[idx]) && {
+          y_presion: {
+            ...config.options.scales.y_presion,
+            title: {
+              ...config.options.scales.y_presion.title,
+              color: exportColors.text // Forzar color oscuro
+            },
+            ticks: {
+              ...config.options.scales.y_presion.ticks,
+              color: exportColors.text // Forzar color oscuro
+            }
+          }
+        }),
+        ...(myChart.data.datasets.some((ds, idx) => ds.yAxisID === 'y_ph' && datasetVisibility[idx]) && {
+          y_ph: {
+            ...config.options.scales.y_ph,
+            title: {
+              ...config.options.scales.y_ph.title,
+              color: exportColors.text // Forzar color oscuro
+            },
+            ticks: {
+              ...config.options.scales.y_ph.ticks,
+              color: exportColors.text // Forzar color oscuro
+            }
+          }
+        })
       }
     }
   };
@@ -600,6 +1067,7 @@ function filtrarPuntos(cantidad) {
     return;
   }
   
+  // SIEMPRE usar originalData como fuente, no los datos del chart que pueden estar filtrados
   const total = originalData.labels.length;
   const inicio = Math.max(total - cantidad, 0);
   
@@ -610,32 +1078,46 @@ function filtrarPuntos(cantidad) {
     return;
   }
   
-  // Marcar que estamos en modo filtrado
+  // Marcar que estamos en modo filtrado y guardar la cantidad
   isFiltered = true;
+  currentFilterPoints = cantidad;
   
-  // Aplicar filtro solo a los datos mostrados en el chart, NO a originalData
-  const nuevasLabels = originalData.labels.slice(inicio);
-  const nuevosDatasets = originalData.datasets.map((dataset) => ({
-    ...dataset,
-    data: dataset.data.slice(inicio),
-  }));
+  // Actualizar el estado activo de los botones de filtro
+  updateFilterUI(cantidad);
   
-  // Verificar que tengamos labels después del filtro
-  if (nuevasLabels.length === 0) {
-    console.warn('El filtro resultó en datos vacíos');
-    showNotification('El filtro no produjo datos para mostrar', 'warning');
-    isFiltered = false; // Resetear el flag si falló
-    return;
+  // Aplicar granularidad a los datos filtrados
+  applyGranularity(currentGranularity);
+  
+  // Verificar si estamos en modo móvil y aplicar lógica responsive después del filtro
+  const width = window.innerWidth;
+  const isMobile = width < 768;
+  
+  if (isMobile) {
+    // En móvil, encontrar cuál dataset estaba visible antes del filtro y mantenerlo
+    let visibleDatasetIndex = -1;
+    myChart.data.datasets.forEach((dataset, idx) => {
+      const meta = myChart.getDatasetMeta(idx);
+      if (!meta.hidden && visibleDatasetIndex === -1) {
+        visibleDatasetIndex = idx;
+      }
+    });
+    
+    // Si no había ningún dataset visible, usar el primero
+    if (visibleDatasetIndex === -1) {
+      visibleDatasetIndex = 0;
+    }
+    
+    // Ocultar todos los datasets excepto el que estaba visible
+    myChart.data.datasets.forEach((dataset, idx) => {
+      const meta = myChart.getDatasetMeta(idx);
+      meta.hidden = idx !== visibleDatasetIndex;
+    });
+    
+    updateResponsiveDisplay();
   }
   
-  // Actualizar solo los datos del chart mostrado
-  myChart.data.labels = nuevasLabels;
-  myChart.data.datasets = nuevosDatasets;
-  updateYAxisRanges();
-  myChart.update();
-  
   // Mostrar notificación de éxito
-  showNotification(`Mostrando últimos ${cantidad} puntos (${Math.round(cantidad/6)} horas aprox.)`, 'success');
+  showNotification(`Mostrando últimos ${cantidad} puntos originales (${Math.round(cantidad/6)} horas aprox.)`, 'success');
 }
 
 function restaurarDatos() {
@@ -646,15 +1128,14 @@ function restaurarDatos() {
     return;
   }
   
-  // Desmarcar modo filtrado
+  // Desmarcar modo filtrado y limpiar filtro guardado
   isFiltered = false;
+  currentFilterPoints = null;
   
-  // Restaurar datos completos desde originalData
-  myChart.data.labels = [...originalData.labels];
-  myChart.data.datasets = originalData.datasets.map((ds) => ({
-    ...ds,
-    data: [...ds.data],
-  }));
+  // Quitar el estado activo de todos los botones de filtro
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
   
   // También restaurar inputChartData para sincronización
   inputChartData.labels = [...originalData.labels];
@@ -663,8 +1144,27 @@ function restaurarDatos() {
     data: [...ds.data],
   }));
   
-  updateYAxisRanges();
-  myChart.update();
+  // Aplicar granularidad a todos los datos restaurados
+  applyGranularity(currentGranularity);
+  
+  // Verificar si estamos en modo móvil y ajustar visibilidad de datasets
+  const width = window.innerWidth;
+  const isMobile = width < 768;
+  
+  if (isMobile) {
+    // En móvil, asegurar que solo un dataset esté visible después de restaurar
+    let foundActive = false;
+    myChart.data.datasets.forEach((dataset, idx) => {
+      const meta = myChart.getDatasetMeta(idx);
+      if (foundActive) {
+        meta.hidden = true;
+      } else {
+        meta.hidden = false;
+        foundActive = true;
+      }
+    });
+    updateResponsiveDisplay();
+  }
   
   showNotification('Mostrando todos los datos disponibles', 'success');
 }
@@ -694,10 +1194,13 @@ function updateChartDimensions() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  addZoomListener();
+  // addZoomListener(); // Deshabilitado - usar solo el plugin de zoom de Chart.js
+  
   updateResponsiveDisplay();
   updateYAxisRanges();
   updateChartTheme(); // Aplicar tema inicial
+  updateChartTitle(); // Aplicar conteo inicial de puntos
+  updateGranularityUI(); // Actualizar UI de granularidad
   
   window.addEventListener('resize', () => {
     updateChartDimensions();
