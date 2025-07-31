@@ -6,21 +6,193 @@
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
     />
+    
+    <!-- Prevenir renderizado antes de que los estilos estén listos -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    
     <title>BIOMASTER Pro V2 IA</title>
     
     <!-- Preload de recursos críticos -->
-    <link rel="preload" href="./css/styles.css" as="style">
+    <link rel="preload" href="./css/styles.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="./css/styles.css"></noscript>
+    
+    <!-- CSS crítico inline para evitar FOUC -->
+    <style>
+      /* Variables CSS críticas para tema claro y oscuro */
+      :root {
+        --background-color: #f8fafc;
+        --bg-secondary: #f1f5f9;
+        --primary-color: #2563eb;
+        --secondary-color: #3b82f6;
+        --text-primary: #1e293b;
+        --card-shadow: 0 4px 6px rgb(0 0 0 / 15%), 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      
+      :root[data-theme="dark"] {
+        --background-color: #0f172a;
+        --bg-secondary: #374151;
+        --primary-color: #3b82f6;
+        --secondary-color: #60a5fa;
+        --text-primary: #f1f5f9;
+        --card-shadow: 0 4px 6px rgb(0 0 0 / 25%), 0 1px 3px rgba(0, 0, 0, 0.2);
+      }
+      
+      /* Estilos críticos para evitar FOUC */
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background-color: var(--background-color);
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out;
+        font-display: swap;
+      }
+      
+      body.loading {
+        overflow: hidden;
+      }
+      
+      body.loaded {
+        opacity: 1;
+      }
+      
+      /* Loader inicial - estilos críticos que coinciden con el diseño principal */
+      .initial-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, var(--background-color) 0%, var(--bg-secondary) 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000000;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      
+      .initial-loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+      
+      .loader-container {
+        text-align: center;
+        transform: scale(0.9);
+        animation: loaderEntry 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      }
+      
+      .company-logo {
+        margin-bottom: 1rem;
+        animation: logoFloat 3s ease-in-out infinite;
+      }
+      
+      .logo-circle {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--card-shadow);
+        position: relative;
+        overflow: hidden;
+        background-position: center;
+        background-size: contain;
+        background-image: url('./icons/pyh.png');
+      }
+      
+      .loader-text {
+        color: var(--text-primary);
+        text-align: center;
+        animation: textFadeIn 1s ease-out 0.5s both;
+        display: grid;
+        place-items: center;
+      }
+      
+      .loader-text h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      
+      .loader-spinner-modern {
+        position: relative;
+        width: 60px;
+        height: 60px;
+      }
+      
+      .spinner-ring {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 3px solid transparent;
+      }
+      
+      .spinner-ring:nth-child(1) {
+        border-top-color: var(--primary-color);
+        animation: spinRing 1.5s linear infinite;
+      }
+      
+      .spinner-ring:nth-child(2) {
+        border-right-color: var(--secondary-color);
+        animation: spinRing 1.5s linear infinite reverse;
+        animation-delay: 0.2s;
+      }
+      
+      .spinner-ring:nth-child(3) {
+        border-bottom-color: var(--primary-color);
+        animation: spinRing 1.5s linear infinite;
+        animation-delay: 0.4s;
+      }
+      
+      .main-container {
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out;
+      }
+      
+      body:not(.loading) .main-container {
+        opacity: 1;
+      }
+      
+      /* Animaciones críticas */
+      @keyframes loaderEntry {
+        from { opacity: 0; transform: scale(0.8) translateY(20px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
+      }
+      
+      @keyframes logoFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+      }
+      
+      @keyframes spinRing {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      @keyframes textFadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    </style>
     
     <!-- Preload de iconos críticos -->
     <link rel="preload" href="./icons/pyh.png" as="image">
     <link rel="preload" href="./icons/menu.svg" as="image">
     <link rel="preload" href="./icons/config-white.svg" as="image">
     
-    <link rel="stylesheet" href="./css/styles.css" />
+    <!-- Eliminamos el link normal del CSS ya que se carga con preload -->
     <link rel="icon" type="image/x-icon" href="" />
     <link rel="icon" type="image/png" href="./icons/pyh.png" />
-    
-
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="./manifest.json">
@@ -39,6 +211,28 @@
   </head>
 
   <body class="loading">
+    
+    <!-- Script inline para manejo de FOUC -->
+    <script>
+      // Prevenir FOUC y manejar carga de estilos
+      (function() {
+        // Agregar clase loaded cuando los estilos críticos estén listos
+        function handleStylesLoaded() {
+          document.body.classList.add('loaded');
+        }
+        
+        // Si los estilos ya están cargados
+        if (document.readyState !== 'loading') {
+          handleStylesLoaded();
+        } else {
+          // Esperar a que el DOM esté listo
+          document.addEventListener('DOMContentLoaded', handleStylesLoaded);
+        }
+        
+        // Fallback: forzar carga después de 100ms
+        setTimeout(handleStylesLoaded, 100);
+      })();
+    </script>
 
     <!-- Loader inicial -->
     <div class="initial-loader">
@@ -78,17 +272,21 @@
         <img class="custom-icon" src="./icons/menu.svg" alt="Menú" loading="eager">
       </div>
 
+      <div class="menu-button scroll-top" id="scrollTop" onclick="scrollToTop()">
+        <img class="custom-icon" src="./icons/up.svg" alt="Menú" loading="eager">
+      </div>
+
       <div class="control-button" id="controlButton" onclick="toggleActionButtons()">
         <img class="custom-icon" src="./icons/config-white.svg" alt="Configuración" loading="eager">
       </div>
       <div class="control-button play-button" id="playButton" onclick="actionPlay()">
-        ▶︎
+        <img class="custom-icon" src="./icons/play.svg" alt="Menú" loading="eager">
       </div>
       <div class="control-button stop-button" id="stopButton" onclick="actionStop()">
-        ⏹
+        <img class="custom-icon" src="./icons/stop.svg" alt="Menú" loading="eager">
       </div>
       <div class="control-button close-button" id="closeButton" onclick="actionClose()">
-        ✖︎
+        <img class="custom-icon" src="./icons/close.svg" alt="Menú" loading="eager">
       </div>
 
 
@@ -174,6 +372,8 @@
             </div>
         </div>
 
+      <!-- Overlay para cerrar sidebar en móviles -->
+      <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
       <!-- Contenido principal -->
 
@@ -480,60 +680,126 @@
 
             <!-- Paneles de control organizados -->
             <div class="panel-container">
-              
               <!-- Panel de Filtros Temporales -->
-              <div class="panel">
-                <p>Filtros</p>
+              <div class="panel time-filter-panel">
+                <h3>Filtros de datos</h3>
                 
-                <!-- Filtros rápidos -->
-                <div class="filter-buttons">
-                  <button class="btn" onclick="filtrarPuntos(6)" data-icon="⏰">
-                    Última Hora
-                  </button>
-                  <button class="btn" onclick="restaurarDatos()" data-icon="🔄">
-                    Ver Todo
-                  </button>
-                </div>
+                <!-- Filtros Rápidos -->
+                <div class="control-section">
 
-                <!-- Filtro personalizado -->
-                <div class="custom-filter-section">
-                  <div class="custom-filter-controls">
-                    <input
-                      id="horasInput"
-                      type="number"
-                      min="1"
-                      placeholder="Últimas x horas"
-                    />
-                    <button class="btn" onclick="filtrarPorHoras()" data-icon="🔍">
-                      Filtrar
+                  <p class="control-description">Acceso rápido a períodos comunes</p>
+                  <div class="quick-filters">
+                    <button class="btn filter-btn" data-filter="6" onclick="filtrarPuntos(6)" title="Mostrar solo la última hora de datos">
+                      <span class="btn-icon">⏰</span>
+                      <span class="btn-text">Última Hora</span>
+                    </button>
+                    <button class="btn filter-btn" data-filter="18" onclick="filtrarPuntos(18)" title="Mostrar las últimas 3 horas de datos">
+                      <span class="btn-icon">🕐</span>
+                      <span class="btn-text">Últimas 3h</span>
+                    </button>
+                    <button class="btn filter-btn" data-filter="36" onclick="filtrarPuntos(36)" title="Mostrar las últimas 6 horas de datos">
+                      <span class="btn-icon">🕕</span>
+                      <span class="btn-text">Últimas 6h</span>
+                    </button>
+                    <button class="btn filter-btn" data-filter="72" onclick="filtrarPuntos(72)" title="Mostrar las últimas 12 horas de datos">
+                      <span class="btn-icon">🕘</span>
+                      <span class="btn-text">Últimas 12h</span>
                     </button>
                   </div>
                 </div>
 
-                <!-- Controles de visualización -->
-                <div class="utility-buttons">
-                  <button class="btn" onclick="resetZoom()" data-icon="🔍">
-                    Resetear Zoom
-                  </button>
+                <!-- Filtro Personalizado -->
+                <div class="control-section">
+
+                  <p class="control-description">Define un período específico de visualización</p>
+                  <div class="custom-filter">
+                    <div class="input-group">
+                      <label for="horasInput">Últimas horas a mostrar:</label>
+                      <div class="input-with-button">
+                        <input
+                          id="horasInput"
+                          type="number"
+                          min="1"
+                          max="100"
+                          placeholder="Ej: 8"
+                          title="Introduce el número de horas a mostrar"
+                        />
+                        <button class="btn action-btn" onclick="filtrarPorHoras()" title="Aplicar el filtro personalizado">
+                          <span class="btn-icon">🔍</span>
+                          <span class="btn-text">Filtrar</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
+              
 
-              <!-- Panel de Exportación y Descarga -->
-              <div class="panel">
-                <p>Exportación de Datos</p>
+              <!-- Panel de Configuración de Visualización -->
+              <div class="panel chart-config-panel">
+                <h3>Configuración de Visualización</h3>
                 
-                <div class="custom-filter-section">
-                  <div class="download-buttons">
-                    <button class="btn" onclick="descargarGrafica()" data-icon="📊">
-                      Descargar gráfica
+                <!-- Sección de Granularidad -->
+                <div class="control-section">
+
+                  <p class="control-description">Selecciona la resolución temporal de los datos mostrados</p>
+                  <div class="granularity-controls">
+                    <button class="btn granularity-btn active" data-granularity="1" onclick="setGranularity(1)" title="Mostrar un punto cada 10 minutos">
+                      <span class="btn-icon">⏰</span>
+                      <span class="btn-text">10 min</span>
                     </button>
-                    <button class="btn" onclick="descargarCSV()" data-icon="📋">
-                      Descargar CSV
+                    <button class="btn granularity-btn" data-granularity="3" onclick="setGranularity(3)" title="Mostrar un punto cada 30 minutos">
+                      <span class="btn-icon">⏱️</span>
+                      <span class="btn-text">30 min</span>
+                    </button>
+                    <button class="btn granularity-btn" data-granularity="6" onclick="setGranularity(6)" title="Mostrar un punto cada hora">
+                      <span class="btn-icon">🕐</span>
+                      <span class="btn-text">1 hora</span>
+                    </button>
+                    <button class="btn granularity-btn" data-granularity="12" onclick="setGranularity(12)" title="Mostrar un punto cada 2 horas">
+                      <span class="btn-icon">🕓</span>
+                      <span class="btn-text">2 horas</span>
+                    </button>
+                    <button class="btn granularity-btn" data-granularity="18" onclick="setGranularity(18)" title="Mostrar un punto cada 3 horas">
+                      <span class="btn-icon">🕕</span>
+                      <span class="btn-text">3 horas</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Sección de Zoom y Navegación -->
+                <div class="control-section">
+
+                  <p class="control-description">Herramientas para explorar los datos</p>
+                  <div class="zoom-controls">
+                    <button class="btn control-btn" onclick="resetZoom()" title="Restablecer el zoom a la vista completa">
+                      <span class="btn-icon">🔍</span>
+                      <span class="btn-text">Resetear Zoom</span>
+                    </button>
+                    <button class="btn control-btn primary" onclick="restaurarDatos()" title="Mostrar todos los datos disponibles">
+                      <span class="btn-icon">🔄</span>
+                      <span class="btn-text">Ver Todo</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="control-section">
+
+                  <p class="control-description">Descarga los datos visibles en diferentes formatos</p>
+                  <div class="export-controls">
+                    <button class="btn export-btn" onclick="descargarGrafica()" title="Descargar la gráfica como imagen JPG de alta calidad">
+                      <span class="btn-icon">📈</span>
+                      <span class="btn-text">Imagen JPG</span>
+                    </button>
+                    <button class="btn export-btn" onclick="descargarCSV()" title="Descargar los datos como archivo CSV para análisis">
+                      <span class="btn-icon">📋</span>
+                      <span class="btn-text">Datos CSV</span>
                     </button>
                   </div>
                 </div>
               </div>
-
+              
+              
             </div>
           </div>
         </div>
@@ -841,13 +1107,6 @@
         </button>
       </div>
     </div>
-
-    <!-- Footer sutil que aparece solo en pantallas pequeñas -->
-    <footer class="responsive-footer">
-      <div class="footer-content">
-        <span class="footer-text">Penagos Hermanos @ 2026 </span>
-      </div>
-    </footer>
 
     <!-- Modal de confirmación -->
     <div id="confirmationModal" class="modal-overlay">
