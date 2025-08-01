@@ -1,5 +1,5 @@
 let inputChartData = {
-  labels: labels,
+  labels: [],
   datasets: [
     {
       label: "Temperatura Masa (°C)",
@@ -374,45 +374,71 @@ function updateYAxisRanges(shouldUpdate = true) {
 
 // Función para actualizar colores de la gráfica según el tema
 function updateChartTheme() {
-  if (!myChart) return;
+  // Verificar que myChart esté definido y correctamente inicializado
+  if (typeof myChart === 'undefined' || !myChart || !myChart.options) {
+
+    return;
+  }
   
-  const isDark = document.documentElement.hasAttribute('data-theme') && 
-                 document.documentElement.getAttribute('data-theme') === 'dark';
-  
-  // Colores para el título y texto
-  const titleColor = isDark ? '#ffffff' : '#333333';
-  const textColor = isDark ? '#e2e8f0' : '#666666';
-  const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
-  
-  // Actualizar colores del título
-  myChart.options.plugins.title.color = titleColor;
-  
-  // Actualizar colores de las leyendas
-  myChart.options.plugins.legend.labels.color = textColor;
-  
-  // Actualizar colores de los ejes
-  myChart.options.scales.x.title.color = textColor;
-  myChart.options.scales.x.ticks.color = textColor;
-  myChart.options.scales.x.grid.color = gridColor;
-  
-  myChart.options.scales.y_temp.title.color = textColor;
-  myChart.options.scales.y_temp.ticks.color = textColor;
-  myChart.options.scales.y_temp.grid.color = gridColor;
-  
-  myChart.options.scales.y_presion.title.color = textColor;
-  myChart.options.scales.y_presion.ticks.color = textColor;
-  
-  myChart.options.scales.y_ph.title.color = textColor;
-  myChart.options.scales.y_ph.ticks.color = textColor;
-  
-  // Actualizar tooltip
-  myChart.options.plugins.tooltip.backgroundColor = isDark ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)';
-  myChart.options.plugins.tooltip.titleColor = titleColor;
-  myChart.options.plugins.tooltip.bodyColor = textColor;
-  myChart.options.plugins.tooltip.borderColor = isDark ? '#4a5568' : '#e0e0e0';
-  
-  // Actualizar la gráfica
-  myChart.update('none');
+  try {
+    const isDark = document.documentElement.hasAttribute('data-theme') && 
+                   document.documentElement.getAttribute('data-theme') === 'dark';
+    
+    // Colores para el título y texto
+    const titleColor = isDark ? '#ffffff' : '#333333';
+    const textColor = isDark ? '#e2e8f0' : '#666666';
+    const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
+    
+    // Verificar que las propiedades existan antes de actualizarlas
+    if (myChart.options.plugins && myChart.options.plugins.title) {
+      myChart.options.plugins.title.color = titleColor;
+    }
+    
+    // Actualizar colores de las leyendas
+    if (myChart.options.plugins && myChart.options.plugins.legend && myChart.options.plugins.legend.labels) {
+      myChart.options.plugins.legend.labels.color = textColor;
+    }
+    
+    // Actualizar colores de los ejes si existen
+    if (myChart.options.scales) {
+      if (myChart.options.scales.x) {
+        if (myChart.options.scales.x.title) myChart.options.scales.x.title.color = textColor;
+        if (myChart.options.scales.x.ticks) myChart.options.scales.x.ticks.color = textColor;
+        if (myChart.options.scales.x.grid) myChart.options.scales.x.grid.color = gridColor;
+      }
+      
+      if (myChart.options.scales.y_temp) {
+        if (myChart.options.scales.y_temp.title) myChart.options.scales.y_temp.title.color = textColor;
+        if (myChart.options.scales.y_temp.ticks) myChart.options.scales.y_temp.ticks.color = textColor;
+        if (myChart.options.scales.y_temp.grid) myChart.options.scales.y_temp.grid.color = gridColor;
+      }
+      
+      if (myChart.options.scales.y_presion) {
+        if (myChart.options.scales.y_presion.title) myChart.options.scales.y_presion.title.color = textColor;
+        if (myChart.options.scales.y_presion.ticks) myChart.options.scales.y_presion.ticks.color = textColor;
+      }
+      
+      if (myChart.options.scales.y_ph) {
+        if (myChart.options.scales.y_ph.title) myChart.options.scales.y_ph.title.color = textColor;
+        if (myChart.options.scales.y_ph.ticks) myChart.options.scales.y_ph.ticks.color = textColor;
+      }
+    }
+    
+    // Actualizar tooltip si existe
+    if (myChart.options.plugins && myChart.options.plugins.tooltip) {
+      myChart.options.plugins.tooltip.backgroundColor = isDark ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+      myChart.options.plugins.tooltip.titleColor = titleColor;
+      myChart.options.plugins.tooltip.bodyColor = textColor;
+      myChart.options.plugins.tooltip.borderColor = isDark ? '#4a5568' : '#e0e0e0';
+    }
+    
+    // Actualizar la gráfica
+    myChart.update('none');
+    
+
+  } catch (error) {
+    console.error('BIOMASTER: Error al actualizar tema del chart:', error);
+  }
 }
 
 // Función para actualizar el título con el conteo de puntos
@@ -421,6 +447,31 @@ function updateChartTitle() {
   
   const totalPuntos = myChart.data.datasets[0].data.length;
   const mainTitle = "Temperatura, Presión y pH en el tiempo";
+  
+  // Calcular el tiempo total mostrado en el gráfico
+  const minutosBase = 10; // Cada punto original representa 10 minutos
+  const granularityMultiplier = {
+    1: 1,   // 10 min por punto
+    3: 3,   // 30 min por punto
+    6: 6,   // 1 hora por punto
+    12: 12, // 2 horas por punto
+    18: 18  // 3 horas por punto
+  };
+  
+  // Calcular total de minutos mostrados
+  const totalMinutos = totalPuntos * minutosBase * (granularityMultiplier[currentGranularity] || 1);
+  const horas = Math.floor(totalMinutos / 60);
+  const minutos = totalMinutos % 60;
+  
+  // Formatear el tiempo total
+  let tiempoTotal = "";
+  if (horas > 0 && minutos > 0) {
+    tiempoTotal = `${horas}h ${minutos}min`;
+  } else if (horas > 0) {
+    tiempoTotal = `${horas}h`;
+  } else {
+    tiempoTotal = `${minutos}min`;
+  }
   
   // Determinar el texto de granularidad
   const granularityText = {
@@ -432,7 +483,7 @@ function updateChartTitle() {
   };
   
   const currentGranularityText = granularityText[currentGranularity] || "10 min";
-  const subtitle = `${totalPuntos} puntos - Granularidad: ${currentGranularityText}`;
+  const subtitle = `${tiempoTotal} - Granularidad: ${currentGranularityText}`;
   
   myChart.options.plugins.title.text = [mainTitle, subtitle];
 }
@@ -684,6 +735,34 @@ const config = {
 };
 
 const myChart = new Chart(document.getElementById("multiAxisChart"), config);
+
+// Notificar al theme manager que el chart está listo
+function notifyChartReady() {
+
+  
+  // Notificar al theme manager si está disponible
+  if (typeof themeManager !== 'undefined' && themeManager) {
+
+    themeManager.updateChartThemeIfAvailable();
+  }
+  
+  // Crear evento personalizado para otros módulos
+  document.dispatchEvent(new CustomEvent('chartReady', { detail: { chart: myChart } }));
+}
+
+// Usar múltiples métodos para asegurar que se ejecute
+requestAnimationFrame(() => {
+  setTimeout(notifyChartReady, 50);
+});
+
+// También verificar cuando el DOM esté completamente listo
+if (document.readyState === 'complete') {
+  setTimeout(notifyChartReady, 100);
+} else {
+  window.addEventListener('load', () => {
+    setTimeout(notifyChartReady, 100);
+  });
+}
 
 function addZoomListener() {
   const canvas = document.getElementById('multiAxisChart');
@@ -1088,6 +1167,9 @@ function filtrarPuntos(cantidad) {
   // Aplicar granularidad a los datos filtrados
   applyGranularity(currentGranularity);
   
+  // Resetear el zoom para mostrar todos los datos filtrados
+  myChart.resetZoom();
+  
   // Verificar si estamos en modo móvil y aplicar lógica responsive después del filtro
   const width = window.innerWidth;
   const isMobile = width < 768;
@@ -1146,6 +1228,9 @@ function restaurarDatos() {
   
   // Aplicar granularidad a todos los datos restaurados
   applyGranularity(currentGranularity);
+  
+  // Resetear el zoom para mostrar todos los datos restaurados
+  myChart.resetZoom();
   
   // Verificar si estamos en modo móvil y ajustar visibilidad de datasets
   const width = window.innerWidth;

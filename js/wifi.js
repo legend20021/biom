@@ -39,7 +39,7 @@ const connectToWifi = (networkName) => {
         const password = passwordInput.value.trim();
 
         if (!password) {
-            showTempNotification("Por favor, ingresa una contraseña.", 'error');
+            showNotification("Por favor, ingresa una contraseña.", 'error');
             return;
         }
 
@@ -66,7 +66,7 @@ const clearWifiInputs = () => {
 
 document.getElementById("disconnectWifi5").addEventListener("click", () => {
     console.log("Desconectado de la red Wi-Fi.");
-    showTempNotification("Desconectado de la red Wi-Fi", 'success');
+    showNotification("Desconectado de la red Wi-Fi", 'success');
     clearWifiInputs();
 
     // Ocultar elementos relacionados con la conexión

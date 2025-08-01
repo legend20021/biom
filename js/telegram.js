@@ -26,7 +26,7 @@ document.getElementById("addUser").addEventListener("click", () => {
     const id = parseInt(document.getElementById("userId").value.trim());
 
     if (!name || !id) {
-        showTempNotification("Por favor, completa todos los campos.", 'error');
+        showNotification("Por favor, completa todos los campos.", 'error');
         return;
     }
 
@@ -40,7 +40,7 @@ document.getElementById("addUser").addEventListener("click", () => {
         console.log(JSON.stringify({ action: "actualizar", user: { id, name } }));
         document.getElementById("addUser").innerText = "Agregar Usuario";
     } else {
-        showTempNotification("El ID ya existe. Por favor, usa un ID diferente.", 'error');
+        showNotification("El ID ya existe. Por favor, usa un ID diferente.", 'error');
         return;
     }
 

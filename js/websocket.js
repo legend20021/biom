@@ -1,11 +1,10 @@
-// Variables globales
+// Variables para control de WebSocket
 let isConnected = false;
 let gateway = `ws://${window.location.hostname}/ws`;
 let websocket;
 let num_clientes_conectados = 0;
 let simulationInterval = null; // Variable para guardar la referencia del setInterval
 let userInteractionLock = false; // Bloquear actualizaciones durante interacción del usuario
-let pendingUserActions = new Map(); // Almacenar acciones pendientes del usuario
 
 // Variables para control de reconexión
 let reconnectAttempts = 0;
@@ -15,62 +14,43 @@ let isReconnecting = false;
 let lastMessageTimestamp = 0;
 let connectionCheckInterval = null;
 
-// Estado global
-const state = {
-  mode: "manual", //automatic o manual
-  temperature: 0,
-  temperatureLix: 0,
-  // tempSetpoint: 27,
-  tempLixSetpoint: 27,
-  pressure: 0,
-  pressureSetpoint: 50,
-  ph: 0,
-  phSetpoint: 7.0,
-  isAutomatic: false, // Indica que empieza en modo automático
-  isManual: true, // Esto será inverso al valor de isAutomatic
-  tiempo_horas: 0,
-  tiempo_minutos: 0,
-  temperatura_sp: 0,
-  grafica_temperatura_masa: [],
-  grafica_temperatura_lixiviados: [],
-  grafica_presion: [],
-  grafica_ph: [],
-  users: [],
-  wifiNetworks: [],
-  recirculacion: false,
-  control_temperatura: false,
-  presion_natural: false,
-  maceracion: false,
-  modalFunction: function () {},
-};
-
+// NOTA: El estado global ahora se define en state.js como appState
+// Esta función mantiene compatibilidad con el código existente
 function setInitialStateValues() {
-  (state.mode = "manual"),
-    (state.temperature = 0),
-    (state.temperatureLix = 0),
-    // state.tempSetpoint =  27,
-    (state.tempLixSetpoint = 27),
-    (state.pressure = 0),
-    (state.pressureSetpoint = 50),
-    (state.ph = 0),
-    (state.phSetpoint = 7.0),
-    (state.isAutomatic = false),
-    (state.isManual = true),
-    (state.tiempo_horas = 0),
-    (state.tiempo_minutos = 0),
-    (state.temperatura_sp = 0),
-    (state.temperatura_sp = 0),
-    (state.grafica_temperatura_masa = []),
-    (state.grafica_temperatura_lixiviados = []),
-    (state.grafica_presion = []),
-    (state.grafica_ph = []),
-    (state.users = []),
-    (state.wifiNetworks = []),
-    (state.recirculacion = false),
-    (state.presion_natural = false),
-    (state.maceracion = false),
-    (state.control_temperatura = false),
-    (state.modalFunction = () => {});
+    if (typeof resetAppState === 'function') {
+        resetAppState();
+    } else {
+        console.warn('resetAppState no está disponible - usando fallback');
+        // Fallback para compatibilidad temporal
+        if (window.state) {
+            Object.assign(window.state, {
+                mode: "manual",
+                temperature: 0,
+                temperatureLix: 0,
+                tempLixSetpoint: 27,
+                pressure: 0,
+                pressureSetpoint: 50,
+                ph: 0,
+                phSetpoint: 7.0,
+                isAutomatic: false,
+                isManual: true,
+                tiempo_horas: 0,
+                tiempo_minutos: 0,
+                temperatura_sp: 0,
+                grafica_temperatura_masa: [],
+                grafica_temperatura_lixiviados: [],
+                grafica_presion: [],
+                grafica_ph: [],
+                users: [],
+                wifiNetworks: [],
+                recirculacion: false,
+                presion_natural: false,
+                maceracion: false,
+                control_temperatura: false,
+                modalFunction: function () {}
+            });
+        }
+    }
 }
 
 // Enviar un valor al WebSocket
@@ -461,7 +441,7 @@ function initWebSocket() {
   };
 }
 
-const NUM_PUNTOS = 12 * 4; // 3 días * 24 horas * 6 puntos/hora (cada 10 min)
+const NUM_PUNTOS = 6 * 4 * 1; //6 puntos/hora (cada 10 min) * hora * día
 
 function generarSerieAleatoria(min, max, cantidad) {
   const serie = [];
@@ -474,11 +454,6 @@ function generarSerieAleatoria(min, max, cantidad) {
 
 // Variable para trackear si es la primera vez que se generan los datos
 let isFirstDataGeneration = true;
-
-const labels = Array.from({ length: NUM_PUNTOS }, (_, i) => {
-  i++;
-  return parseInt(i / 6) + "h " + (i % 6) * 10 + "m";
-});
 
 function initWebSocketSimulated() {
   setInitialStateValues();
@@ -540,7 +515,7 @@ function initWebSocketSimulated() {
       pH: parseFloat((Math.random() * (14 - 7) + 7).toFixed(1)),
 
       recirculacion: false,
-      presion_natural: false,
+      presion_natural: true,
       maceracion: false,
       control_temperatura: false,
 
@@ -713,41 +688,7 @@ updateDemoButton();
 
 
 function simulateStart() {
-    //le envia al websocket onmessage un objeto con los datos simulados
-    // const data = {
-    //   start: true,
-    //   stop: false,
-    //   tiempo_horas: 2,
-    //   tiempo_minutos: 15,
-    //   temperatura_sp: 90,
-    //   recirculacion: false,
-    //   presion_natural: false,
-    //   maceracion: false,
-    //   control_temperatura: false,
-    //   calibrar_presion: false,
-    //   calibrar_temperatura_masa: false,
-    //   calibrar_temperatura_lixiviados: false,
-    //   calibrar_ph_bajo: false,
-    //   calibrar_ph_medio: false,
-    //   calibrar_ph_alto: false,
-    //   num_clientes_conectados: 2,
-    //   setpoint_presion: 20,
-    //   setpoint_temperatura: 45,
-    //   valor_temperatura_masa: 23,
-    //   valor_temperatura_lixiviados: 44,
-    //   setpoint_presion: 23,
-    //   setpoint_temperatura: 12,
-    //   setpoint_temperatura: 33,
-      
-    //   pH: 5,
-    //   temperatura_masa: 23,
-    //   temperatura_lixiviados: 22,
-    //   presion: 19,
-    // };
     initWebSocketSimulated();
-    // if (websocket && websocket.onmessage) {
-    //   websocket.onmessage({ data: JSON.stringify(data) });
-    // }
 
 }
 

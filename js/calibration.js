@@ -42,7 +42,7 @@ document.getElementById('calibrate-pressure').addEventListener('click', async fu
         
     } catch (error) {
         console.error('Error en calibración de presión:', error);
-        showNotification('Error en la calibración', 'error');
+        // showNotification('Error en la calibración', 'error');
     }
 });
 
@@ -110,7 +110,7 @@ async function calibrateMasaTemp() {
     const res = await openModal(() => sendValue(message));
     if(res) {
         // Efectos visuales
-        showTempNotification(`Temperatura de masa calibrada a ${temperature}°C`);
+        showNotification(`Temperatura de masa calibrada a ${temperature}°C`);
         // Limpiar input
         input.value = '';
     }
@@ -127,7 +127,7 @@ async function calibrateLixTemp() {
     const res = await openModal(() => sendValue(message));
     if(res) {
         // Efectos visuales
-        showTempNotification(`Temperatura de lixiviado calibrada a ${temperature}°C`);
+        showNotification(`Temperatura de lixiviado calibrada a ${temperature}°C`);
 
         // Limpiar input
         input.value = '';

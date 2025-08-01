@@ -1,1098 +1,1149 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
-    />
-    
-    <!-- Prevenir renderizado antes de que los estilos estén listos -->
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    
-    <title>BIOMASTER Pro V2 IA</title>
-    
-    <!-- Preload de recursos críticos -->
-    <link rel="preload" href="./css/styles.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="./css/styles.css"></noscript>
-    
-    <!-- CSS crítico inline para evitar FOUC -->
-    <style>
-      /* Variables CSS críticas para tema claro y oscuro */
-      :root {
-        --background-color: #f8fafc;
-        --bg-secondary: #f1f5f9;
-        --primary-color: #2563eb;
-        --secondary-color: #3b82f6;
-        --text-primary: #1e293b;
-        --card-shadow: 0 4px 6px rgb(0 0 0 / 15%), 0 1px 3px rgba(0, 0, 0, 0.1);
-      }
-      
-      :root[data-theme="dark"] {
-        --background-color: #0f172a;
-        --bg-secondary: #374151;
-        --primary-color: #3b82f6;
-        --secondary-color: #60a5fa;
-        --text-primary: #f1f5f9;
-        --card-shadow: 0 4px 6px rgb(0 0 0 / 25%), 0 1px 3px rgba(0, 0, 0, 0.2);
-      }
-      
-      /* Estilos críticos para evitar FOUC */
-      body {
-        margin: 0;
-        padding: 0;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        background-color: var(--background-color);
-        opacity: 0;
-        transition: opacity 0.3s ease-in-out;
-        font-display: swap;
-      }
-      
-      body.loading {
-        overflow: hidden;
-      }
-      
-      body.loaded {
-        opacity: 1;
-      }
-      
-      /* Loader inicial - estilos críticos que coinciden con el diseño principal */
-      .initial-loader {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, var(--background-color) 0%, var(--bg-secondary) 100%);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000000;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-      }
-      
-      .initial-loader.hidden {
-        opacity: 0;
-        visibility: hidden;
-      }
-      
-      .loader-container {
-        text-align: center;
-        transform: scale(0.9);
-        animation: loaderEntry 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-      }
-      
-      .company-logo {
-        margin-bottom: 1rem;
-        animation: logoFloat 3s ease-in-out infinite;
-      }
-      
-      .logo-circle {
-        width: 80px;
-        height: 80px;
-        margin: 0 auto 1rem;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: var(--card-shadow);
-        position: relative;
-        overflow: hidden;
-        background-position: center;
-        background-size: contain;
-        background-image: url('./icons/pyh.png');
-      }
-      
-      .loader-text {
-        color: var(--text-primary);
-        text-align: center;
-        animation: textFadeIn 1s ease-out 0.5s both;
-        display: grid;
-        place-items: center;
-      }
-      
-      .loader-text h3 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-      }
-      
-      .loader-spinner-modern {
-        position: relative;
-        width: 60px;
-        height: 60px;
-      }
-      
-      .spinner-ring {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        border: 3px solid transparent;
-      }
-      
-      .spinner-ring:nth-child(1) {
-        border-top-color: var(--primary-color);
-        animation: spinRing 1.5s linear infinite;
-      }
-      
-      .spinner-ring:nth-child(2) {
-        border-right-color: var(--secondary-color);
-        animation: spinRing 1.5s linear infinite reverse;
-        animation-delay: 0.2s;
-      }
-      
-      .spinner-ring:nth-child(3) {
-        border-bottom-color: var(--primary-color);
-        animation: spinRing 1.5s linear infinite;
-        animation-delay: 0.4s;
-      }
-      
-      .main-container {
-        opacity: 0;
-        transition: opacity 0.3s ease-in-out;
-      }
-      
-      body:not(.loading) .main-container {
-        opacity: 1;
-      }
-      
-      /* Animaciones críticas */
-      @keyframes loaderEntry {
-        from { opacity: 0; transform: scale(0.8) translateY(20px); }
-        to { opacity: 1; transform: scale(1) translateY(0); }
-      }
-      
-      @keyframes logoFloat {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-8px); }
-      }
-      
-      @keyframes spinRing {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-      
-      @keyframes textFadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-    </style>
-    
-    <!-- Preload de iconos críticos -->
-    <link rel="preload" href="./icons/pyh.png" as="image">
-    <link rel="preload" href="./icons/menu.svg" as="image">
-    <link rel="preload" href="./icons/config-white.svg" as="image">
-    
-    <!-- Eliminamos el link normal del CSS ya que se carga con preload -->
-    <link rel="icon" type="image/x-icon" href="" />
-    <link rel="icon" type="image/png" href="./icons/pyh.png" />
-    
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="./manifest.json">
-    
-    <!-- Meta tags adicionales para PWA -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="BIOMASTER">
-    <link rel="apple-touch-icon" href="./icons/pyh.png">
-    
-    <!-- Meta tags para SEO y performance -->
-    <meta name="description" content="Sistema de control avanzado para biofermentación - BIOMASTER Pro V2 IA">
-    <meta name="keywords" content="biofermentación, control, sensores, IoT, agricultura">
-    <meta name="author" content="Penagos y Hermanos">
-    <meta name="robots" content="index, follow">
-  </head>
 
-  <body class="loading">
-    
-    <!-- Script inline para manejo de FOUC -->
-    <script>
-      // Prevenir FOUC y manejar carga de estilos
-      (function() {
-        // Agregar clase loaded cuando los estilos críticos estén listos
-        function handleStylesLoaded() {
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+
+  <!-- Prevenir renderizado antes de que los estilos estén listos -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <title>BIOMASTER Pro V2 IA</title>
+
+  <!-- Preload de recursos críticos -->
+  <link rel="preload" href="./css/clean.css" as="style"
+    onload="this.onload=null;this.rel='stylesheet';document.documentElement.classList.add('styles-loaded')">
+  <noscript>
+    <link rel="stylesheet" href="./css/clean.css">
+  </noscript>
+
+  <style>
+    /* Variables CSS críticas para tema claro y oscuro */
+    :root {
+      --background-color: #f8fafc;
+      --bg-secondary: #f1f5f9;
+      --primary-color: #2563eb;
+      --secondary-color: #3b82f6;
+      --text-primary: #1e293b;
+      --card-shadow: 0 4px 6px rgb(0 0 0 / 15%), 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    :root[data-theme="dark"] {
+      --background-color: #0f172a;
+      --bg-secondary: #374151;
+      --primary-color: #3b82f6;
+      --secondary-color: #60a5fa;
+      --text-primary: #f1f5f9;
+      --card-shadow: 0 4px 6px rgb(0 0 0 / 25%), 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Estilos críticos para evitar FOUC */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--background-color);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease-in-out;
+      font-display: swap;
+    }
+
+    /* Mostrar contenido cuando los estilos estén listos */
+    html.styles-loaded body,
+    body.loaded {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Fallback temporal para JavaScript deshabilitado */
+    html:not(.styles-loaded) body {
+      animation: fouc-fallback 0.1s ease-in-out 2s forwards;
+    }
+
+    @keyframes fouc-fallback {
+      to {
+        opacity: 1;
+        visibility: visible;
+      }
+    }
+
+    body.loading {
+      overflow: hidden;
+    }
+
+    /* Loader inicial - estilos críticos que coinciden con el diseño principal */
+    .initial-loader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, var(--background-color) 0%, var(--bg-secondary) 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000000;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .initial-loader.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .loader-container {
+      text-align: center;
+      transform: scale(0.9);
+      animation: loaderEntry 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    .company-logo {
+      margin-bottom: 1rem;
+      animation: logoFloat 3s ease-in-out infinite;
+    }
+
+    .logo-circle {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 1rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--card-shadow);
+      position: relative;
+      overflow: hidden;
+      background-position: center;
+      background-size: contain;
+      background-image: url('./icons/pyh.png');
+    }
+
+    .loader-text {
+      color: var(--text-primary);
+      text-align: center;
+      animation: textFadeIn 1s ease-out 0.5s both;
+      display: grid;
+      place-items: center;
+    }
+
+    .loader-text h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .loader-spinner-modern {
+      position: relative;
+      width: 60px;
+      height: 60px;
+    }
+
+    .spinner-ring {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 3px solid transparent;
+    }
+
+    .spinner-ring:nth-child(1) {
+      border-top-color: var(--primary-color);
+      animation: spinRing 1.5s linear infinite;
+    }
+
+    .spinner-ring:nth-child(2) {
+      border-right-color: var(--secondary-color);
+      animation: spinRing 1.5s linear infinite reverse;
+      animation-delay: 0.2s;
+    }
+
+    .spinner-ring:nth-child(3) {
+      border-bottom-color: var(--primary-color);
+      animation: spinRing 1.5s linear infinite;
+      animation-delay: 0.4s;
+    }
+
+    .main-container {
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+    }
+
+    body:not(.loading) .main-container {
+      opacity: 1;
+    }
+
+    /* Animaciones críticas */
+    @keyframes loaderEntry {
+      from {
+        opacity: 0;
+        transform: scale(0.8) translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    @keyframes logoFloat {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-8px);
+      }
+    }
+
+    @keyframes spinRing {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes textFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+
+  <!-- Preload de iconos críticos -->
+  <link rel="preload" href="./icons/pyh.png" as="image">
+  <link rel="preload" href="./icons/menu.svg" as="image">
+  <link rel="preload" href="./icons/config-white.svg" as="image">
+
+  <!-- Eliminamos el link normal del CSS ya que se carga con preload -->
+  <link rel="icon" type="image/x-icon" href="" />
+  <link rel="icon" type="image/png" href="./icons/pyh.png" />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="./manifest.json">
+
+  <!-- Meta tags adicionales para PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="BIOMASTER">
+  <link rel="apple-touch-icon" href="./icons/pyh.png">
+
+  <!-- Meta tags para SEO y performance -->
+  <meta name="description" content="Sistema de control avanzado para biofermentación - BIOMASTER Pro V2 IA">
+  <meta name="keywords" content="biofermentación, control, sensores, IoT, agricultura">
+  <meta name="author" content="Penagos y Hermanos">
+  <meta name="robots" content="index, follow">
+</head>
+
+<body class="loading">
+
+  <!-- Script inline para manejo de FOUC -->
+  <script>
+    // Prevenir FOUC y manejar carga de estilos
+    (function () {
+      let stylesLoaded = false;
+      let domReady = false;
+
+      // Función para mostrar el contenido cuando todo esté listo
+      function showContent() {
+        if (stylesLoaded && domReady) {
           document.body.classList.add('loaded');
+          // Pequeño delay adicional para asegurar que todo esté renderizado
+          requestAnimationFrame(() => {
+            document.body.style.visibility = 'visible';
+          });
         }
-        
-        // Si los estilos ya están cargados
-        if (document.readyState !== 'loading') {
-          handleStylesLoaded();
-        } else {
-          // Esperar a que el DOM esté listo
-          document.addEventListener('DOMContentLoaded', handleStylesLoaded);
-        }
-        
-        // Fallback: forzar carga después de 100ms
-        setTimeout(handleStylesLoaded, 100);
-      })();
-    </script>
+      }
 
-    <!-- Loader inicial -->
-    <div class="initial-loader">
-      <div class="loader-container">
-        <div class="company-logo">
-          <div class="logo-circle">
-            <div class="logo-inner">
-              <span class="logo-letter"></span>
-            </div>
+      // Detectar cuando los estilos estén cargados
+      function checkStylesLoaded() {
+        if (document.documentElement.classList.contains('styles-loaded')) {
+          stylesLoaded = true;
+          showContent();
+        }
+      }
+
+      // Detectar cuando el DOM esté listo
+      function handleDOMReady() {
+        domReady = true;
+        showContent();
+      }
+
+      // Verificar estilos periódicamente
+      const styleCheck = setInterval(() => {
+        checkStylesLoaded();
+        if (stylesLoaded) {
+          clearInterval(styleCheck);
+        }
+      }, 50);
+
+      // Si los estilos ya están cargados
+      if (document.readyState !== 'loading') {
+        handleDOMReady();
+        checkStylesLoaded();
+      } else {
+        // Esperar a que el DOM esté listo
+        document.addEventListener('DOMContentLoaded', handleDOMReady);
+      }
+
+      // Fallback: forzar carga después de tiempo límite
+      setTimeout(() => {
+        if (!stylesLoaded) {
+          console.warn('BIOMASTER: Timeout en carga de estilos, mostrando contenido');
+          stylesLoaded = true;
+          showContent();
+        }
+        clearInterval(styleCheck);
+      }, 3000);
+
+      // Fallback más agresivo para casos extremos
+      setTimeout(() => {
+        document.body.classList.add('loaded');
+        document.body.style.opacity = '1';
+        document.body.style.visibility = 'visible';
+      }, 5000);
+    })();
+  </script>
+
+  <!-- Loader inicial -->
+  <div class="initial-loader">
+    <div class="loader-container">
+      <div class="company-logo">
+        <div class="logo-circle">
+          <div class="logo-inner">
+            <span class="logo-letter"></span>
           </div>
         </div>
-        <div class="loader-content">
-          
-          <div class="loader-text">
-            <h3>BIOMASTER Pro V2 IA</h3>
-            <p>Inicializando componentes del sistema...</p>
-            <div class="loader-spinner-modern">
+      </div>
+      <div class="loader-content">
+
+        <div class="loader-text">
+          <h3>BIOMASTER Pro V2 IA</h3>
+          <p>Inicializando componentes del sistema...</p>
+          <div class="loader-spinner-modern">
             <div class="spinner-ring"></div>
             <div class="spinner-ring"></div>
             <div class="spinner-ring"></div>
-          </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <div class="main-container">
+  <div class="main-container">
 
-           
-      <!-- Barra de progreso horizontal para procesos en ejecución -->
-      <div class="progress-bar-container" id="progressBarContainer">
-        <div class="progress-bar-fill" id="progressBarFill"></div>
+
+    <!-- Barra de progreso horizontal para procesos en ejecución -->
+    <div class="progress-bar-container" id="progressBarContainer">
+      <div class="progress-bar-fill" id="progressBarFill"></div>
+    </div>
+
+    <!-- Botón de menú, visible solo en dispositivos pequeños -->
+    <div class="menu-button" id="menuButton" onclick="toggleMenu()">
+      <img class="custom-icon" src="./icons/menu.svg" alt="Menú" loading="eager">
+    </div>
+
+    <div class="menu-button scroll-top" id="scrollTop" onclick="scrollToTop()">
+      <img class="custom-icon" src="./icons/up.svg" alt="Menú" loading="eager">
+    </div>
+
+    <div class="control-button" id="controlButton" onclick="toggleActionButtons()">
+      <img class="custom-icon" src="./icons/config-white.svg" alt="Configuración" loading="eager">
+    </div>
+    <div class="control-button play-button" id="playButton" onclick="actionPlay()">
+      <img class="custom-icon" src="./icons/play.svg" alt="Menú" loading="eager">
+    </div>
+    <div class="control-button stop-button" id="stopButton" onclick="actionStop()">
+      <img class="custom-icon" src="./icons/stop.svg" alt="Menú" loading="eager">
+    </div>
+    <div class="control-button close-button" id="closeButton" onclick="actionClose()">
+      <img class="custom-icon" src="./icons/close.svg" alt="Menú" loading="eager">
+    </div>
+
+
+    <div class="sidebar" id="sidebar">
+      <!-- Logo y branding -->
+      <div class="logo-section">
+        <img src="./icons/pyh.png" alt="Penagos y Hermanos Logo" loading="eager">
+        <div class="company-name">PENAGOS Y HERMANOS</div>
+        <div class="machine-name">Biomaster Pro V2 IA</div>
       </div>
-      
-      <!-- Botón de menú, visible solo en dispositivos pequeños -->
-      <div class="menu-button" id="menuButton" onclick="toggleMenu()">
-        <img class="custom-icon" src="./icons/menu.svg" alt="Menú" loading="eager">
+
+      <!-- Navegación principal -->
+      <nav>
+        <ul class="nav-menu">
+          <li class="nav-item fade-in-up">
+            <a href="#dashboard" class="nav-link active" data-section="dashboard" onclick="showSection(event)">
+              <span class="nav-icon">
+                <img class="custom-icon" src="./icons/dashboard.svg" alt="Dashboard" loading="lazy">
+              </span>
+              Dashboard
+            </a>
+          </li>
+          <li class="nav-item fade-in-up">
+            <a href="#graficas" class="nav-link" data-section="graficas" onclick="showSection(event)">
+              <span class="nav-icon">
+                <img class="custom-icon" src="./icons/graph.svg" alt="Gráficas" loading="lazy">
+              </span>
+              Gráficas
+            </a>
+          </li>
+          <li class="nav-item fade-in-up">
+            <a href="#usuarios" class="nav-link" data-section="usuarios" onclick="showSection(event)">
+              <span class="nav-icon">
+                <img class="custom-icon" src="./icons/users.svg" alt="Usuarios" loading="lazy">
+              </span>
+              Usuarios
+            </a>
+          </li>
+          <li class="nav-item fade-in-up">
+            <a href="#conexiones" class="nav-link" data-section="conexiones" onclick="showSection(event)">
+              <span class="nav-icon">
+                <img class="custom-icon" src="./icons/wifi.svg" alt="WiFi" loading="lazy">
+              </span>
+              Conexiones
+            </a>
+          </li>
+          <li class="nav-item fade-in-up">
+            <a href="#ayuda" class="nav-link" data-section="ayuda" onclick="showSection(event)">
+              <span class="nav-icon">
+                <img class="custom-icon" src="./icons/help.svg" alt="Ayuda" loading="lazy">
+              </span>
+              Ayuda
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Botón de cambio de tema -->
+      <div class="theme-toggle-container">
+        <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()">
+          <span class="theme-icon" id="themeIcon">🌙</span>
+          <span class="theme-text" id="themeText">Tema Oscuro</span>
+        </button>
       </div>
 
-      <div class="menu-button scroll-top" id="scrollTop" onclick="scrollToTop()">
-        <img class="custom-icon" src="./icons/up.svg" alt="Menú" loading="eager">
+      <!-- Botón de modo demo -->
+      <div class="demo-toggle-container">
+        <button class="demo-toggle-btn" id="demoToggle" onclick="toggleDemoMode()">
+          <span class="demo-icon" id="demoIcon">🧪</span>
+          <span class="demo-text" id="demoText">Modo Demo</span>
+        </button>
       </div>
-
-      <div class="control-button" id="controlButton" onclick="toggleActionButtons()">
-        <img class="custom-icon" src="./icons/config-white.svg" alt="Configuración" loading="eager">
+      <!-- Dos botones en columna, uno para simular un start y otro para simular un stop -->
+      <div class="action-buttons-container" id="actionButtonsContainer">
+        <button class="action-button" id="startButton" onclick="simulateStart()">
+          <span class="action-icon">▶︎</span>
+          <span class="action-text">Iniciar Proceso</span>
+        </button>
+        <button class="action-button" id="stopButton" onclick="simulateStop()">
+          <span class="action-icon">⏹</span>
+          <span class="action-text">Detener Proceso</span>
+        </button>
       </div>
-      <div class="control-button play-button" id="playButton" onclick="actionPlay()">
-        <img class="custom-icon" src="./icons/play.svg" alt="Menú" loading="eager">
-      </div>
-      <div class="control-button stop-button" id="stopButton" onclick="actionStop()">
-        <img class="custom-icon" src="./icons/stop.svg" alt="Menú" loading="eager">
-      </div>
-      <div class="control-button close-button" id="closeButton" onclick="actionClose()">
-        <img class="custom-icon" src="./icons/close.svg" alt="Menú" loading="eager">
-      </div>
+    </div>
 
+    <!-- Overlay para cerrar sidebar en móviles -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-      <div class="sidebar" id="sidebar">
-            <!-- Logo y branding -->
-            <div class="logo-section">
-                <img src="./icons/pyh.png" alt="Penagos y Hermanos Logo" loading="eager">
-                <div class="company-name">PENAGOS Y HERMANOS</div>
-                <div class="machine-name">Biomaster Pro V2 IA</div>
-            </div>
+    <!-- Contenido principal -->
 
-            <!-- Navegación principal -->
-            <nav>
-                <ul class="nav-menu">
-                    <li class="nav-item fade-in-up">
-                        <a href="#dashboard" class="nav-link active" data-section="dashboard" onclick="showSection(event)">
-                            <span class="nav-icon">
-                              <img class="custom-icon" src="./icons/dashboard.svg" alt="Dashboard" loading="lazy">
-                            </span>
-                            Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item fade-in-up">
-                        <a href="#graficas" class="nav-link" data-section="graficas" onclick="showSection(event)">
-                            <span class="nav-icon">
-                              <img class="custom-icon" src="./icons/graph.svg" alt="Gráficas" loading="lazy">
-                            </span>
-                            Gráficas
-                        </a>
-                    </li>
-                    <li class="nav-item fade-in-up">
-                        <a href="#usuarios" class="nav-link" data-section="usuarios" onclick="showSection(event)">
-                            <span class="nav-icon">
-                              <img class="custom-icon" src="./icons/users.svg" alt="Usuarios" loading="lazy">
-                            </span>
-                            Usuarios
-                        </a>
-                    </li>
-                    <li class="nav-item fade-in-up">
-                        <a href="#conexiones" class="nav-link" data-section="conexiones" onclick="showSection(event)">
-                            <span class="nav-icon">
-                              <img class="custom-icon" src="./icons/wifi.svg" alt="WiFi" loading="lazy">
-                            </span>
-                            Conexiones
-                        </a>
-                    </li>
-                    <li class="nav-item fade-in-up">
-                        <a href="#ayuda" class="nav-link" data-section="ayuda" onclick="showSection(event)">
-                            <span class="nav-icon">
-                              <img class="custom-icon" src="./icons/help.svg" alt="Ayuda" loading="lazy">
-                            </span>
-                            Ayuda
-                        </a>
-                    </li>
-                </ul>
-            </nav>
+    <div class="main-content">
 
-            <!-- Botón de cambio de tema -->
-            <div class="theme-toggle-container">
-                <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()">
-                    <span class="theme-icon" id="themeIcon">🌙</span>
-                    <span class="theme-text" id="themeText">Tema Oscuro</span>
-                </button>
-            </div>
-            
-                         <!-- Botón de modo demo -->
-             <div class="demo-toggle-container">
-                 <button class="demo-toggle-btn" id="demoToggle" onclick="toggleDemoMode()">
-                     <span class="demo-icon" id="demoIcon">🧪</span>
-                     <span class="demo-text" id="demoText">Modo Demo</span>
-                 </button>
-             </div>
-             <!-- Dos botones en columna, uno para simular un start y otro para simular un stop -->
-            <div class="action-buttons-container" id="actionButtonsContainer">
-                <button class="action-button" id="startButton" onclick="simulateStart()">
-                    <span class="action-icon">▶︎</span>
-                    <span class="action-text">Iniciar Proceso</span>
-                </button>
-                <button class="action-button" id="stopButton" onclick="simulateStop()">
-                    <span class="action-icon">⏹</span>
-                    <span class="action-text">Detener Proceso</span>
-                </button>
-            </div>
+      <div class="content" id="dashboard" style="display: block">
+        <div class="demo-indicator" id="demoIndicator" style="display: none;">
+          <span class="demo-text">Modo Demo Activado</span>
         </div>
-
-      <!-- Overlay para cerrar sidebar en móviles -->
-      <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-      <!-- Contenido principal -->
-
-      <div class="main-content">
-
-        <div class="content" id="dashboard" style="display: block">
-          <div class="demo-indicator" id="demoIndicator" style="display: none;">
-            <span class="demo-text">Modo Demo Activado</span>
+        
+        <!-- Header principal del dashboard -->
+        <header class="dashboard-header">
+          <div class="header-content">
+            <div class="header-main">
+              <h1 class="dashboard-title">Panel de Control</h1>
+              <p class="dashboard-subtitle">Sistema de Monitoreo BIOMASTER Pro V2 IA</p>
+            </div>
           </div>
-            <h2>Panel de Control</h2>
+        </header>
 
 
-            <div class="indicators">
+        <div class="indicators">
 
-              <div class="indicator-card" id="TimePanel">
-                <div class="indicator-title help-icon position-relative" title="Calibra la presión del sistema">
-                  Tiempo de proceso
-                </div>
-                <span class="status-ready">
-                        <span id="timer-hours">00</span> hrs
-                        <span class="timer-separator">:</span>
-                        <span id="timer-minutes">00</span> <span>min</span>
-                      </span>
-                <div class="system-status">
-                  <div class="status-item">
-                    <span>Proceso:</span>
-                    <span id="processTextStatus" class="mode-display">Detenido</span>
-                  </div>
-                </div>
+          <div class="indicator-card" id="TimePanel">
+            <div class="indicator-title help-icon position-relative" title="Calibra la presión del sistema">
+              Tiempo de proceso
+            </div>
+            <span class="status-ready">
+              <span id="timer-hours">00</span> hrs
+              <span class="timer-separator">:</span>
+              <span id="timer-minutes">00</span> <span>min</span>
+            </span>
+            <div class="system-status">
+              <div class="status-item">
+                <span>Proceso:</span>
+                <span id="processTextStatus" class="mode-display">Detenido</span>
               </div>
+            </div>
+          </div>
 
-              <div class="indicator-card">
-                <div class="system-status">
-                  <div class="status-item">
-                      <span>Conexión:</span>
-                      <span class="connection-text" >Offline</span>
-                  </div>
-                  <div class="status-item">
-                    <span>Usuarios conectados:</span>
-                    <span class="conected-users">0</span>
-                  </div>
-                  <div class="status-item">
-                      <span>T. Controlador:</span>
-                      <span id="temp_sp">0 °C</span>
-                  </div>
-                </div>
+          <div class="indicator-card">
+            <div class="system-status">
+              <div class="status-item">
+                <span>Conexión:</span>
+                <span class="connection-text">Offline</span>
               </div>
-
-
-              <div class="indicator-card">
-                <span class="open-calibration" onclick="toggleCalibration('pressure-calibration')">
-                  <img class="custom-icon" src="./icons/config.svg" alt="Configurar presión" loading="lazy">
-                </span>
-                <div class="indicator-title help-icon position-relative" title="Calibra la presión del sistema" >
-                  Presión del Sistema
-                </div>
-                <div class="progress-container" >
-                  <div class="progress-bar" id="pressureProgress"></div>
-                </div>
-                <div class="indicator-data" >
-                  <span class="current-value" id="pressureValue">0 PSI</span>
-                  <span class="setpoint"
-                    ><span id="pressureSetpoint">50 PSI</span></span
-                  >
-                </div>
-                <div id="pressure-calibration" class="hideCalibration w-100">
-                  <button class="btn" id="calibrate-pressure">
-                    <i class="fas fa-sync-alt"></i> Calibrar
-                  </button>
-                  <div class="progress-container-back">
-                    <div class="progress-bar-back">
-                      <div class="progress-back" id="pressure-progress"></div>
-                    </div>
-                  </div>
-                </div>
+              <div class="status-item">
+                <span>Usuarios conectados:</span>
+                <span class="conected-users">0</span>
               </div>
-
-
-              <div class="indicator-card">
-                <span class="open-calibration" onclick="toggleCalibration('ph-calibration')">
-                  <img class="custom-icon" src="./icons/config.svg" alt="Configurar pH" loading="lazy">
-                </span>
-                <div class="indicator-title help-icon position-relative" title="Calibra el Ph del sistema">pH Lixiviados</div>
-                <div class="progress-container">
-                  <div class="progress-bar" id="phProgress"></div>
-                </div>
-                <div class="indicator-data">
-                  <span class="current-value" id="phValue">0.0</span>
-                  <span class="setpoint"><span>Escala: 0-14</span></span>
-                </div>
-
-                <div id="ph-calibration" class="hideCalibration w-100">
-                  <div class="ph-buttons">
-                    <button id="ph4-btn" class="btn" onclick="calibratePH(4)">pH 4</button>
-                    <button id="ph7-btn" class="btn" onclick="calibratePH(7)">pH 7</button>
-                    <button id="ph10-btn" class="btn" onclick="calibratePH(10)">pH 10</button>
-                  </div>
-                  <div class="progress-container-back">
-                    <div class="progress-bar-back">
-                      <div class="progress-back" id="ph-progress"></div>
-                    </div>
-                  </div>
-                </div>
+              <div class="status-item">
+                <span>T. Controlador:</span>
+                <span id="temp_sp">0 °C</span>
               </div>
-            
-
-              <!-- Tarjeta: Temperatura del Lixiviado -->
-              <div class="indicator-card">
-                <span class="open-calibration" onclick="toggleCalibration('temp-m-calibration')">
-                  <img class="custom-icon" src="./icons/config.svg" alt="Configurar temperatura masa" loading="lazy">
-                </span>
-                <div class="indicator-title help-icon position-relative" title="Calibra la temperatura de masa" >Temperatura de Masa</div>
-                <div class="progress-container">
-                  <div class="progress-bar" id="tempProgress"></div>
-                </div>
-                <div class="indicator-data" >
-                  <span class="current-value" id="tempValue">0.0°C</span>
-                  <!-- <span class="setpoint"><span id="tempSetpoint">28.0°C</span></span> -->
-                </div>
-
-                <div id="temp-m-calibration" class="temp-control-group hideCalibration w-100" >
-                  <div class="input-control">
-                    <input
-                      type="number"
-                      id="masa-temp-input"
-                      min="0"
-                      max="100"
-                      step="0.1"
-                      placeholder="Ingrese la temperatura"
-                    />
-                    <button class="btn" onclick="calibrateMasaTemp()">
-                      <i class="fas fa-sync-alt"></i> Calibrar
-                    </button>
-                  </div>
-                </div>
-
-              </div>
-
-
-              <!-- Tarjeta: Temperatura del Lixiviado -->
-              <div class="indicator-card">
-                <span class="open-calibration" onclick="toggleCalibration('temp-l-calibration')">
-                  <img class="custom-icon" src="./icons/config.svg" alt="Configurar temperatura lixiviado" loading="lazy">
-                </span>
-                <div class="indicator-title help-icon position-relative" title="Calibra la temperatura de lixiviado">Temperatura de Lixiviado</div>
-                <div class="progress-container">
-                  <div class="progress-bar" id="tempLixProgress"></div>
-                </div>
-                <div class="indicator-data">
-                  <span class="current-value" id="tempLixValue">0.0°C</span>
-                  <span class="setpoint"
-                    ><span id="tempLixSetpoint">28.0°C</span></span
-                  >
-                </div>
-
-                <div id="temp-l-calibration" class="temp-control-group hideCalibration w-100" >
-                  <div class="input-control">
-                    <input
-                      type="number"
-                      id="lix-temp-input"
-                      min="0"
-                      max="100"
-                      step="0.1"
-                      placeholder="Ingrese la temperatura"
-                    />
-                    <button class="btn" onclick="calibrateLixTemp()">
-                      <i class="fas fa-sync-alt"></i> Calibrar
-                    </button>
-                  </div>
-                </div>
-              </div>
+            </div>
           </div>
 
 
-          <h2>Control de variables</h2>
-
-          <div class="indicators">
-
-            <div class="control-cards" id="controlCards" >
-                <div class="control-cards-container">
-                  <div>
-                    <!-- Recirculación -->
-                    <div class="card">
-                      <div class="card-header">
-                        <div class="card-text">
-                          <h4>Recirculación</h4>
-                        </div>
-                        <label class="switch">
-                          <input type="checkbox" id="recirculationToggle" />
-                          <span class="slider"></span>
-                        </label>
-                      </div>
-                    </div>
-  
-                    <!-- Control de Temperatura -->
-                    <div class="card">
-                      <div class="card-header">
-                        <div class="card-text">
-                          <h4>Temperatura</h4>
-                        </div>
-                        <label class="switch">
-                          <input type="checkbox" id="temperatureBtn" />
-                          <span class="slider"></span>
-                        </label>
-                      </div>
-                      <div class="input-group1" id="temperatureInput">
-                        <input
-                          type="number"
-                          placeholder="Temperatura (0-100)"
-                          min="0"
-                          max="100"
-                        />
-                        <button class="send-btn btn">Enviar</button>
-                      </div>
-                    </div>
-                  </div>
+          <div class="indicator-card">
+            <span class="open-calibration" onclick="toggleCalibration('pressure-calibration')">
+              <img class="custom-icon" src="./icons/config.svg" alt="Configurar presión" loading="lazy">
+            </span>
+            <div class="indicator-title help-icon position-relative" title="Calibra la presión del sistema">
+              Presión del Sistema
+            </div>
+            <div class="progress-container">
+              <div class="progress-bar" id="pressureProgress"></div>
+            </div>
+            <div class="indicator-data">
+              <span class="current-value" id="pressureValue">0 PSI</span>
+              <span class="setpoint"><span id="pressureSetpoint">0 PSI</span></span>
+            </div>
+            <div id="pressure-calibration" class="hideCalibration w-100">
+              <button class="btn" id="calibrate-pressure">
+                <i class="fas fa-sync-alt"></i> Calibrar
+              </button>
+              <div class="progress-container-back">
+                <div class="progress-bar-back">
+                  <div class="progress-back" id="pressure-progress"></div>
                 </div>
               </div>
-
-              <div class="control-cards" id="controlCards" >
-                <div class="control-cards-container">
-                  <div>
-                    <div class="control-group">
-                      <div class="control-header">
-                        <div class="card-text">
-                          <h4>Presión Natural</h4>
-                        </div>
-                        <label class="switch">
-                          <input type="checkbox" id="naturalPressureBtn" />
-                          <span class="slider"></span>
-                        </label>
-                      </div>
-                      <div class="input-group1" id="naturalPressureInput">
-                        <input
-                          type="number"
-                          placeholder="PSI (0-10)"
-                          min="0"
-                          max="10"
-                        />
-                        <button class="send-btn btn">Enviar</button>
-                      </div>
-                    </div>
-  
-                    <div class="control-group">
-                      <div class="control-header">
-                        <div class="card-text">
-                          <h4>Maceración Carbónica</h4>
-                        </div>
-                        <label class="switch">
-                          <input type="checkbox" id="carbonicMacerationBtn" />
-                          <span class="slider"></span>
-                        </label>
-                      </div>
-                      <div class="input-group1" id="carbonicMacerationInput">
-                        <input
-                          type="number"
-                          placeholder="PSI (0-10)"
-                          min="0"
-                          max="10"
-                        />
-                        <button class="send-btn btn">Enviar</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-
-
-
+            </div>
           </div>
 
 
-          
-
-        </div>
-
-        <!-- FIN DASHBOARD PRINCIPAL---------------------------------------------------------- -->
-
-        <!--  DASHBOARD PRINCIPAL Graficas---------------------------------------------------------- -->
-
-        <div class="content" id="graficas" style="display: none">
-          <div class="header-info">
-            <button class="connection-btn-fixed online">
-              <span>🔘</span> <span class="pressureValue">0</span>
-            </button>
-            <button class="connection-btn-fixed online">
-              <span>🌡️ M</span> <span class="tempValue">0</span>
-            </button>
-            <button class="connection-btn-fixed online">
-              <span>🌡️ L</span> <span class="tempLixValue">0</span>
-            </button>
-            <button class="connection-btn-fixed online">
-              <span>💧</span> <span class="phValue">0</span>
-            </button>
-            <!-- <button class="pin-button" onclick="toggleHeaderPin(this)">📌</button> -->
-          </div>
-
-          <div class="chart-page">
-            <!-- Contenedor principal de la gráfica -->
-            <div class="chart-container">
-              <canvas id="multiAxisChart"></canvas>
+          <div class="indicator-card">
+            <span class="open-calibration" onclick="toggleCalibration('ph-calibration')">
+              <img class="custom-icon" src="./icons/config.svg" alt="Configurar pH" loading="lazy">
+            </span>
+            <div class="indicator-title help-icon position-relative" title="Calibra el Ph del sistema">pH Lixiviados
+            </div>
+            <div class="progress-container">
+              <div class="progress-bar" id="phProgress"></div>
+            </div>
+            <div class="indicator-data">
+              <span class="current-value" id="phValue">0.0</span>
+              <span class="setpoint"><span>Escala: 0-14</span></span>
             </div>
 
-            <!-- Paneles de control organizados -->
-            <div class="panel-container">
-              <!-- Panel de Filtros Temporales -->
-              <div class="panel time-filter-panel">
-                <h3>Filtros de datos</h3>
-                
-                <!-- Filtros Rápidos -->
-                <div class="control-section">
-
-                  <p class="control-description">Acceso rápido a períodos comunes</p>
-                  <div class="quick-filters">
-                    <button class="btn filter-btn" data-filter="6" onclick="filtrarPuntos(6)" title="Mostrar solo la última hora de datos">
-                      <span class="btn-icon">⏰</span>
-                      <span class="btn-text">Última Hora</span>
-                    </button>
-                    <button class="btn filter-btn" data-filter="18" onclick="filtrarPuntos(18)" title="Mostrar las últimas 3 horas de datos">
-                      <span class="btn-icon">🕐</span>
-                      <span class="btn-text">Últimas 3h</span>
-                    </button>
-                    <button class="btn filter-btn" data-filter="36" onclick="filtrarPuntos(36)" title="Mostrar las últimas 6 horas de datos">
-                      <span class="btn-icon">🕕</span>
-                      <span class="btn-text">Últimas 6h</span>
-                    </button>
-                    <button class="btn filter-btn" data-filter="72" onclick="filtrarPuntos(72)" title="Mostrar las últimas 12 horas de datos">
-                      <span class="btn-icon">🕘</span>
-                      <span class="btn-text">Últimas 12h</span>
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Filtro Personalizado -->
-                <div class="control-section">
-
-                  <p class="control-description">Define un período específico de visualización</p>
-                  <div class="custom-filter">
-                    <div class="input-group">
-                      <label for="horasInput">Últimas horas a mostrar:</label>
-                      <div class="input-with-button">
-                        <input
-                          id="horasInput"
-                          type="number"
-                          min="1"
-                          max="100"
-                          placeholder="Ej: 8"
-                          title="Introduce el número de horas a mostrar"
-                        />
-                        <button class="btn action-btn" onclick="filtrarPorHoras()" title="Aplicar el filtro personalizado">
-                          <span class="btn-icon">🔍</span>
-                          <span class="btn-text">Filtrar</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+            <div id="ph-calibration" class="hideCalibration w-100">
+              <div class="ph-buttons">
+                <button id="ph4-btn" class="btn" onclick="calibratePH(4)">pH 4</button>
+                <button id="ph7-btn" class="btn" onclick="calibratePH(7)">pH 7</button>
+                <button id="ph10-btn" class="btn" onclick="calibratePH(10)">pH 10</button>
+              </div>
+              <div class="progress-container-back">
+                <div class="progress-bar-back">
+                  <div class="progress-back" id="ph-progress"></div>
                 </div>
               </div>
-              
+            </div>
+          </div>
 
-              <!-- Panel de Configuración de Visualización -->
-              <div class="panel chart-config-panel">
-                <h3>Configuración de Visualización</h3>
-                
-                <!-- Sección de Granularidad -->
-                <div class="control-section">
 
-                  <p class="control-description">Selecciona la resolución temporal de los datos mostrados</p>
-                  <div class="granularity-controls">
-                    <button class="btn granularity-btn active" data-granularity="1" onclick="setGranularity(1)" title="Mostrar un punto cada 10 minutos">
-                      <span class="btn-icon">⏰</span>
-                      <span class="btn-text">10 min</span>
-                    </button>
-                    <button class="btn granularity-btn" data-granularity="3" onclick="setGranularity(3)" title="Mostrar un punto cada 30 minutos">
-                      <span class="btn-icon">⏱️</span>
-                      <span class="btn-text">30 min</span>
-                    </button>
-                    <button class="btn granularity-btn" data-granularity="6" onclick="setGranularity(6)" title="Mostrar un punto cada hora">
-                      <span class="btn-icon">🕐</span>
-                      <span class="btn-text">1 hora</span>
-                    </button>
-                    <button class="btn granularity-btn" data-granularity="12" onclick="setGranularity(12)" title="Mostrar un punto cada 2 horas">
-                      <span class="btn-icon">🕓</span>
-                      <span class="btn-text">2 horas</span>
-                    </button>
-                    <button class="btn granularity-btn" data-granularity="18" onclick="setGranularity(18)" title="Mostrar un punto cada 3 horas">
-                      <span class="btn-icon">🕕</span>
-                      <span class="btn-text">3 horas</span>
-                    </button>
-                  </div>
-                </div>
+          <!-- Tarjeta: Temperatura del Lixiviado -->
+          <div class="indicator-card">
+            <span class="open-calibration" onclick="toggleCalibration('temp-m-calibration')">
+              <img class="custom-icon" src="./icons/config.svg" alt="Configurar temperatura masa" loading="lazy">
+            </span>
+            <div class="indicator-title help-icon position-relative" title="Calibra la temperatura de masa">Temperatura
+              de Masa</div>
+            <div class="progress-container">
+              <div class="progress-bar" id="tempProgress"></div>
+            </div>
+            <div class="indicator-data">
+              <span class="current-value" id="tempValue">0.0°C</span>
+              <!-- <span class="setpoint"><span id="tempSetpoint">28.0°C</span></span> -->
+            </div>
 
-                <!-- Sección de Zoom y Navegación -->
-                <div class="control-section">
-
-                  <p class="control-description">Herramientas para explorar los datos</p>
-                  <div class="zoom-controls">
-                    <button class="btn control-btn" onclick="resetZoom()" title="Restablecer el zoom a la vista completa">
-                      <span class="btn-icon">🔍</span>
-                      <span class="btn-text">Resetear Zoom</span>
-                    </button>
-                    <button class="btn control-btn primary" onclick="restaurarDatos()" title="Mostrar todos los datos disponibles">
-                      <span class="btn-icon">🔄</span>
-                      <span class="btn-text">Ver Todo</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div class="control-section">
-
-                  <p class="control-description">Descarga los datos visibles en diferentes formatos</p>
-                  <div class="export-controls">
-                    <button class="btn export-btn" onclick="descargarGrafica()" title="Descargar la gráfica como imagen JPG de alta calidad">
-                      <span class="btn-icon">📈</span>
-                      <span class="btn-text">Imagen JPG</span>
-                    </button>
-                    <button class="btn export-btn" onclick="descargarCSV()" title="Descargar los datos como archivo CSV para análisis">
-                      <span class="btn-icon">📋</span>
-                      <span class="btn-text">Datos CSV</span>
-                    </button>
-                  </div>
-                </div>
+            <div id="temp-m-calibration" class="temp-control-group hideCalibration w-100">
+              <div class="input-control">
+                <input type="number" id="masa-temp-input" min="0" max="100" step="0.1"
+                  placeholder="Ingrese la temperatura" />
+                <button class="btn" onclick="calibrateMasaTemp()">
+                  <i class="fas fa-sync-alt"></i> Calibrar
+                </button>
               </div>
-              
-              
+            </div>
+
+          </div>
+
+
+          <!-- Tarjeta: Temperatura del Lixiviado -->
+          <div class="indicator-card">
+            <span class="open-calibration" onclick="toggleCalibration('temp-l-calibration')">
+              <img class="custom-icon" src="./icons/config.svg" alt="Configurar temperatura lixiviado" loading="lazy">
+            </span>
+            <div class="indicator-title help-icon position-relative" title="Calibra la temperatura de lixiviado">
+              Temperatura de Lixiviado</div>
+            <div class="progress-container">
+              <div class="progress-bar" id="tempLixProgress"></div>
+            </div>
+            <div class="indicator-data">
+              <span class="current-value" id="tempLixValue">0.0°C</span>
+              <span class="setpoint"><span id="tempLixSetpoint">28.0°C</span></span>
+            </div>
+
+            <div id="temp-l-calibration" class="temp-control-group hideCalibration w-100">
+              <div class="input-control">
+                <input type="number" id="lix-temp-input" min="0" max="100" step="0.1"
+                  placeholder="Ingrese la temperatura" />
+                <button class="btn" onclick="calibrateLixTemp()">
+                  <i class="fas fa-sync-alt"></i> Calibrar
+                </button>
+              </div>
             </div>
           </div>
         </div>
         
-        <div class="content" id="usuarios" style="display: none">
-          <!-- contenido del telegram -->
-          <div class="header-info">
-            <button class="connection-btn-fixed online">
-              <span>🔘</span> <span class="pressureValue">0</span>
-            </button>
-            <button class="connection-btn-fixed online">
-              <span>🌡️ M</span> <span class="tempValue">0</span>
-            </button>
-            <button class="connection-btn-fixed online">
-              <span>🌡️ L</span> <span class="tempLixValue">0</span>
-            </button>
-            <button class="connection-btn-fixed online">
-              <span>💧</span> <span class="phValue">0</span>
-            </button>
-            <!-- <button class="pin-button" onclick="toggleHeaderPin(this)">📌</button> -->
+        <div class="control-variables-container">
+
+          <div class="control-cards" id="controlCards">
+            <div class="control-cards-container">
+              <div>
+                <!-- Recirculación -->
+                <div class="card">
+                  <div class="card-header">
+                    <div class="card-text">
+                      <h4>Recirculación</h4>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="recirculationToggle" />
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Control de Temperatura -->
+                <div class="card">
+                  <div class="card-header">
+                    <div class="card-text">
+                      <h4>Temperatura</h4>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="temperatureBtn" />
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                  <div class="input-group1" id="temperatureInput">
+                    <input type="number" placeholder="Temperatura (0-100)" min="0" max="100" />
+                    <button class="send-btn btn">Enviar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
+          <div class="control-cards" id="controlCards">
+            <div class="control-cards-container">
+              <div>
+                <div class="control-group">
+                  <div class="control-header">
+                    <div class="card-text">
+                      <h4>Presión Natural</h4>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="naturalPressureBtn" />
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                  <div class="input-group1" id="naturalPressureInput">
+                    <input type="number" placeholder="PSI (0-10)" min="0" max="10" />
+                    <button class="send-btn btn">Enviar</button>
+                  </div>
+                </div>
 
-          <h2>Registro de usuarios</h2>
+                <div class="control-group">
+                  <div class="control-header">
+                    <div class="card-text">
+                      <h4>Maceración Carbónica</h4>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="carbonicMacerationBtn" />
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                  <div class="input-group1" id="carbonicMacerationInput">
+                    <input type="number" placeholder="PSI (0-10)" min="0" max="10" />
+                    <button class="send-btn btn">Enviar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-          <div class="panel user-table">
-            <table id="userTable">
+
+      </div>
+
+      <!-- FIN DASHBOARD PRINCIPAL---------------------------------------------------------- -->
+
+      <!--  DASHBOARD PRINCIPAL Graficas---------------------------------------------------------- -->
+
+      <div class="content" id="graficas" style="display: none">
+        <div class="header-info">
+          <button class="connection-btn-fixed online">
+            <span>🔘</span> <span class="pressureValue">0</span>
+          </button>
+          <button class="connection-btn-fixed online">
+            <span>🌡️ M</span> <span class="tempValue">0</span>
+          </button>
+          <button class="connection-btn-fixed online">
+            <span>🌡️ L</span> <span class="tempLixValue">0</span>
+          </button>
+          <button class="connection-btn-fixed online">
+            <span>💧</span> <span class="phValue">0</span>
+          </button>
+        </div>
+
+        <div class="chart-page">
+          <!-- Contenedor principal de la gráfica -->
+          <div class="chart-container">
+            <canvas id="multiAxisChart"></canvas>
+          </div>
+
+          <!-- Paneles de control organizados -->
+          <div class="panel-container">
+            <!-- Panel de Filtros Temporales -->
+            <div class="panel time-filter-panel">
+              <h3>Filtros de datos</h3>
+
+              <!-- Filtros Rápidos -->
+              <div class="control-section">
+
+                <p class="control-description">Acceso rápido a períodos comunes</p>
+                <div class="quick-filters">
+                  <button class="btn filter-btn" data-filter="6" onclick="filtrarPuntos(6)"
+                    title="Mostrar solo la última hora de datos">
+                    <span class="btn-icon">⏰</span>
+                    <span class="btn-text">Última Hora</span>
+                  </button>
+                  <button class="btn filter-btn" data-filter="18" onclick="filtrarPuntos(18)"
+                    title="Mostrar las últimas 3 horas de datos">
+                    <span class="btn-icon">🕐</span>
+                    <span class="btn-text">Últimas 3h</span>
+                  </button>
+                  <button class="btn filter-btn" data-filter="36" onclick="filtrarPuntos(36)"
+                    title="Mostrar las últimas 6 horas de datos">
+                    <span class="btn-icon">🕕</span>
+                    <span class="btn-text">Últimas 6h</span>
+                  </button>
+                  <button class="btn filter-btn" data-filter="72" onclick="filtrarPuntos(72)"
+                    title="Mostrar las últimas 12 horas de datos">
+                    <span class="btn-icon">🕘</span>
+                    <span class="btn-text">Últimas 12h</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Filtro Personalizado -->
+              <div class="control-section">
+
+                <p class="control-description">Define un período específico de visualización</p>
+                <div class="custom-filter">
+                  <div class="input-group">
+                    <label for="horasInput">Últimas horas a mostrar:</label>
+                    <div class="input-with-button">
+                      <input id="horasInput" type="number" min="1" max="100" placeholder="Ej: 8"
+                        title="Introduce el número de horas a mostrar" />
+                      <button class="btn action-btn" onclick="filtrarPorHoras()"
+                        title="Aplicar el filtro personalizado">
+                        <span class="btn-icon">🔍</span>
+                        <span class="btn-text">Filtrar</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+            <!-- Panel de Configuración de Visualización -->
+            <div class="panel chart-config-panel">
+              <h3>Configuración de Visualización</h3>
+
+              <!-- Sección de Granularidad -->
+              <div class="control-section">
+
+                <p class="control-description">Selecciona la resolución temporal de los datos mostrados</p>
+                <div class="granularity-controls">
+                  <button class="btn granularity-btn active" data-granularity="1" onclick="setGranularity(1)"
+                    title="Mostrar un punto cada 10 minutos">
+                    <span class="btn-icon">⏰</span>
+                    <span class="btn-text">10 min</span>
+                  </button>
+                  <button class="btn granularity-btn" data-granularity="3" onclick="setGranularity(3)"
+                    title="Mostrar un punto cada 30 minutos">
+                    <span class="btn-icon">⏱️</span>
+                    <span class="btn-text">30 min</span>
+                  </button>
+                  <button class="btn granularity-btn" data-granularity="6" onclick="setGranularity(6)"
+                    title="Mostrar un punto cada hora">
+                    <span class="btn-icon">🕐</span>
+                    <span class="btn-text">1 hora</span>
+                  </button>
+                  <button class="btn granularity-btn" data-granularity="12" onclick="setGranularity(12)"
+                    title="Mostrar un punto cada 2 horas">
+                    <span class="btn-icon">🕓</span>
+                    <span class="btn-text">2 horas</span>
+                  </button>
+                  <button class="btn granularity-btn" data-granularity="18" onclick="setGranularity(18)"
+                    title="Mostrar un punto cada 3 horas">
+                    <span class="btn-icon">🕕</span>
+                    <span class="btn-text">3 horas</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Sección de Zoom y Navegación -->
+              <div class="control-section">
+
+                <p class="control-description">Herramientas para explorar los datos</p>
+                <div class="zoom-controls">
+                  <button class="btn control-btn" onclick="resetZoom()" title="Restablecer el zoom a la vista completa">
+                    <span class="btn-icon">🔍</span>
+                    <span class="btn-text">Resetear Zoom</span>
+                  </button>
+                  <button class="btn control-btn primary" onclick="restaurarDatos()"
+                    title="Mostrar todos los datos disponibles">
+                    <span class="btn-icon">🔄</span>
+                    <span class="btn-text">Ver Todo</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="control-section">
+
+                <p class="control-description">Descarga los datos visibles en diferentes formatos</p>
+                <div class="export-controls">
+                  <button class="btn export-btn" onclick="descargarGrafica()"
+                    title="Descargar la gráfica como imagen JPG de alta calidad">
+                    <span class="btn-icon">📈</span>
+                    <span class="btn-text">Imagen JPG</span>
+                  </button>
+                  <button class="btn export-btn" onclick="descargarCSV()"
+                    title="Descargar los datos como archivo CSV para análisis">
+                    <span class="btn-icon">📋</span>
+                    <span class="btn-text">Datos CSV</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+
+          </div>
+        </div>
+      </div>
+
+      <div class="content" id="usuarios" style="display: none">
+        <!-- contenido del telegram -->
+        <div class="header-info">
+          <button class="connection-btn-fixed online">
+            <span>🔘</span> <span class="pressureValue">0</span>
+          </button>
+          <button class="connection-btn-fixed online">
+            <span>🌡️ M</span> <span class="tempValue">0</span>
+          </button>
+          <button class="connection-btn-fixed online">
+            <span>🌡️ L</span> <span class="tempLixValue">0</span>
+          </button>
+          <button class="connection-btn-fixed online">
+            <span>💧</span> <span class="phValue">0</span>
+          </button>
+        </div>
+
+
+        <h2>Registro de usuarios</h2>
+
+        <div class="panel user-table">
+          <table id="userTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <div class="container2">
+            <input type="number" id="userId" placeholder="ID del Usuario" required />
+            <input type="text" id="userName" placeholder="Nombre del Usuario" required />
+          </div>
+          <div class="container2">
+            <button class="btn" id="addUser">Agregar Usuario</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="content" id="conexiones" style="display: none">
+        <div class="header-info">
+          <button class="connection-btn-fixed online">
+            <span>🔘</span> <span class="pressureValue">0</span>
+          </button>
+          <button class="connection-btn-fixed online">
+            <span>🌡️ M</span> <span class="tempValue">0</span>
+          </button>
+          <button class="connection-btn-fixed online">
+            <span>🌡️ L</span> <span class="tempLixValue">0</span>
+          </button>
+          <button class="connection-btn-fixed online">
+            <span>💧</span> <span class="phValue">0</span>
+          </button>
+        </div>
+        <h2>Conexiones WIFI</h2>
+        <!-- contenido wifi -->
+        <div class="panel wifi-table">
+          <div class="container5">
+            <table id="wifiTable5">
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>ID</th>
-                  <th>Nombre</th>
+                  <th>Nombre de Red</th>
+                  <th>Intensidad</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
-              <tbody></tbody>
+              <tbody>
+                <!-- Las redes Wi-Fi se agregarán aquí -->
+              </tbody>
             </table>
           </div>
-
-          <div class="panel">
-            <div class="container2">
-                <input
-                type="number"
-                id="userId"
-                placeholder="ID del Usuario"
-                required
-                />
-                <input
-                  type="text"
-                  id="userName"
-                  placeholder="Nombre del Usuario"
-                  required
-                />
-            </div>
-            <div class="container2">
-              <button class="btn" id="addUser">Agregar Usuario</button>
-            </div>
-          </div>
-
         </div>
 
-        <div class="content" id="conexiones" style="display: none">
-          <div class="header-info">
-            <button class="connection-btn-fixed online">
-              <span>🔘</span> <span class="pressureValue">0</span>
-            </button>
-            <button class="connection-btn-fixed online">
-              <span>🌡️ M</span> <span class="tempValue">0</span>
-            </button>
-            <button class="connection-btn-fixed online">
-              <span>🌡️ L</span> <span class="tempLixValue">0</span>
-            </button>
-            <button class="connection-btn-fixed online">
-              <span>💧</span> <span class="phValue">0</span>
-            </button>
-            <!-- <button class="pin-button" onclick="toggleHeaderPin(this)">📌</button> -->
+        <div class="panel wifi-container" id="wifiPasswordContainer5" style="display: none">
+          <label id="labelWifiPassword5" for="wifiPassword5"></label>
+          <div class="input-container5">
+            <input type="password" id="wifiPassword5" required />
+            <button class="eye-button5" id="togglePassword5">👁️</button>
           </div>
-          <h2>Conexiones WIFI</h2>
-          <!-- contenido wifi -->
-          <div class="panel wifi-table">
-            <div class="container5">
-              <table id="wifiTable5">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Nombre de Red</th>
-                    <th>Intensidad</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <!-- Las redes Wi-Fi se agregarán aquí -->
-                </tbody>
-              </table>
+          <button id="connectWifi5" class="btn connect-button5" style="display: none">
+            Conectar
+          </button>
+          <button id="disconnectWifi5" class=" btn disconnect-button5" style="display: none">
+            Desconectar
+          </button>
+        </div>
+      </div>
+
+      <div class="content" id="ayuda" style="display: none">
+        <div class="header-info">
+          <button class="connection-btn-fixed online">
+            <span>🔘</span> <span class="pressureValue">0</span>
+          </button>
+          <button class="connection-btn-fixed online">
+            <span>🌡️ M</span> <span class="tempValue">0</span>
+          </button>
+          <button class="connection-btn-fixed online">
+            <span>🌡️ L</span> <span class="tempLixValue">0</span>
+          </button>
+          <button class="connection-btn-fixed online">
+            <span>💧</span> <span class="phValue">0</span>
+          </button>
+        </div>
+
+        <h2>Sección de ayuda</h2>
+
+        <!-- Seccion de ayuda en forma de elementos de acordeon con 4 contenedores explicando diferentes funcionalidades -->
+        <div class="accordion-container">
+          <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+              <h3>📘 ¿Qué es un BioMaster?</h3>
+              <span class="accordion-icon">+</span>
+            </div>
+            <div class="accordion-content">
+              <p>BioMaster es un biorreactor hermético diseñado para la fermentación controlada de café, ya sea
+                despulpado o en cereza. Su función principal es permitir la consistencia en la calidad del producto y
+                modular el perfil de la taza mediante el monitoreo y control de variables clave del proceso.</p>
+              <ul>
+                <li>🌡️ Temperatura (masa y lixiviados)</li>
+                <li>🧯 Presión (máximo 15 PSI)</li>
+                <li>🧪 pH</li>
+                <li>💧 TDS y Conductividad Eléctrica</li>
+                <li>⏱ Tiempo del proceso</li>
+              </ul>
             </div>
           </div>
 
-          <div
-            class="panel wifi-container"
-            id="wifiPasswordContainer5"
-            style="display: none"
-          >
-            <label id="labelWifiPassword5" for="wifiPassword5"></label>
-            <div class="input-container5">
-              <input type="password" id="wifiPassword5" required />
-              <button class="eye-button5" id="togglePassword5">👁️</button>
+          <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+              <h3>⚙️ Configuración y Calibración de Sensores</h3>
+              <span class="accordion-icon">+</span>
             </div>
-            <button
-              id="connectWifi5"
-              class="btn connect-button5"
-              style="display: none"
-            >
-              Conectar
-            </button>
-            <button
-              id="disconnectWifi5"
-              class=" btn disconnect-button5"
-              style="display: none"
-            >
-              Desconectar
-            </button>
+            <div class="accordion-content">
+              <p><strong>🧪 Sensor de pH</strong></p>
+              <ol>
+                <li>Ve a "Calibración" → "pH" en la pantalla táctil.</li>
+                <li>Coloca el sensor en la solución buffer pH 4.01.</li>
+                <li>Espera a que la lectura se estabilice y presiona "Calibrar Buffer Bajo".</li>
+                <li>Enjuaga con agua destilada y repite con pH 7.01 → "Calibrar Buffer Medio".</li>
+                <li>Repite con pH 10.01 → "Calibrar Buffer Alto".</li>
+              </ol>
+              <p>💡 No dejes secar el bulbo. Almacena en solución HI70300.</p>
+
+              <p><strong>🌡️ Temperatura de Masa (TM)</strong></p>
+              <ol>
+                <li>Ve a "Calibración" → "Temperaturas".</li>
+                <li>Inserta un termómetro en la masa del tanque fermentador.</li>
+                <li>Escribe el valor medido en la casilla "TM" y presiona "Calibrar Temperatura".</li>
+              </ol>
+
+              <p><strong>🌊 Temperatura de Lixiviado (TL)</strong></p>
+              <ol>
+                <li>Toma una muestra del lixiviado.</li>
+                <li>Mide con un termómetro externo.</li>
+                <li>Ingresa el valor en la casilla "TL" y presiona "Calibrar Temperatura".</li>
+              </ol>
+
+              <p><strong>🧯 Sensor de Presión</strong></p>
+              <ol>
+                <li>Asegúrate de que el equipo esté despresurizado (a presión ambiente).</li>
+                <li>Ve a "Calibración" → "Presión".</li>
+                <li>Presiona "Calibrar Presión".</li>
+              </ol>
+              <p>⚠ Solo calibra si no hay presión interna.</p>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+              <h3>📊 Variables que mide el equipo</h3>
+              <span class="accordion-icon">+</span>
+            </div>
+            <div class="accordion-content">
+              <ul>
+                <li>🌡️ Temperatura (de la masa y de los lixiviados)</li>
+                <li>🧪 pH</li>
+                <li>🧯 Presión (máx. 15 PSI)</li>
+                <li>💧 TDS y conductividad eléctrica</li>
+                <li>⏱ Tiempo de fermentación</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+              <h3>🚦 Modos de Operación</h3>
+              <span class="accordion-icon">+</span>
+            </div>
+            <div class="accordion-content">
+              <ul>
+                <li><strong>Manual:</strong> Permite el encendido individual de los actuadores como la bomba, el chiller
+                  y las válvulas.</li>
+                <li><strong>Personalizado:</strong> Permite configurar un valor fijo para cada variable de control.</li>
+                <li><strong>Parametrizado:</strong> Permite programar hasta dieciséis valores diferentes en cada
+                  variable de control para crear perfiles complejos.</li>
+                <li><strong>Automático:</strong> Replica curvas de fermentación que han sido guardadas previamente.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+              <h3>🔁 Ciclo de Recirculación</h3>
+              <span class="accordion-icon">+</span>
+            </div>
+            <div class="accordion-content">
+              <ol>
+                <li><strong>Drenaje:</strong> los lixiviados se recogen en el tanque de lixiviados.</li>
+                <li><strong>Tratamiento:</strong> el líquido pasa por un serpentín para su enfriamiento.</li>
+                <li><strong>Bombeo:</strong> se activa una bomba de 1 HP cuando el líquido alcanza el nivel requerido.
+                </li>
+                <li><strong>Aspersión:</strong> los lixiviados se rocían nuevamente sobre el café a través de aspersores
+                  en la parte superior del tanque.</li>
+              </ol>
+              <p>🔄 Este ciclo se repite automáticamente para asegurar una fermentación uniforme.</p>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+              <h3>📦 Cuidados del Sensor de pH</h3>
+              <span class="accordion-icon">+</span>
+            </div>
+            <div class="accordion-content">
+              <ul>
+                <li>🔬 Después de usarlo: sumérgelo por un mínimo de 2 horas en solución de limpieza HI7061.</li>
+                <li>🧪 Almacena en solución de almacenamiento HI70300 cuando no esté en uso por largos periodos.</li>
+                <li>⚠ Nunca lo dejes secar, ya que esto daña su vida útil.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+              <h3>📡 ¿Cómo conectarme al equipo?</h3>
+              <span class="accordion-icon">+</span>
+            </div>
+            <div class="accordion-content">
+              <p>Los documentos no especifican credenciales de Wi-Fi para el usuario. Mencionan que la conectividad
+                remota es un objetivo de desarrollo para que el equipo técnico realice actualizaciones y mantenimiento
+                de software a distancia.</p>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion(this)">
+              <h3>💾 Exportar datos del proceso</h3>
+              <span class="accordion-icon">+</span>
+            </div>
+            <div class="accordion-content">
+              <p>El equipo guarda la información de los procesos en carpetas dentro de un dispositivo de almacenamiento
+                (posiblemente una memoria USB o SD, según el panel de control):</p>
+              <ul>
+                <li>📈 <strong>RECETAS:</strong> Contiene las configuraciones y tablas de parámetros guardadas.</li>
+                <li>🧮 <strong>CURVAS:</strong> Guarda los registros de datos de los procesos de fermentación
+                  completados.</li>
+              </ul>
+              <p>Puedes acceder a estos archivos para analizarlos en programas como Excel.</p>
+            </div>
           </div>
         </div>
 
-        <div class="content" id="ayuda" style="display: none">
-          <div class="header-info">
-            <button class="connection-btn-fixed online">
-              <span>🔘</span> <span class="pressureValue">0</span>
-            </button>
-            <button class="connection-btn-fixed online">
-              <span>🌡️ M</span> <span class="tempValue">0</span>
-            </button>
-            <button class="connection-btn-fixed online">
-              <span>🌡️ L</span> <span class="tempLixValue">0</span>
-            </button>
-            <button class="connection-btn-fixed online">
-              <span>💧</span> <span class="phValue">0</span>
-            </button>
-            <!-- <button class="pin-button" onclick="toggleHeaderPin(this)">📌</button> -->
-          </div>
 
-          <h2>Sección de ayuda</h2>
-
-          <!-- Seccion de ayuda en forma de elementos de acordeon con 4 contenedores explicando diferentes funcionalidades -->
-          <div class="accordion-container">
-            <div class="accordion-item">
-              <div class="accordion-header" onclick="toggleAccordion(this)">
-                <h3>📘 ¿Qué es un BioMaster?</h3>
-                <span class="accordion-icon">+</span>
-              </div>
-              <div class="accordion-content">
-                <p>BioMaster es un biorreactor hermético diseñado para la fermentación controlada de café, ya sea despulpado o en cereza. Su función principal es permitir la consistencia en la calidad del producto y modular el perfil de la taza mediante el monitoreo y control de variables clave del proceso.</p>
-                <ul>
-                    <li>🌡️ Temperatura (masa y lixiviados)</li>
-                    <li>🧯 Presión (máximo 15 PSI)</li>
-                    <li>🧪 pH</li>
-                    <li>💧 TDS y Conductividad Eléctrica</li>
-                    <li>⏱ Tiempo del proceso</li>
-                </ul>
-              </div>
-            </div>
-            
-            <div class="accordion-item">
-              <div class="accordion-header" onclick="toggleAccordion(this)">
-                <h3>⚙️ Configuración y Calibración de Sensores</h3>
-                <span class="accordion-icon">+</span>
-              </div>
-              <div class="accordion-content">
-                <p><strong>🧪 Sensor de pH</strong></p>
-                <ol>
-                    <li>Ve a "Calibración" → "pH" en la pantalla táctil.</li>
-                    <li>Coloca el sensor en la solución buffer pH 4.01.</li>
-                    <li>Espera a que la lectura se estabilice y presiona "Calibrar Buffer Bajo".</li>
-                    <li>Enjuaga con agua destilada y repite con pH 7.01 → "Calibrar Buffer Medio".</li>
-                    <li>Repite con pH 10.01 → "Calibrar Buffer Alto".</li>
-                </ol>
-                <p>💡 No dejes secar el bulbo. Almacena en solución HI70300.</p>
-
-                <p><strong>🌡️ Temperatura de Masa (TM)</strong></p>
-                <ol>
-                    <li>Ve a "Calibración" → "Temperaturas".</li>
-                    <li>Inserta un termómetro en la masa del tanque fermentador.</li>
-                    <li>Escribe el valor medido en la casilla "TM" y presiona "Calibrar Temperatura".</li>
-                </ol>
-
-                <p><strong>🌊 Temperatura de Lixiviado (TL)</strong></p>
-                <ol>
-                    <li>Toma una muestra del lixiviado.</li>
-                    <li>Mide con un termómetro externo.</li>
-                    <li>Ingresa el valor en la casilla "TL" y presiona "Calibrar Temperatura".</li>
-                </ol>
-
-                <p><strong>🧯 Sensor de Presión</strong></p>
-                <ol>
-                    <li>Asegúrate de que el equipo esté despresurizado (a presión ambiente).</li>
-                    <li>Ve a "Calibración" → "Presión".</li>
-                    <li>Presiona "Calibrar Presión".</li>
-                </ol>
-                <p>⚠ Solo calibra si no hay presión interna.</p>
-              </div>
-            </div>
-            
-            <div class="accordion-item">
-              <div class="accordion-header" onclick="toggleAccordion(this)">
-                <h3>📊 Variables que mide el equipo</h3>
-                <span class="accordion-icon">+</span>
-              </div>
-              <div class="accordion-content">
-                <ul>
-                    <li>🌡️ Temperatura (de la masa y de los lixiviados)</li>
-                    <li>🧪 pH</li>
-                    <li>🧯 Presión (máx. 15 PSI)</li>
-                    <li>💧 TDS y conductividad eléctrica</li>
-                    <li>⏱ Tiempo de fermentación</li>
-                </ul>
-              </div>
-            </div>
-            
-            <div class="accordion-item">
-              <div class="accordion-header" onclick="toggleAccordion(this)">
-                <h3>🚦 Modos de Operación</h3>
-                <span class="accordion-icon">+</span>
-              </div>
-              <div class="accordion-content">
-                <ul>
-                    <li><strong>Manual:</strong> Permite el encendido individual de los actuadores como la bomba, el chiller y las válvulas.</li>
-                    <li><strong>Personalizado:</strong> Permite configurar un valor fijo para cada variable de control.</li>
-                    <li><strong>Parametrizado:</strong> Permite programar hasta dieciséis valores diferentes en cada variable de control para crear perfiles complejos.</li>
-                    <li><strong>Automático:</strong> Replica curvas de fermentación que han sido guardadas previamente.</li>
-                </ul>
-              </div>
-            </div>
-            
-            <div class="accordion-item">
-              <div class="accordion-header" onclick="toggleAccordion(this)">
-                <h3>🔁 Ciclo de Recirculación</h3>
-                <span class="accordion-icon">+</span>
-              </div>
-              <div class="accordion-content">
-                <ol>
-                    <li><strong>Drenaje:</strong> los lixiviados se recogen en el tanque de lixiviados.</li>
-                    <li><strong>Tratamiento:</strong> el líquido pasa por un serpentín para su enfriamiento.</li>
-                    <li><strong>Bombeo:</strong> se activa una bomba de 1 HP cuando el líquido alcanza el nivel requerido.</li>
-                    <li><strong>Aspersión:</strong> los lixiviados se rocían nuevamente sobre el café a través de aspersores en la parte superior del tanque.</li>
-                </ol>
-                <p>🔄 Este ciclo se repite automáticamente para asegurar una fermentación uniforme.</p>
-              </div>
-            </div>
-            
-            <div class="accordion-item">
-              <div class="accordion-header" onclick="toggleAccordion(this)">
-                <h3>📦 Cuidados del Sensor de pH</h3>
-                <span class="accordion-icon">+</span>
-              </div>
-              <div class="accordion-content">
-                <ul>
-                    <li>🔬 Después de usarlo: sumérgelo por un mínimo de 2 horas en solución de limpieza HI7061.</li>
-                    <li>🧪 Almacena en solución de almacenamiento HI70300 cuando no esté en uso por largos periodos.</li>
-                    <li>⚠ Nunca lo dejes secar, ya que esto daña su vida útil.</li>
-                </ul>
-              </div>
-            </div>
-            
-            <div class="accordion-item">
-              <div class="accordion-header" onclick="toggleAccordion(this)">
-                <h3>📡 ¿Cómo conectarme al equipo?</h3>
-                <span class="accordion-icon">+</span>
-              </div>
-              <div class="accordion-content">
-                <p>Los documentos no especifican credenciales de Wi-Fi para el usuario. Mencionan que la conectividad remota es un objetivo de desarrollo para que el equipo técnico realice actualizaciones y mantenimiento de software a distancia.</p>
-              </div>
-            </div>
-            
-            <div class="accordion-item">
-              <div class="accordion-header" onclick="toggleAccordion(this)">
-                <h3>💾 Exportar datos del proceso</h3>
-                <span class="accordion-icon">+</span>
-              </div>
-              <div class="accordion-content">
-                <p>El equipo guarda la información de los procesos en carpetas dentro de un dispositivo de almacenamiento (posiblemente una memoria USB o SD, según el panel de control):</p>
-                <ul>
-                    <li>📈 <strong>RECETAS:</strong> Contiene las configuraciones y tablas de parámetros guardadas.</li>
-                    <li>🧮 <strong>CURVAS:</strong> Guarda los registros de datos de los procesos de fermentación completados.</li>
-                </ul>
-                <p>Puedes acceder a estos archivos para analizarlos en programas como Excel.</p>
-              </div>
-            </div>
-          </div>
-
-        
         <!-- Fin boton play pausa stop---------------------------------------------------------- -->
       </div>
-      
+
 
     </div>
 
@@ -1124,43 +1175,46 @@
         </div>
       </div>
     </div>
-    
-    <!-- Agregar esto al final del body, antes de los scripts -->
-    <div id="temp-notification" class="temp-notification"></div>
+
+    <!-- Notificaciones del sistema -->
     <div id="notification" class="notification"></div>
 
-    <!-- Scripts críticos que se cargan inmediatamente -->
+    <!-- Scripts críticos que se cargan inmediatamente en orden correcto -->
+    <script src="./js/state.js"></script>
     <script defer src="./js/progressManager.js"></script>
     <script defer src="./js/websocket.js"></script>
-    <script src="./js/performance.js"></script>
-    <script src="./js/theme.js"></script>
-    <script src="./js/state.js"></script>
     <script src="./js/initialization.js"></script>
-    
+
     <!-- Registro del Service Worker -->
     <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then((registration) => {
-                        console.log('BIOMASTER: Service Worker registrado correctamente:', registration.scope);
-                    })
-                    .catch((error) => {
-                        console.log('BIOMASTER: Error al registrar Service Worker:', error);
-                    });
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then((registration) => {
+              console.log('BIOMASTER: Service Worker registrado correctamente:', registration.scope);
+            })
+            .catch((error) => {
+              console.log('BIOMASTER: Error al registrar Service Worker:', error);
             });
-        }
+        });
+      }
     </script>
-    
-    <!-- Scripts no críticos que se cargan de forma diferida -->
+
+    <!-- Scripts relacionados con gráficas que deben cargarse juntos -->
     <script defer src="./js/chartLibrary.js"></script>
     <script defer src="./js/chart-plugin.min.js"></script>
+    <script defer src="./js/chartsLogic.js"></script>
+
+    <!-- Theme después de que charts esté listo -->
+    <script defer src="./js/theme.js"></script>
+
+    <!-- Scripts no críticos que se cargan de forma diferida -->
     <script defer src="./js/buttonLogic.js"></script>
     <script defer src="./js/notification.js"></script>
     <script defer src="./js/calibration.js"></script>
     <script defer src="./js/eventListeners.js"></script>
-    <script defer src="./js/chartsLogic.js"></script>
     <script defer src="./js/telegram.js"></script>
     <script defer src="./js/wifi.js"></script>
-  </body>
+</body>
+
 </html>

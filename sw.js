@@ -11,8 +11,8 @@ const DYNAMIC_CACHE = 'biomaster-dynamic-v1.0.0';
 const CRITICAL_RESOURCES = [
     '/',
     '/index.html',
-    '/css/styles.css',
-    '/js/performance.js',
+    '/manifest.json',
+    '/css/clean.css',
     '/js/theme.js',
     '/js/state.js',
     '/js/initialization.js',
@@ -33,12 +33,19 @@ const CACHEABLE_RESOURCES = [
     '/js/chartsLogic.js',
     '/js/telegram.js',
     '/js/wifi.js',
+    '/js/demo.js',
+    '/js/progressManager.js',
     '/icons/dashboard.svg',
     '/icons/graph.svg',
     '/icons/users.svg',
     '/icons/wifi.svg',
     '/icons/help.svg',
-    '/icons/config.svg'
+    '/icons/config.svg',
+    '/icons/close.svg',
+    '/icons/pause.svg',
+    '/icons/play.svg',
+    '/icons/stop.svg',
+    '/icons/up.svg'
 ];
 
 // Instalación del Service Worker
@@ -109,6 +116,29 @@ self.addEventListener('fetch', (event) => {
     }
 });
 
+// Precargar recursos bajo demanda cuando la aplicación esté inactiva
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'PRECACHE_RESOURCES') {
+        precacheResources();
+    } else if (event.data && event.data.type === 'CLEAR_CACHE') {
+        clearOldCache();
+    }
+});
+
+/**
+ * Precarga recursos bajo demanda
+ */
+async function precacheResources() {
+    try {
+        const cache = await caches.open(STATIC_CACHE);
+        console.log('BIOMASTER Service Worker: Precaching resources...');
+        await cache.addAll(CACHEABLE_RESOURCES);
+        console.log('BIOMASTER Service Worker: Resources precached successfully');
+    } catch (error) {
+        console.error('BIOMASTER Service Worker: Error precaching resources:', error);
+    }
+}
+
 /**
  * Verifica si un recurso es estático
  */
@@ -118,7 +148,15 @@ function isStaticResource(url) {
            url.includes('.svg') || 
            url.includes('.png') || 
            url.includes('.jpg') || 
-           url.includes('.ico');
+           url.includes('.jpeg') || 
+           url.includes('.gif') || 
+           url.includes('.webp') || 
+           url.includes('.ico') ||
+           url.includes('.woff') ||
+           url.includes('.woff2') ||
+           url.includes('.ttf') ||
+           url.includes('/icons/') ||
+           url.includes('/css/');
 }
 
 /**
@@ -143,12 +181,34 @@ async function cacheFirst(request) {
         const networkResponse = await fetch(request);
         if (networkResponse.ok) {
             const cache = await caches.open(STATIC_CACHE);
-            cache.put(request, networkResponse.clone());
+            // Solo cachear si es un recurso válido
+            if (networkResponse.status === 200) {
+                cache.put(request, networkResponse.clone());
+            }
         }
         return networkResponse;
     } catch (error) {
         console.error('BIOMASTER Service Worker: Cache First error:', error);
-        return new Response('Offline content not available', { status: 503 });
+        
+        // Intentar buscar en cualquier caché disponible
+        const cachedResponse = await caches.match(request);
+        if (cachedResponse) {
+            return cachedResponse;
+        }
+        
+        // Fallback para páginas HTML
+        if (request.headers.get('accept').includes('text/html')) {
+            const indexCache = await caches.match('/index.html');
+            if (indexCache) {
+                return indexCache;
+            }
+        }
+        
+        return new Response('Contenido no disponible offline', { 
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: { 'Content-Type': 'text/html; charset=utf-8' }
+        });
     }
 }
 
@@ -194,10 +254,26 @@ async function staleWhileRevalidate(request) {
 
 // Limpiar caché periódicamente
 self.addEventListener('message', (event) => {
-    if (event.data && event.data.type === 'CLEAR_CACHE') {
+    if (event.data && event.data.type === 'PRECACHE_RESOURCES') {
+        precacheResources();
+    } else if (event.data && event.data.type === 'CLEAR_CACHE') {
         clearOldCache();
     }
 });
+
+/**
+ * Precarga recursos bajo demanda
+ */
+async function precacheResources() {
+    try {
+        const cache = await caches.open(STATIC_CACHE);
+        console.log('BIOMASTER Service Worker: Precaching resources...');
+        await cache.addAll(CACHEABLE_RESOURCES);
+        console.log('BIOMASTER Service Worker: Resources precached successfully');
+    } catch (error) {
+        console.error('BIOMASTER Service Worker: Error precaching resources:', error);
+    }
+}
 
 /**
  * Limpia cachés antiguas

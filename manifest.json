@@ -53,22 +53,6 @@
         }
     ],
     "prefer_related_applications": false,
-    "screenshots": [
-        {
-            "src": "./screenshots/dashboard.png",
-            "sizes": "1280x720",
-            "type": "image/png",
-            "form_factor": "wide",
-            "label": "Panel de control principal"
-        },
-        {
-            "src": "./screenshots/mobile.png",
-            "sizes": "390x844",
-            "type": "image/png",
-            "form_factor": "narrow",
-            "label": "Vista móvil del dashboard"
-        }
-    ],
     "permissions": [
         "notifications"
     ],
