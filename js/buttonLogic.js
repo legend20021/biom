@@ -6,6 +6,7 @@ function toggleMenu() {
     const overlay = document.getElementById("sidebarOverlay");
     const mainContent = document.querySelector(".main-content");
     const menuButton = document.getElementById("menuButton");
+    const dashboardFooter = document.getElementById("dashboardFooter");
     
     const isOpen = sidebar.classList.contains("show");
     
@@ -14,12 +15,14 @@ function toggleMenu() {
         sidebar.classList.remove("show");
         overlay.classList.remove("show");
         mainContent.classList.remove("sidebar-open");
+        dashboardFooter.classList.remove("sidebar-open");
         menuButton.classList.remove("active");
     } else {
         // Abrir sidebar
         sidebar.classList.add("show");
         overlay.classList.add("show");
         mainContent.classList.add("sidebar-open");
+        dashboardFooter.classList.add("sidebar-open");
         menuButton.classList.add("active");
     }
 }
@@ -34,6 +37,7 @@ function closeSidebar() {
     sidebar.classList.remove("show");
     overlay.classList.remove("show");
     mainContent.classList.remove("sidebar-open");
+    dashboardFooter.classList.remove("sidebar-open");
     menuButton.classList.remove("active");
 }
 
@@ -49,6 +53,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     if (mainContent) {
         mainContent.classList.remove("sidebar-open");
+        dashboardFooter.classList.remove("sidebar-open");
     }
 });
 

@@ -272,7 +272,7 @@ function attemptReconnection() {
 
   if (reconnectAttempts >= maxReconnectAttempts) {
     console.log("Máximo número de intentos de reconexión alcanzado");
-    showNotification("No se pudo restablecer la conexión. Verifique su red.", "error");
+    showNotification("No se pudo restablecer la conexión. Verifique su red.", "persistent");
     stopReconnection();
     return;
   }
@@ -389,6 +389,7 @@ function initWebSocket() {
   }
 
   websocket.onopen = () => {
+    forceHideNotification();
     console.log("Conexión WebSocket abierta");
     updateConnectionStatus(true);
     lastMessageTimestamp = Date.now();
@@ -456,6 +457,7 @@ function generarSerieAleatoria(min, max, cantidad) {
 let isFirstDataGeneration = true;
 
 function initWebSocketSimulated() {
+  forceHideNotification();
   setInitialStateValues();
   updateControlVariables();
   isFirstDataGeneration = true; // Resetear para la nueva simulación
