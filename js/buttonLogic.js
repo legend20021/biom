@@ -1,132 +1,112 @@
-function setMode(mode) {
-    if (mode === 'automatic') {
-        state.isAutomatic = true;
-        state.isManual = false;
-        elements.mainContent.classList.add('mode-automatic');
-        elements.controlCards.style.cssText = 'display: noupdateTimerValuene !important';
-        elements.modeIndicator.style.display = 'block';
-    } else if (mode === 'manual') {
-        state.isAutomatic = false;
-        state.isManual = true;
-        elements.mainContent.classList.remove('mode-automatic');
-        elements.controlCards.style.cssText = 'display: grid !important';
-        elements.modeIndicator.style.display = 'none';
-
-        // Force style recalculation
-        requestAnimationFrame(() => {
-            elements.controlCards.style.opacity = '0';
-            requestAnimationFrame(() => {
-                elements.controlCards.style.opacity = '1';
-            });
-        });
-    }
-}
-
-// fin para los estados true y false modo manual y auto
-
-
-// Selección de elementos
-// const menuIcon = document.getElementById('menuIcon');
-// const menu = document.getElementById('menu');
-// const buttons = document.querySelectorAll('.menu button');
-
-// Estado del menú
 let menuOpen = false;
-
-// Botones por defecto
-
-// // Inicializa los estados de los botones
-// buttons.forEach((button) => {
-//     const isActive = button.id === 'pauseButton'; // El botón de pausa comienza activo
-//     button.classList.toggle('active', isActive);
-//     button.setAttribute('data-state', isActive);
-// });
-
-
-// // Lógica de botones
-// buttons.forEach((button) => {
-//     button.addEventListener('click', () => {
-//         const buttonId = button.id;
-
-//         // Cambia el estado del botón pulsado
-//         buttons.forEach((btn) => {
-//             const isActive = btn === button;
-//             btn.classList.toggle('active', isActive);
-//             btn.classList.toggle('inactive', !isActive);
-//             btn.setAttribute('data-state', isActive);
-//         });
-
-//         // Log del estado actualizado
-//         console.log(`${buttonId} activado: true`);
-//     });
-// });
-
-// Cierra el menú al hacer clic fuera de él
-function selectMenuItem(element, content) {
-    // Llama a la función para mostrar el contenido
-    showContent(content);
-
-    // // Oculta el menú
-    // menuOpen = false;
-    // // menu.style.right = '-120px'; // Ajusta según tu diseño
-    // menuIcon.classList.remove('open');
-
-    // // Resalta el botón seleccionado
-    // const links = menu.querySelectorAll('a');
-    // links.forEach(link => {
-    //     link.classList.remove('selected'); // Elimina la clase de selección de todos los enlaces
-    // });
-    // element.classList.add('selected'); // Agrega la clase de selección al enlace clicado
-}
-
-// // Cierra el menú al hacer clic fuera de él
-// document.addEventListener('click', (event) => {
-//     const isOutsideMenu = !menu.contains(event.target) && !menuIcon.contains(event.target);
-//     if (isOutsideMenu && menuOpen) {
-//         menuOpen = false;
-//         menu.style.right = '-120px'; // Ajusta según tu diseño
-//         menuIcon.classList.remove('open');
-//     }
-// });
-
-//fin botones pausa play stop
 
 // Función para mostrar/ocultar el menú
 function toggleMenu() {
     const sidebar = document.getElementById("sidebar");
-    sidebar.classList.toggle("show"); // Alterna entre mostrar y ocultar el menú
+    const overlay = document.getElementById("sidebarOverlay");
+    const mainContent = document.querySelector(".main-content");
+    const menuButton = document.getElementById("menuButton");
+    
+    const isOpen = sidebar.classList.contains("show");
+    
+    if (isOpen) {
+        // Cerrar sidebar
+        sidebar.classList.remove("show");
+        overlay.classList.remove("show");
+        mainContent.classList.remove("sidebar-open");
+        menuButton.classList.remove("active");
+    } else {
+        // Abrir sidebar
+        sidebar.classList.add("show");
+        overlay.classList.add("show");
+        mainContent.classList.add("sidebar-open");
+        menuButton.classList.add("active");
+    }
 }
+
+// Función para cerrar el sidebar
+function closeSidebar() {
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("sidebarOverlay");
+    const mainContent = document.querySelector(".main-content");
+    const menuButton = document.getElementById("menuButton");
+    
+    sidebar.classList.remove("show");
+    overlay.classList.remove("show");
+    mainContent.classList.remove("sidebar-open");
+    menuButton.classList.remove("active");
+}
+
+// Event listener para cerrar el sidebar al hacer clic en el overlay
+document.addEventListener("DOMContentLoaded", function() {
+    const overlay = document.getElementById("sidebarOverlay");
+    const mainContent = document.querySelector(".main-content");
+    
+    // Asegurar estado inicial correcto
+    if (overlay) {
+        overlay.classList.remove("show");
+        overlay.addEventListener("click", closeSidebar);
+    }
+    if (mainContent) {
+        mainContent.classList.remove("sidebar-open");
+    }
+});
+
+// Event listener para cerrar el sidebar con la tecla ESC
+document.addEventListener("keydown", function(event) {
+    if (event.key === "Escape") {
+        const sidebar = document.getElementById("sidebar");
+        if (sidebar.classList.contains("show")) {
+            closeSidebar();
+        }
+    }
+});
 //actualizarModo(); //EJECUTA LA FUNCION PARA SABER SI ESTOY EN MODO MANUAL O AUTOMATICO
-
-// Función para recargar la página
-function reloadPage() {
-    location.reload(); // Recarga la página actual
-}
-
-
 
 // Función para cerrar el menú cuando se hace clic fuera
 document.addEventListener("click", function(event) {
     const sidebar = document.getElementById("sidebar");
     const menuButton = document.getElementById("menuButton");
+    const overlay = document.getElementById("sidebarOverlay");
 
     // Verificar si el clic fue fuera del sidebar y del botón del menú
     if (!sidebar.contains(event.target) &&
         !menuButton.contains(event.target) &&
+        !overlay.contains(event.target) &&
         sidebar.classList.contains("show")
     ) {
-        sidebar.classList.remove("show");
+        closeSidebar();
     }
 });
 
 // Evitar que los clics dentro del sidebar cierren el menú
 document.getElementById("sidebar").addEventListener("click", function(event) {
-    // Solo detenemos la propagación si el clic no fue en un enlace
-    if (!event.target.closest("a")) {
+    // Cerrar sidebar al hacer clic en enlaces de navegación
+    if (event.target.closest("a.nav-link")) {
+        // Pequeño delay para permitir que la navegación se complete
+        setTimeout(() => {
+            closeSidebar();
+        }, 150);
+    } else if (!event.target.closest("button") && !event.target.closest("input")) {
+        // Solo detenemos la propagación si no es un botón o input
         event.stopPropagation();
     }
 });
 
+
+//event listener para scrollTop para hacer scroll hacia arriba
+document.getElementById('scrollTop').addEventListener('click', function() {
+    scrollToTop();
+});
+
+// Función para hacer scroll hacia arriba
+function scrollToTop() {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth' // Desplazamiento suave
+    });
+}
+scrollToTop(); // Llamada inicial para asegurar que el scroll esté al inicio
 
 
 // JavaScript para manejar la visibilidad de las secciones
@@ -202,9 +182,6 @@ function openModal(callback) {
         };
     });
 }
-
-
-
 
 
 // Función para cerrar el modal

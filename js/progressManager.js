@@ -104,67 +104,6 @@ class ProgressManager {
         this.currentProgress = percentage;
     }
 
-    // Animar progreso gradualmente hasta un porcentaje
-    animateProgressTo(targetPercentage, duration = 1000) {
-        if (!this.progressBarFill) return;
-        
-        const startProgress = this.currentProgress;
-        const progressDiff = targetPercentage - startProgress;
-        const startTime = Date.now();
-        
-        this.progressBarFill.classList.remove('indeterminate');
-        
-        const animateStep = () => {
-            const elapsed = Date.now() - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            
-            // Función de easing suave
-            const easeProgress = 1 - Math.pow(1 - progress, 3);
-            const currentProgress = startProgress + (progressDiff * easeProgress);
-            
-            this.setDeterminateProgress(currentProgress);
-            
-            if (progress < 1) {
-                requestAnimationFrame(animateStep);
-            }
-        };
-        
-        requestAnimationFrame(animateStep);
-    }
-
-    // Verificar si un proceso está en ejecución
-    isRunning() {
-        return this.isProcessRunning;
-    }
-
-    // Obtener progreso actual
-    getCurrentProgress() {
-        return this.currentProgress;
-    }
-
-    // Simular progreso automático (útil para pruebas)
-    simulateProgress(duration = 30000) {
-        if (!this.isProcessRunning) {
-            this.startProcess();
-        }
-        
-        const steps = 100;
-        const stepDuration = duration / steps;
-        let currentStep = 0;
-        
-        this.progressTimer = setInterval(() => {
-            currentStep++;
-            const progress = (currentStep / steps) * 100;
-            
-            this.setDeterminateProgress(progress);
-            
-            if (currentStep >= steps) {
-                clearInterval(this.progressTimer);
-                this.progressTimer = null;
-                // No detener automáticamente, dejar que el usuario lo haga
-            }
-        }, stepDuration);
-    }
 }
 
 // Crear instancia global del gestor de progreso

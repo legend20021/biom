@@ -26,7 +26,7 @@ document.getElementById("addUser").addEventListener("click", () => {
     const id = parseInt(document.getElementById("userId").value.trim());
 
     if (!name || !id) {
-        showTempNotification("Por favor, completa todos los campos.", 'error');
+        showNotification("Por favor, completa todos los campos.", 'error');
         return;
     }
 
@@ -40,7 +40,7 @@ document.getElementById("addUser").addEventListener("click", () => {
         console.log(JSON.stringify({ action: "actualizar", user: { id, name } }));
         document.getElementById("addUser").innerText = "Agregar Usuario";
     } else {
-        showTempNotification("El ID ya existe. Por favor, usa un ID diferente.", 'error');
+        showNotification("El ID ya existe. Por favor, usa un ID diferente.", 'error');
         return;
     }
 
@@ -56,9 +56,9 @@ const deleteUser = async (index) => {
         eliminar_tg: deletedUser.id,
     };
 
-    sendValue(JSON.stringify(message), false, `Se ha eliminado el usuario ${deletedUser.name}`);
+    sendValue(message, false, `Se ha eliminado el usuario ${deletedUser.name}`);
     
-    console.log(JSON.stringify({ action: "eliminar", user: deletedUser }));
+    console.log({ action: "eliminar", user: deletedUser });
     renderUserTable();
     showNotification(`Se ha eliminado el usuario ${deletedUser.name}`);
 };

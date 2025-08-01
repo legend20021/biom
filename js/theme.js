@@ -2,12 +2,23 @@
 class ThemeManager {
     constructor() {
         this.currentTheme = localStorage.getItem('theme') || 'light';
+        this.chartReady = false;
         this.init();
+        this.setupChartListener();
+    }
+
+    setupChartListener() {
+        // Escuchar cuando el chart esté listo
+        document.addEventListener('chartReady', () => {
+            this.chartReady = true;
+
+            this.updateChartThemeIfAvailable();
+        });
     }
 
     init() {
-        // Aplicar tema guardado
-        this.applyTheme(this.currentTheme);
+        // Aplicar tema guardado sin intentar actualizar chart
+        this.applyTheme(this.currentTheme, false);
         
         // Actualizar interfaz del botón
         this.updateThemeButton();
@@ -15,7 +26,7 @@ class ThemeManager {
 
     toggleTheme() {
         this.currentTheme = this.currentTheme === 'light' ? 'dark' : 'light';
-        this.applyTheme(this.currentTheme);
+        this.applyTheme(this.currentTheme, true);
         this.updateThemeButton();
         
         // Guardar preferencia
@@ -25,7 +36,7 @@ class ThemeManager {
         this.showThemeNotification();
     }
 
-    applyTheme(theme) {
+    applyTheme(theme, updateChart = false) {
         const htmlElement = document.documentElement;
         if (theme === 'dark') {
             htmlElement.setAttribute('data-theme', 'dark');
@@ -33,12 +44,34 @@ class ThemeManager {
             htmlElement.removeAttribute('data-theme');
         }
         
-        // Actualizar colores de la gráfica si existe
-        if (typeof updateChartTheme === 'function') {
-            // Usar setTimeout para asegurar que el DOM se haya actualizado
-            setTimeout(() => {
+        // Solo actualizar colores de la gráfica si se solicita explícitamente
+        if (updateChart) {
+            this.updateChartThemeIfAvailable();
+        }
+    }
+
+    updateChartThemeIfAvailable() {
+        // Verificar si la función y myChart están disponibles
+        if (typeof updateChartTheme === 'function' && typeof myChart !== 'undefined' && myChart) {
+            try {
                 updateChartTheme();
-            }, 50);
+
+            } catch (error) {
+
+                // Reintentar después de un breve delay
+                setTimeout(() => {
+                    if (typeof myChart !== 'undefined' && myChart) {
+                        try {
+                            updateChartTheme();
+
+                        } catch (retryError) {
+
+                        }
+                    }
+                }, 200);
+            }
+        } else {
+
         }
     }
 
@@ -86,9 +119,6 @@ class ThemeManager {
         }
     }
 
-    getCurrentTheme() {
-        return this.currentTheme;
-    }
 }
 
 // Instancia global del gestor de temas
