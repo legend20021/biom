@@ -43,7 +43,6 @@ const showNotification = (message, type = 'success', duration = 4000) => {
                 textColor: '#ffffff',
                 borderColor: '#2563eb'
             };
-<<<<<<< HEAD
             break;
         case 'persistent':
             config = {
@@ -62,8 +61,6 @@ const showNotification = (message, type = 'success', duration = 4000) => {
                 textColor: '#ffffff',
                 borderColor: '#b91c1c'
             };
-=======
->>>>>>> b5783b697a51f3499a44c842eafe1532a7b123d5
             break;
         default:
             config = {
@@ -76,12 +73,9 @@ const showNotification = (message, type = 'success', duration = 4000) => {
     }
     
     // Crear estructura HTML profesional
-<<<<<<< HEAD
     const isPermanent = type === 'persistent' || type === 'critical';
     const showCloseButton = type !== 'persistent'; // Solo 'persistent' no tendrá botón de cierre
     
-=======
->>>>>>> b5783b697a51f3499a44c842eafe1532a7b123d5
     notification.innerHTML = `
         <div class="notification-content">
             <div class="notification-icon" style="color: ${config.iconColor};">
@@ -90,23 +84,14 @@ const showNotification = (message, type = 'success', duration = 4000) => {
             <div class="notification-message" style="color: ${config.textColor};">
                 ${message}
             </div>
-<<<<<<< HEAD
             ${showCloseButton ? `<button class="notification-close" onclick="hideNotification()" style="color: ${config.textColor};">×</button>` : ''}
         </div>
         ${isPermanent ? '' : '<div class="notification-progress"></div>'}
-=======
-            <button class="notification-close" onclick="hideNotification()" style="color: ${config.textColor};">
-                ×
-            </button>
-        </div>
-        <div class="notification-progress"></div>
->>>>>>> b5783b697a51f3499a44c842eafe1532a7b123d5
     `;
     
     // Aplicar estilos
     notification.style.background = `${config.backgroundColor}`;
     notification.style.borderLeft = `4px solid ${config.borderColor}`;
-<<<<<<< HEAD
     
     // Estilos especiales para notificaciones permanentes
     if (isPermanent) {
@@ -122,17 +107,10 @@ const showNotification = (message, type = 'success', duration = 4000) => {
     
     // Agregar clase de tipo para estilos específicos
     notification.className = `notification notification-${type} ${isPermanent ? 'notification-permanent' : ''}`;
-=======
-    notification.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1)';
-    
-    // Agregar clase de tipo para estilos específicos
-    notification.className = `notification notification-${type}`;
->>>>>>> b5783b697a51f3499a44c842eafe1532a7b123d5
     
     // Mostrar con animación
     notification.classList.add('show');
     
-<<<<<<< HEAD
     // Solo animar barra de progreso y auto-ocultar para notificaciones no permanentes
     if (!isPermanent) {
         // Animar barra de progreso
@@ -149,21 +127,6 @@ const showNotification = (message, type = 'success', duration = 4000) => {
         // Guardar el timer para poder cancelarlo si es necesario
         notification.hideTimer = hideTimer;
     }
-=======
-    // Animar barra de progreso
-    const progressBar = notification.querySelector('.notification-progress');
-    if (progressBar) {
-        progressBar.style.animation = `notificationProgress ${duration}ms linear`;
-    }
-    
-    // Auto-ocultar después del tiempo especificado
-    const hideTimer = setTimeout(() => {
-        hideNotification();
-    }, duration);
-    
-    // Guardar el timer para poder cancelarlo si es necesario
-    notification.hideTimer = hideTimer;
->>>>>>> b5783b697a51f3499a44c842eafe1532a7b123d5
 };
 
 // Función para ocultar notificación manualmente
@@ -196,7 +159,6 @@ const showQuickNotification = (message, type = 'success') => {
 // Función helper para notificaciones persistentes
 const showPersistentNotification = (message, type = 'info') => {
     showNotification(message, type, 8000); // Duración más larga
-<<<<<<< HEAD
 };
 
 // Función para notificaciones permanentes del sistema (no se cierran automáticamente)
@@ -235,8 +197,6 @@ const forceHideNotification = () => {
 const hasPermanentNotification = () => {
     const notification = document.getElementById('notification');
     return notification && notification.classList.contains('notification-permanent');
-=======
->>>>>>> b5783b697a51f3499a44c842eafe1532a7b123d5
 };
 const animateProgress = (progressElement, duration, callback) => {
     return new Promise((resolve) => {

@@ -145,12 +145,25 @@ function upateTemperature() {
 //HEADERS
 
 function initializeHeader() {
-    // Inicializar
-    const headerInfos = document.querySelectorAll('.header-info');
-    headerInfos.forEach(headerInfo => {
-        headerInfo.classList.add('visible'); 
-    });
-    //
+    // Determinar qué sección está activa
+    const activeSection = document.querySelector('.main-content .content[style*="block"]');
+    const globalHeaderInfo = document.getElementById('globalHeaderInfo');
+    
+    if (!globalHeaderInfo) return;
+    
+    // Lista de secciones que necesitan el header-info
+    const sectionsWithHeader = ['graficas', 'usuarios', 'conexiones', 'ayuda'];
+    
+    if (activeSection && sectionsWithHeader.includes(activeSection.id)) {
+        // Mostrar el header global
+        globalHeaderInfo.style.display = 'flex';
+        globalHeaderInfo.classList.add('visible');
+    } else {
+        // Ocultar el header global
+        globalHeaderInfo.style.display = 'none';
+        globalHeaderInfo.classList.remove('visible');
+    }
+    
     updateTimer(state.tiempo_horas, state.tiempo_minutos, 0); // Inicializar el timer a 00:00:00
 }
 

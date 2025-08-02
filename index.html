@@ -716,21 +716,6 @@
       <!--  DASHBOARD PRINCIPAL Graficas---------------------------------------------------------- -->
 
       <div class="content" id="graficas" style="display: none">
-        <div class="header-info">
-          <button class="connection-btn-fixed online">
-            <span>🔘</span> <span class="pressureValue">0</span>
-          </button>
-          <button class="connection-btn-fixed online">
-            <span>🌡️ M</span> <span class="tempValue">0</span>
-          </button>
-          <button class="connection-btn-fixed online">
-            <span>🌡️ L</span> <span class="tempLixValue">0</span>
-          </button>
-          <button class="connection-btn-fixed online">
-            <span>💧</span> <span class="phValue">0</span>
-          </button>
-        </div>
-
         <div class="chart-page">
           <!-- Contenedor principal de la gráfica -->
           <div class="chart-container">
@@ -872,21 +857,6 @@
 
       <div class="content" id="usuarios" style="display: none">
         <!-- contenido del telegram -->
-        <div class="header-info">
-          <button class="connection-btn-fixed online">
-            <span>🔘</span> <span class="pressureValue">0</span>
-          </button>
-          <button class="connection-btn-fixed online">
-            <span>🌡️ M</span> <span class="tempValue">0</span>
-          </button>
-          <button class="connection-btn-fixed online">
-            <span>🌡️ L</span> <span class="tempLixValue">0</span>
-          </button>
-          <button class="connection-btn-fixed online">
-            <span>💧</span> <span class="phValue">0</span>
-          </button>
-        </div>
-
 
         <h2>Registro de usuarios</h2>
 
@@ -917,20 +887,6 @@
       </div>
 
       <div class="content" id="conexiones" style="display: none">
-        <div class="header-info">
-          <button class="connection-btn-fixed online">
-            <span>🔘</span> <span class="pressureValue">0</span>
-          </button>
-          <button class="connection-btn-fixed online">
-            <span>🌡️ M</span> <span class="tempValue">0</span>
-          </button>
-          <button class="connection-btn-fixed online">
-            <span>🌡️ L</span> <span class="tempLixValue">0</span>
-          </button>
-          <button class="connection-btn-fixed online">
-            <span>💧</span> <span class="phValue">0</span>
-          </button>
-        </div>
         <h2>Conexiones WIFI</h2>
         <!-- contenido wifi -->
         <div class="panel wifi-table">
@@ -967,21 +923,6 @@
       </div>
 
       <div class="content" id="ayuda" style="display: none">
-        <div class="header-info">
-          <button class="connection-btn-fixed online">
-            <span>🔘</span> <span class="pressureValue">0</span>
-          </button>
-          <button class="connection-btn-fixed online">
-            <span>🌡️ M</span> <span class="tempValue">0</span>
-          </button>
-          <button class="connection-btn-fixed online">
-            <span>🌡️ L</span> <span class="tempLixValue">0</span>
-          </button>
-          <button class="connection-btn-fixed online">
-            <span>💧</span> <span class="phValue">0</span>
-          </button>
-        </div>
-
         <h2>Sección de ayuda</h2>
 
         <!-- Seccion de ayuda en forma de elementos de acordeon con 4 contenedores explicando diferentes funcionalidades -->
@@ -1147,6 +1088,22 @@
 
     </div>
 
+    <!-- Header de información de sensores - Elemento único reutilizable -->
+    <div id="globalHeaderInfo" class="header-info" style="display: none;">
+      <button class="connection-btn-fixed online">
+        <span>🔘</span> <span class="pressureValue">0</span>
+      </button>
+      <button class="connection-btn-fixed online">
+        <span>🌡️ M</span> <span class="tempValue">0</span>
+      </button>
+      <button class="connection-btn-fixed online">
+        <span>🌡️ L</span> <span class="tempLixValue">0</span>
+      </button>
+      <button class="connection-btn-fixed online">
+        <span>💧</span> <span class="phValue">0</span>
+      </button>
+    </div>
+
     <!-- Div contenedor para mostrar el estado de conexión y el número de conectados -->
     <div>
       <div class="connection-status">
@@ -1175,6 +1132,19 @@
         </div>
       </div>
     </div>
+
+    <!-- Footer móvil - Solo visible en pantallas pequeñas -->
+    <footer id="dashboardFooter" class="dashboard-footer">
+      <div class="footer-content">
+        <div class="footer-logo">
+          <img src="./icons/pyh.png" alt="Penagos y Hermanos Logo" loading="lazy">
+        </div>
+        <div class="footer-info">
+          <div class="company-name">PENAGOS Y HERMANOS</div>
+          <div class="machine-name">Biomaster Pro V2 IA</div>
+        </div>
+      </div>
+    </footer>
 
     <!-- Notificaciones del sistema -->
     <div id="notification" class="notification"></div>

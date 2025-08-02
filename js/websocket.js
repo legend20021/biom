@@ -8,11 +8,7 @@ let userInteractionLock = false; // Bloquear actualizaciones durante interacció
 
 // Variables para control de reconexión
 let reconnectAttempts = 0;
-<<<<<<< HEAD
-let maxReconnectAttempts = 2;
-=======
 let maxReconnectAttempts = 10;
->>>>>>> b5783b697a51f3499a44c842eafe1532a7b123d5
 let reconnectInterval = null;
 let isReconnecting = false;
 let lastMessageTimestamp = 0;
@@ -276,11 +272,7 @@ function attemptReconnection() {
 
   if (reconnectAttempts >= maxReconnectAttempts) {
     console.log("Máximo número de intentos de reconexión alcanzado");
-<<<<<<< HEAD
     showNotification("No se pudo restablecer la conexión. Verifique su red.", "persistent");
-=======
-    showNotification("No se pudo restablecer la conexión. Verifique su red.", "error");
->>>>>>> b5783b697a51f3499a44c842eafe1532a7b123d5
     stopReconnection();
     return;
   }
@@ -397,6 +389,7 @@ function initWebSocket() {
   }
 
   websocket.onopen = () => {
+    forceHideNotification();
     console.log("Conexión WebSocket abierta");
     updateConnectionStatus(true);
     lastMessageTimestamp = Date.now();
@@ -464,6 +457,7 @@ function generarSerieAleatoria(min, max, cantidad) {
 let isFirstDataGeneration = true;
 
 function initWebSocketSimulated() {
+  forceHideNotification();
   setInitialStateValues();
   updateControlVariables();
   isFirstDataGeneration = true; // Resetear para la nueva simulación
