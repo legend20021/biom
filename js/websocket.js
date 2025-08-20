@@ -13,6 +13,7 @@ let reconnectInterval = null;
 let isReconnecting = false;
 let lastMessageTimestamp = 0;
 let connectionCheckInterval = null;
+const NUM_PUNTOS = 6 * 4 * 1; //6 puntos/hora (cada 10 min) * hora * día
 
 // NOTA: El estado global ahora se define en state.js como appState
 // Esta función mantiene compatibilidad con el código existente
@@ -389,7 +390,6 @@ function initWebSocket() {
   }
 
   websocket.onopen = () => {
-    forceHideNotification();
     console.log("Conexión WebSocket abierta");
     updateConnectionStatus(true);
     lastMessageTimestamp = Date.now();
@@ -442,8 +442,6 @@ function initWebSocket() {
   };
 }
 
-const NUM_PUNTOS = 6 * 4 * 1; //6 puntos/hora (cada 10 min) * hora * día
-
 function generarSerieAleatoria(min, max, cantidad) {
   const serie = [];
   for (let i = 0; i < cantidad; i++) {
@@ -457,7 +455,6 @@ function generarSerieAleatoria(min, max, cantidad) {
 let isFirstDataGeneration = true;
 
 function initWebSocketSimulated() {
-  forceHideNotification();
   setInitialStateValues();
   updateControlVariables();
   isFirstDataGeneration = true; // Resetear para la nueva simulación
@@ -598,16 +595,6 @@ function updateConnectionStatus(connected, num_clientes_conectados = 0) {
   }
 }
 
-// Evento que se dispara cuando la página carga
-window.addEventListener("load", () => {
-  //valida si el modo demo está activado
-  const isDemoMode = localStorage.getItem("demoMode") === "true";
-  if (isDemoMode) {
-    initWebSocketSimulated();
-  } else {
-    initWebSocket();
-  }
-});
 
 function toggleDemoMode() {
   //guarda una variable en local storage
@@ -685,8 +672,6 @@ function updateDemoButton() {
   }
 
 }
-updateDemoButton();
-
 
 
 function simulateStart() {
@@ -743,6 +728,20 @@ function simulateStop() {
     updateConnectionStatus(false);
 }
 
+
+
+// Evento que se dispara cuando la página carga
+window.addEventListener("load", () => {
+  //valida si el modo demo está activado
+  const isDemoMode = localStorage.getItem("demoMode") === "true";
+  if (isDemoMode) {
+    initWebSocketSimulated();
+  } else {
+    initWebSocket();
+  }
+});
+
+
 // Limpiar todos los intervalos y procesos cuando se cierra la página
 window.addEventListener('beforeunload', () => {
   stopReconnection();
@@ -757,3 +756,6 @@ window.addEventListener('beforeunload', () => {
   }
 });
 
+
+
+updateDemoButton();

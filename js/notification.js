@@ -1,6 +1,9 @@
 //NOTIFICACIONES PROFESIONALES
 const showNotification = (message, type = 'success', duration = 4000) => {
-    const notification = document.getElementById('notification');
+    let  notification = document.getElementById('notification');
+    if (type === 'persistent') {
+        notification = document.getElementById('notificationFixed');
+    }
     
     // Limpiar contenido anterior
     notification.innerHTML = '';
@@ -46,11 +49,11 @@ const showNotification = (message, type = 'success', duration = 4000) => {
             break;
         case 'persistent':
             config = {
-                backgroundColor: '#7c3aed',
+                backgroundColor: '#fafc8fff',
                 icon: '🔔',
-                iconColor: '#ffffff',
-                textColor: '#ffffff',
-                borderColor: '#6d28d9'
+                iconColor: '#000000',
+                textColor: '#000000',
+                borderColor: '#fafc8fff'
             };
             break;
         case 'critical':
@@ -83,6 +86,7 @@ const showNotification = (message, type = 'success', duration = 4000) => {
             </div>
             <div class="notification-message" style="color: ${config.textColor};">
                 ${message}
+                ${isPermanent ? '<a href="#" onclick="location.reload();" style="text-decoration: underline;">Recargar</a>' : ''}
             </div>
             ${showCloseButton ? `<button class="notification-close" onclick="hideNotification()" style="color: ${config.textColor};">×</button>` : ''}
         </div>
