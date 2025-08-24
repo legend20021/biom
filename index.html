@@ -440,11 +440,10 @@
         </button>
       </div>
 
-      <!-- Botón de modo demo -->
       <div class="demo-toggle-container">
         <button class="demo-toggle-btn" id="demoToggle" onclick="toggleDemoMode()">
           <span class="demo-icon" id="demoIcon">🧪</span>
-          <span class="demo-text" id="demoText">Modo Demo</span>
+          <span class="demo-text" id="demoText">Demo</span>
         </button>
       </div>
       <!-- Dos botones en columna, uno para simular un start y otro para simular un stop -->
@@ -471,23 +470,14 @@
         <div class="demo-indicator" id="demoIndicator" style="display: none;">
           <span class="demo-text">Modo Demo Activado</span>
         </div>
-        
-        <!-- Header principal del dashboard -->
-        <header class="dashboard-header">
-          <div class="header-content">
-            <div class="header-main">
-              <h1 class="dashboard-title">Panel de Control</h1>
-              <p class="dashboard-subtitle">Sistema de Monitoreo BIOMASTER Pro V2 IA</p>
-            </div>
-          </div>
-        </header>
-
-
         <div class="indicators">
 
           <div class="indicator-card" id="TimePanel">
             <div class="indicator-title help-icon position-relative" title="Calibra la presión del sistema">
               Tiempo de proceso
+            </div>
+            <div id="processTextStatus" class="indicator-title indicator-title-responsive help-icon position-relative" title="Calibra la presión del sistema">
+              Detenido
             </div>
             <span class="status-ready">
               <span id="timer-hours">00</span> hrs
@@ -502,7 +492,10 @@
             </div>
           </div>
 
-          <div class="indicator-card">
+          <div class="indicator-card card-header-info">
+            <div class="header-responsive">
+              <img src="./icons/pyh.png" alt="Penagos y Hermanos Logo" loading="eager">
+            </div>
             <div class="system-status">
               <div class="status-item">
                 <span>Conexión:</span>
@@ -526,6 +519,9 @@
             </span>
             <div class="indicator-title help-icon position-relative" title="Calibra la presión del sistema">
               Presión del Sistema
+            </div>
+            <div class="indicator-title indicator-title-responsive help-icon position-relative" title="Calibra la presión del sistema">
+              Presión
             </div>
             <div class="progress-container">
               <div class="progress-bar" id="pressureProgress"></div>
@@ -551,7 +547,11 @@
             <span class="open-calibration" onclick="toggleCalibration('ph-calibration')">
               <img class="custom-icon" src="./icons/config.svg" alt="Configurar pH" loading="lazy">
             </span>
-            <div class="indicator-title help-icon position-relative" title="Calibra el Ph del sistema">pH Lixiviados
+            <div class="indicator-title help-icon position-relative" title="Calibra el Ph del sistema">
+              pH Lixiviados
+            </div>
+            <div class="indicator-title indicator-title-responsive help-icon position-relative" title="Calibra el Ph del sistema">
+              pH Lix
             </div>
             <div class="progress-container">
               <div class="progress-bar" id="phProgress"></div>
@@ -581,8 +581,12 @@
             <span class="open-calibration" onclick="toggleCalibration('temp-m-calibration')">
               <img class="custom-icon" src="./icons/config.svg" alt="Configurar temperatura masa" loading="lazy">
             </span>
-            <div class="indicator-title help-icon position-relative" title="Calibra la temperatura de masa">Temperatura
-              de Masa</div>
+            <div class="indicator-title help-icon position-relative" title="Calibra la temperatura de masa">
+              Temperatura de Masa
+            </div>
+            <div class="indicator-title indicator-title-responsive help-icon position-relative" title="Calibra la temperatura de masa">
+              T. Masa
+            </div>
             <div class="progress-container">
               <div class="progress-bar" id="tempProgress"></div>
             </div>
@@ -610,7 +614,11 @@
               <img class="custom-icon" src="./icons/config.svg" alt="Configurar temperatura lixiviado" loading="lazy">
             </span>
             <div class="indicator-title help-icon position-relative" title="Calibra la temperatura de lixiviado">
-              Temperatura de Lixiviado</div>
+              Temperatura de Lixiviado
+            </div>
+            <div class="indicator-title indicator-title-responsive help-icon position-relative" title="Calibra la temperatura de lixiviado">
+              T. Lix
+            </div>
             <div class="progress-container">
               <div class="progress-bar" id="tempLixProgress"></div>
             </div>

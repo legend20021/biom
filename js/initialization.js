@@ -39,9 +39,9 @@ function updateIndicators() {
         const tempProgress = (state.temperature / state.tempLixSetpoint) * 100;
         
         tempProgressElement.style.width = `${tempProgress}%`;
-        if (tempDiff < -2) {
+        if (tempDiff < -1) {
             tempProgressElement.style.backgroundColor = 'var(--cold)';
-        } else if (tempDiff > 2) {
+        } else if (tempDiff > 1) {
             tempProgressElement.style.backgroundColor = 'var(--warning)';
         } else {
             tempProgressElement.style.backgroundColor = 'var(--success)';
@@ -60,9 +60,9 @@ function updateIndicators() {
         const tempLixProgress = (state.temperatureLix / state.tempLixSetpoint) * 100;
 
         tempLixProgressElement.style.width = `${tempLixProgress}%`;
-        if (tempLixDiff < -2) {
+        if (tempLixDiff < -1) {
             tempLixProgressElement.style.backgroundColor = 'var(--cold)';
-        } else if (tempLixDiff > 2) {
+        } else if (tempLixDiff > 1) {
             tempLixProgressElement.style.backgroundColor = 'var(--warning)';
         } else {
             tempLixProgressElement.style.backgroundColor = 'var(--success)';
@@ -82,9 +82,9 @@ function updateIndicators() {
         // Diferencia relativa con el punto de consigna
         const pressureDiff = (state.pressure - state.pressureSetpoint);
         // Cambiar color basado en el porcentaje de diferencia
-        if (pressureDiff < -2) {
+        if (pressureDiff < -1) {
             pressureProgressElement.style.backgroundColor = 'var(--cold)'; // Azul
-        } else if (pressureDiff > 2) {
+        } else if (pressureDiff > 1) {
             pressureProgressElement.style.backgroundColor = 'var(--warning)'; // Rojo
         } else {
             pressureProgressElement.style.backgroundColor = 'var(--success)'; // Verde

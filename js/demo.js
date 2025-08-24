@@ -48,12 +48,12 @@ class DemoManager {
         
         if (this.isDemoMode) {
             demoIcon.textContent = '🧪';
-            demoText.textContent = 'Modo Demo: Activado';
+            demoText.textContent = 'Demo: Activado';
             demoBtn.classList.add('active');
             this.showDemoWatermark();
         } else {
             demoIcon.textContent = '🧪';
-            demoText.textContent = 'Modo Demo: Desactivado';
+            demoText.textContent = 'Demo: Desactivado';
             demoBtn.classList.remove('active');
             this.hideDemoWatermark();
             // Resetear valores inmediatamente cuando se desactiva el modo demo
@@ -98,7 +98,7 @@ class DemoManager {
             if (isProcessActive) {
                 demoBtn.style.opacity = '0.5';
                 demoBtn.style.cursor = 'not-allowed';
-                demoBtn.title = 'Modo Demo: Bloqueado (Proceso Activo)';
+                demoBtn.title = 'Demo: Bloqueado';
             } else {
                 demoBtn.style.opacity = '1';
                 demoBtn.style.cursor = 'pointer';

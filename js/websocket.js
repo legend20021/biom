@@ -642,8 +642,8 @@ function updateDemoButton() {
   const demoText = document.getElementById("demoText");
   if (demoText) {
     demoText.textContent = isDemoMode
-      ? "Modo Demo Activado"
-      : "Modo Demo Desactivado";
+      ? "Demo Activado"
+      : "Demo Desactivado";
 
     
   }
