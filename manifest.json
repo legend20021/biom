@@ -1,0 +1,65 @@
+{
+    "name": "BIOMASTER Pro V2 IA",
+    "short_name": "BIOMASTER",
+    "description": "Sistema de control avanzado para biofermentación - Penagos y Hermanos",
+    "version": "2.0.0",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#f8fafc",
+    "theme_color": "#2563eb",
+    "orientation": "portrait-primary",
+    "scope": "/",
+    "lang": "es",
+    "dir": "ltr",
+    "categories": ["productivity", "utilities", "business"],
+    "icons": [
+        {
+            "src": "./icons/pyh.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "./icons/pyh.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Dashboard",
+            "short_name": "Panel",
+            "description": "Acceso directo al panel de control",
+            "url": "/#dashboard",
+            "icons": [
+                {
+                    "src": "./icons/dashboard.svg",
+                    "sizes": "96x96"
+                }
+            ]
+        },
+        {
+            "name": "Gráficas",
+            "short_name": "Datos",
+            "description": "Ver gráficas de sensores",
+            "url": "/#graficas",
+            "icons": [
+                {
+                    "src": "./icons/graph.svg",
+                    "sizes": "96x96"
+                }
+            ]
+        }
+    ],
+    "prefer_related_applications": false,
+    "permissions": [
+        "notifications"
+    ],
+    "protocol_handlers": [
+        {
+            "protocol": "web+biomaster",
+            "url": "/?action=%s"
+        }
+    ]
+}
