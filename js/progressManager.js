@@ -4,6 +4,7 @@ class ProgressManager {
         this.progressBarContainer = null;
         this.progressBarFill = null;
         this.playButton = null;
+        this.controlButton = null;
         this.timePanel = null;
         this.isProcessRunning = false;
         this.progressTimer = null;
@@ -25,6 +26,8 @@ class ProgressManager {
         this.progressBarContainer = document.getElementById('progressBarContainer');
         this.progressBarFill = document.getElementById('progressBarFill');
         this.playButton = document.getElementById('playButton');
+        this.controlButton = document.getElementById('controlButton');
+        
         this.timePanel = document.getElementById('TimePanel');
 
         if (!this.progressBarContainer || !this.progressBarFill || !this.playButton || !this.timePanel) {
@@ -43,7 +46,7 @@ class ProgressManager {
         this.currentProgress = 0;
 
         // Agregar clase in-progress al botón de play
-        this.playButton.classList.add('in-progress');
+        this.controlButton.classList.add('in-progress');
         
         // Agregar clase in-progress al panel de tiempo
         this.timePanel.classList.add('in-progress');
@@ -64,7 +67,7 @@ class ProgressManager {
         this.isProcessRunning = false;
         
         // Remover clase in-progress del botón de play
-        this.playButton.classList.remove('in-progress');
+        this.controlButton.classList.remove('in-progress');
 
         // Remover clase in-progress del panel de tiempo
         this.timePanel.classList.remove('in-progress');

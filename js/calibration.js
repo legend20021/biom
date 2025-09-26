@@ -5,7 +5,7 @@ document.getElementById('calibrate-pressure').addEventListener('click', async fu
         const message = {
             CMD_calibrar_presion: true
         };
-        const res = await openModal(() => sendValue(message), true, 'Calibrando presión...');
+        const res = await openModal(() => apiManager.sendCommand(message), true, 'Calibrando presión...');
 
         if (res) {
             const progress = document.getElementById('pressure-progress');
@@ -22,14 +22,14 @@ document.getElementById('calibrate-pressure').addEventListener('click', async fu
             };
     
             //Animar la barra y actualizar el visor
-            await animateProgress(progress, 3000, (percentage) => {
+            await notificationManager.animateProgress(progress, 3000, (percentage) => {
                 updateVisor(percentage);
             });
     
             button.classList.add('success');
             button.innerHTML = '<i class="fas fa-check"></i> Calibrado';
             
-            showNotification('Calibración de presión completada');
+            notificationManager.show('Calibración de presión completada');
     
             setTimeout(() => {
                 button.disabled = false;
@@ -42,7 +42,6 @@ document.getElementById('calibrate-pressure').addEventListener('click', async fu
         
     } catch (error) {
         console.error('Error en calibración de presión:', error);
-        // showNotification('Error en la calibración', 'error');
     }
 });
 
@@ -68,7 +67,7 @@ async function calibratePH(nivel) {
             CMD_calibrar_ph_alto: true
         }
     }
-    const res = await openModal(() => sendValue(message, true, 'Calibrando pH...'));
+    const res = await openModal(() => apiManager.sendCommand(message, true, 'Calibrando pH...'));
     if(res) {
         // Marcar que la calibración está en progreso
         isPhCalibrationInProgress = true;
@@ -89,9 +88,9 @@ async function calibratePH(nivel) {
         // Marcar el botón actual como activo
         button.classList.add('success');
 
-        await animateProgress(progress, 2000);
+        await notificationManager.animateProgress(progress, 2000);
 
-        showNotification(`Calibración pH ${nivel} completada`);
+        notificationManager.show(`Calibración pH ${nivel} completada`);
         console.log(`Calibrado pH ${nivel} completado`);
 
         setTimeout(() => {
@@ -131,10 +130,10 @@ async function calibrateMasaTemp() {
         CMD_calibrar_temperatura_masa: true,
         PAR_calibrar_temperatura_masa: input.value,
     };
-    const res = await openModal(() => sendValue(message));
+    const res = await openModal(() => apiManager.sendCommand(message));
     if(res) {
         // Efectos visuales
-        showNotification(`Temperatura de masa calibrada a ${temperature}°C`);
+        notificationManager.show(`Temperatura de masa calibrada a ${temperature}°C`);
         // Limpiar input
         input.value = '';
     }
@@ -148,10 +147,10 @@ async function calibrateLixTemp() {
         CMD_calibrar_temperatura_lixiviados: true,
         PAR_calibrar_temperatura_lixiviados: input.value
     };
-    const res = await openModal(() => sendValue(message));
+    const res = await openModal(() => apiManager.sendCommand(message));
     if(res) {
         // Efectos visuales
-        showNotification(`Temperatura de lixiviado calibrada a ${temperature}°C`);
+        notificationManager.show(`Temperatura de lixiviado calibrada a ${temperature}°C`);
 
         // Limpiar input
         input.value = '';

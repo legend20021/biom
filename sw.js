@@ -32,7 +32,6 @@ const CACHEABLE_RESOURCES = [
     '/js/chartsLogic.js',
     '/js/telegram.js',
     '/js/wifi.js',
-    '/js/demo.js',
     '/js/progressManager.js',
     '/icons/dashboard.svg',
     '/icons/graph.svg',

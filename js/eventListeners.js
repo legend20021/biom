@@ -22,7 +22,7 @@ async function clickOnRecirculation(param, byPass = false) {
             // Bloquear actualizaciones cuando se abre el modal
             lockUserInteraction();
             
-            await openModal(() => sendValue(message, value, value ?'Recirculación activada': 'Recirculación desactivada'));
+            await openModal(() => apiManager.sendCommand(message, value, value ?'Recirculación activada': 'Recirculación desactivada'));
             
             // Desbloquear después de confirmar
             unlockUserInteraction();
@@ -68,7 +68,7 @@ async function clickOnTemperature(param, byPass = false) {
             // Bloquear actualizaciones cuando se abre el modal
             lockUserInteraction();
             
-            await openModal(() => sendValue(message, value, value ? 'Temperatura activada': 'Temperatura desactivada'));
+            await openModal(() => apiManager.sendCommand(message, value, value ? 'Temperatura activada': 'Temperatura desactivada'));
             
             // Desbloquear después de confirmar
             unlockUserInteraction();
@@ -120,7 +120,7 @@ async function clickOnNaturalPressure(param, byPass = false) {
             // Bloquear actualizaciones cuando se abre el modal
             lockUserInteraction();
             
-            await openModal(() => sendValue(message, value, value ? 'Presion natural activada': 'Presion natural desactivada'));
+            await openModal(() => apiManager.sendCommand(message, value, value ? 'Presion natural activada': 'Presion natural desactivada'));
             
             // Desbloquear después de confirmar
             unlockUserInteraction();
@@ -185,7 +185,7 @@ async function clickOnCarbonicMaceration(param, byPass = false) {
             // Bloquear actualizaciones cuando se abre el modal
             lockUserInteraction();
             
-            await openModal(() => sendValue(message, value, value ? 'Maceracion activada': 'Maceracion desactivada'));
+            await openModal(() => apiManager.sendCommand(message, value, value ? 'Maceracion activada': 'Maceracion desactivada'));
             
             // Desbloquear después de confirmar
             unlockUserInteraction();
@@ -251,7 +251,7 @@ document.querySelectorAll('.input-group1').forEach(group => {
                 // Bloquear actualizaciones cuando se abre el modal
                 lockUserInteraction();
                 
-                await openModal(() => sendValue(message, true, 'Valor enviado'));
+                await openModal(() => apiManager.sendCommand(message, true, 'Valor enviado'));
                 
                 // Desbloquear después de confirmar
                 unlockUserInteraction();
@@ -271,7 +271,7 @@ function handleValueSubmit(input, key, maxValue) {
     if (!isNaN(value) && value >= 0 && value <= maxValue) {
         return true;
     } else {
-        showNotification(`Valor no valido. Por favor, ingresa un valor entre 0 y ${maxValue}.`, 'error');
+        notificationManager.show(`Valor no valido. Por favor, ingresa un valor entre 0 y ${maxValue}.`, 'error');
         return false;
     }
 }
@@ -287,15 +287,17 @@ async function actionPlay(byPass = false) {
         if (!byPass) {
             // Bloquear actualizaciones cuando se abre el modal
             lockUserInteraction();
-            
-            await openModal(() => {
-                sendValue(message, true, 'Proceso iniciado');
-            });
-            
+            const mensajePresion = !state.presion_natural && !state.maceracion ? 'Si no seleccionas un control de presión, se tomará por defecto presion natural. ' : '';
+            await openModal(
+                () => apiManager.sendCommand(message, true, 'Iniciando proceso'),
+                mensajePresion +'¿Iniciar el proceso?'
+            );
+            toggleActionButtons();
             // Desbloquear después de confirmar
             unlockUserInteraction();
         }
     } catch (error) {
+        toggleActionButtons();
         // Desbloquear si se cancela el modal
         unlockUserInteraction();
     }
@@ -310,14 +312,19 @@ async function actionStop(byPass = false) {
             // Bloquear actualizaciones cuando se abre el modal
             lockUserInteraction();
             
-            await openModal(() => {
-                sendValue(message, true, 'Proceso detenido');
-            });
-            
+            await openModal(
+                () => apiManager.sendCommand(message, true, 'Deteniendo proceso'),
+                '¿Detener el proceso?' + '\n\nEsta acción no se puede deshacer.'
+            );
+
+
+            resetControlInputs();
+            toggleActionButtons();
             // Desbloquear después de confirmar
             unlockUserInteraction();
         }
     } catch (error) {
+        toggleActionButtons();
         // Desbloquear si se cancela el modal
         unlockUserInteraction();
     }
@@ -332,14 +339,32 @@ async function actionClose(byPass = false) {
         if (!byPass) {
             // Bloquear actualizaciones cuando se abre el modal
             lockUserInteraction();
-            
-            await openModal(() => sendValue(message, true, 'Proceso cancelado'));
-            
+
+            await openModal(
+                () => apiManager.sendCommand(message, true, 'Cancelando proceso'),
+                '¿Estás seguro de que deseas cancelar el proceso? No se guardarán los datos asociados.'
+            );
+            resetControlInputs();
+            toggleActionButtons();
             // Desbloquear después de confirmar
             unlockUserInteraction();
         }
     } catch (error) {
+        toggleActionButtons();
         // Desbloquear si se cancela el modal
         unlockUserInteraction();
     }
 }
+
+function resetControlInputs() {
+    const temperatureInputElement = document.getElementById('temperatureInputElement');
+    const naturalPressureInputElement = document.getElementById('naturalPressureInputElement');
+    const carbonicMacerationInputElement = document.getElementById('carbonicMacerationInputElement');
+    if (temperatureInputElement) temperatureInputElement.value = '';
+    if (naturalPressureInputElement) naturalPressureInputElement.value = '';
+    if (carbonicMacerationInputElement) carbonicMacerationInputElement.value = '';
+}
+
+window.addEventListener('load', () => {
+    resetControlInputs();
+});

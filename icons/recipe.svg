@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+  <!-- Librito de notas -->
+  <!-- Tapa del libro -->
+  <rect x="5" y="4" width="14" height="16" rx="1" ry="1" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  
+  <!-- Lomo del libro (grosor) -->
+  <path d="M 5 4 L 4 5 L 4 21 L 5 20 Z" fill="currentColor" opacity="0.3"/>
+  
+  <!-- Líneas de las páginas -->
+  <line x1="8" y1="8" x2="16" y2="8" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+  <line x1="8" y1="10" x2="15" y2="10" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+  <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+  <line x1="8" y1="14" x2="14" y2="14" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+  <line x1="8" y1="16" x2="15" y2="16" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+  
+  <!-- Marcador de páginas (pequeña cinta) -->
+  <rect x="17" y="4" width="1" height="8" fill="currentColor" opacity="0.7"/>
+  <path d="M 17 12 L 17.5 14 L 18 12 Z" fill="currentColor" opacity="0.7"/>
+</svg>

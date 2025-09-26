@@ -92,8 +92,8 @@ class ThemeManager {
         const themeName = this.currentTheme === 'dark' ? 'oscuro' : 'claro';
         
         // Usar el sistema de notificaciones existente si está disponible
-        if (typeof showNotification === 'function') {
-            showNotification(`Tema ${themeName} activado`, 'success');
+        if (typeof notificationManager.show === 'function') {
+            notificationManager.show(`Tema ${themeName} activado`, 'success');
         } else {
             // Crear notificación simple
             const notification = document.createElement('div');

@@ -39,7 +39,7 @@ const connectToWifi = (networkName) => {
         const password = passwordInput.value.trim();
 
         if (!password) {
-            showNotification("Por favor, ingresa una contraseña.", 'error');
+            notificationManager.show("Por favor, ingresa una contraseña.", 'error');
             return;
         }
 
@@ -50,7 +50,7 @@ const connectToWifi = (networkName) => {
         };
         console.log("Detalles de conexión:", connectionDetails);
 
-        await openModal(() => sendValue(connectionDetails, true, `Conectado a ${networkName}`));
+        await openModal(() => apiManager.sendCommand(connectionDetails, true, `Conectado a ${networkName}`));
         
         clearWifiInputs();
 
@@ -66,7 +66,7 @@ const clearWifiInputs = () => {
 
 document.getElementById("disconnectWifi5").addEventListener("click", () => {
     console.log("Desconectado de la red Wi-Fi.");
-    showNotification("Desconectado de la red Wi-Fi", 'success');
+    notificationManager.show("Desconectado de la red Wi-Fi", 'success');
     clearWifiInputs();
 
     // Ocultar elementos relacionados con la conexión

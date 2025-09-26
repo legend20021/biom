@@ -114,7 +114,10 @@ scrollToTop(); // Llamada inicial para asegurar que el scroll esté al inicio
 
 
 // JavaScript para manejar la visibilidad de las secciones
-function showSection(event) {
+function showSection(event, curveDetail = null) {
+
+    // Para mostrar detalles de una curva anterior igual se carga la sección de gráfica, el parametro para esa sección es grafica-static
+
     event.preventDefault();
     const sectionId = event.target.getAttribute('data-section');
     const sections = document.querySelectorAll('.main-content .content');
@@ -137,6 +140,12 @@ function showSection(event) {
     if (selectedSection) {
         selectedSection.style.display = 'block';
     }
+    if (sectionId === 'graficas-static' && curveDetail) {
+        const seccionGraficas = document.getElementById('graficas');
+        if (seccionGraficas) {
+            seccionGraficas.style.display = 'block';
+        }
+    }
     
     // Manejar la visibilidad del header global
     initializeHeader(); // Inicializa el header al mostrar una sección
@@ -145,10 +154,52 @@ function showSection(event) {
     if (sectionId === 'graficas') {
         getInitialChartData();
     }
+    if (sectionId === 'graficas-static' && curveDetail) {
+        getInitialChartData(curveDetail);
+    }
+    if (sectionId === 'recetas') {
+        // Verificar que la función existe antes de llamarla
+        if (typeof loadInitReceipes === 'function') {
+            loadInitReceipes();
+        } else {
+            console.error('❌ loadInitReceipes no está definida. Verifica que recipes.js esté cargado.');
+        }
+        
+        // Inicializar el filtro de recetas
+        setTimeout(() => {
+            if (typeof initRecipeFilter === 'function') {
+                initRecipeFilter();
+            }
+        }, 50);
+    }
+    if (sectionId === 'curvas') {
+        // Verificar que la función existe antes de llamarla
+        if (typeof loadInitCurves === 'function') {
+            loadInitCurves();
+        } else {
+            console.error('❌ loadInitCurves no está definida. Verifica que curves.js esté cargado.');
+        }
+    }
 }
 
 // Mostrar por defecto la sección "dashboard"
 document.getElementById('dashboard').style.display = 'block';
+
+// Función simplificada para navegar a una sección específica (útil para botones de navegación)
+function navigateToSection(sectionId) {
+    // Crear un evento sintético que funcione con showSection
+    const fakeEvent = {
+        preventDefault: () => {},
+        target: {
+            getAttribute: (attr) => attr === 'data-section' ? sectionId : null,
+            classList: {
+                add: () => {} // Función vacía para evitar errores
+            }
+        }
+    };
+    
+    showSection(fakeEvent);
+}
 
 
 function toggleActionButtons() {
@@ -169,9 +220,12 @@ function toggleCalibration(idElement) {
     phButtons.classList.toggle('hideCalibration');
 }
 
-function openModal(callback) {
+function openModal(callback, confirmationText = '¿Estás seguro de que deseas realizar esta acción?') {
     const modal = document.getElementById('confirmationModal');
     modal.classList.add('active');
+
+    const modalText = document.getElementById('confirmation-modal-text');
+    modalText.textContent = confirmationText;
 
     // Retornar una promesa que se resuelve o rechaza según la acción del usuario
     return new Promise((resolve, reject) => {

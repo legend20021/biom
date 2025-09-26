@@ -26,7 +26,7 @@ document.getElementById("addUser").addEventListener("click", () => {
     const id = parseInt(document.getElementById("userId").value.trim());
 
     if (!name || !id) {
-        showNotification("Por favor, completa todos los campos.", 'error');
+        notificationManager.show("Por favor, completa todos los campos.", 'error');
         return;
     }
 
@@ -40,13 +40,13 @@ document.getElementById("addUser").addEventListener("click", () => {
         console.log(JSON.stringify({ action: "actualizar", user: { id, name } }));
         document.getElementById("addUser").innerText = "Agregar Usuario";
     } else {
-        showNotification("El ID ya existe. Por favor, usa un ID diferente.", 'error');
+        notificationManager.show("El ID ya existe. Por favor, usa un ID diferente.", 'error');
         return;
     }
 
     renderUserTable();
     clearInputs();
-    showNotification(`Se ha agregado el usuario ${name} `);
+    notificationManager.show(`Se ha agregado el usuario ${name} `);
 });
 
 const deleteUser = async (index) => {
@@ -56,11 +56,11 @@ const deleteUser = async (index) => {
         eliminar_tg: deletedUser.id,
     };
 
-    sendValue(message, false, `Se ha eliminado el usuario ${deletedUser.name}`);
+    apiManager.sendCommand(message, false, `Se ha eliminado el usuario ${deletedUser.name}`);
     
     console.log({ action: "eliminar", user: deletedUser });
     renderUserTable();
-    showNotification(`Se ha eliminado el usuario ${deletedUser.name}`);
+    notificationManager.show(`Se ha eliminado el usuario ${deletedUser.name}`);
 };
 
 const editUser = async (index) => {
@@ -71,7 +71,6 @@ const editUser = async (index) => {
         nombre_usuario_tg: name,
     };
 
-    //await openModal(() => sendValue(JSON.stringify(message)));
 
     document.getElementById("userName").value = name;
     document.getElementById("userId").value = id;

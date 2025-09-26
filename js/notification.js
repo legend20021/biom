@@ -1,225 +1,326 @@
-//NOTIFICACIONES PROFESIONALES
-const showNotification = (message, type = 'success', duration = 4000) => {
-    let  notification = document.getElementById('notification');
+// ============ SISTEMA DE NOTIFICACIONES PROFESIONALES ============
+class NotificationManager {
+  constructor() {
+    this.defaultDurations = {
+      success: 4000,
+      warning: 4500,
+      error: 5000,
+      info: 4000,
+      persistent: 0,
+      critical: 0
+    };
+    
+    this.configs = {
+      success: {
+        backgroundColor: 'var(--success-color, #22c55e)',
+        icon: '✓',
+        iconColor: '#ffffff',
+        textColor: '#ffffff',
+        borderColor: '#16a34a'
+      },
+      warning: {
+        backgroundColor: '#f59e0b',
+        icon: '⚠',
+        iconColor: '#ffffff',
+        textColor: '#ffffff',
+        borderColor: '#d97706'
+      },
+      error: {
+        backgroundColor: '#ef4444',
+        icon: '✕',
+        iconColor: '#ffffff',
+        textColor: '#ffffff',
+        borderColor: '#dc2626'
+      },
+      info: {
+        backgroundColor: '#3b82f6',
+        icon: 'ℹ',
+        iconColor: '#ffffff',
+        textColor: '#ffffff',
+        borderColor: '#2563eb'
+      },
+      persistent: {
+        backgroundColor: '#fafc8fff',
+        icon: '🔔',
+        iconColor: '#000000',
+        textColor: '#000000',
+        borderColor: '#fafc8fff'
+      },
+      critical: {
+        backgroundColor: '#dc2626',
+        icon: '🚨',
+        iconColor: '#ffffff',
+        textColor: '#ffffff',
+        borderColor: '#b91c1c'
+      }
+    };
+    
+    this.activeNotifications = new Map();
+  }
+
+  // ============ MÉTODO PRINCIPAL DE NOTIFICACIONES ============
+  show(message, type = 'success', duration = null) {
+    // Usar duración por defecto si no se especifica
+    if (duration === null) {
+      duration = this.defaultDurations[type] || this.defaultDurations.success;
+    }
+
+    let notification = document.getElementById('notification');
     if (type === 'persistent') {
-        notification = document.getElementById('notificationFixed');
+      notification = document.getElementById('notificationFixed');
     }
     
+    if (!notification) {
+      console.error('❌ Elemento de notificación no encontrado');
+      return;
+    }
+
     // Limpiar contenido anterior
     notification.innerHTML = '';
     
-    // Definir configuración según el tipo
-    let config;
-    switch(type) {
-        case 'success':
-            config = {
-                backgroundColor: 'var(--success-color, #22c55e)',
-                icon: '✓',
-                iconColor: '#ffffff',
-                textColor: '#ffffff',
-                borderColor: '#16a34a'
-            };
-            break;
-        case 'warning':
-            config = {
-                backgroundColor: '#f59e0b',
-                icon: '⚠',
-                iconColor: '#ffffff',
-                textColor: '#ffffff',
-                borderColor: '#d97706'
-            };
-            break;
-        case 'error':
-            config = {
-                backgroundColor: '#ef4444',
-                icon: '✕',
-                iconColor: '#ffffff',
-                textColor: '#ffffff',
-                borderColor: '#dc2626'
-            };
-            break;
-        case 'info':
-            config = {
-                backgroundColor: '#3b82f6',
-                icon: 'ℹ',
-                iconColor: '#ffffff',
-                textColor: '#ffffff',
-                borderColor: '#2563eb'
-            };
-            break;
-        case 'persistent':
-            config = {
-                backgroundColor: '#fafc8fff',
-                icon: '🔔',
-                iconColor: '#000000',
-                textColor: '#000000',
-                borderColor: '#fafc8fff'
-            };
-            break;
-        case 'critical':
-            config = {
-                backgroundColor: '#dc2626',
-                icon: '🚨',
-                iconColor: '#ffffff',
-                textColor: '#ffffff',
-                borderColor: '#b91c1c'
-            };
-            break;
-        default:
-            config = {
-                backgroundColor: 'var(--success-color, #22c55e)',
-                icon: '✓',
-                iconColor: '#ffffff',
-                textColor: '#ffffff',
-                borderColor: '#16a34a'
-            };
-    }
+    // Obtener configuración del tipo
+    const config = this.configs[type] || this.configs.success;
     
     // Crear estructura HTML profesional
     const isPermanent = type === 'persistent' || type === 'critical';
-    const showCloseButton = type !== 'persistent'; // Solo 'persistent' no tendrá botón de cierre
+    const showCloseButton = type !== 'persistent';
     
-    notification.innerHTML = `
-        <div class="notification-content">
-            <div class="notification-icon" style="color: ${config.iconColor};">
-                ${config.icon}
-            </div>
-            <div class="notification-message" style="color: ${config.textColor};">
-                ${message}
-                ${isPermanent ? '<a href="#" onclick="location.reload();" style="text-decoration: underline;">Recargar</a>' : ''}
-            </div>
-            ${showCloseButton ? `<button class="notification-close" onclick="hideNotification()" style="color: ${config.textColor};">×</button>` : ''}
-        </div>
-        ${isPermanent ? '' : '<div class="notification-progress"></div>'}
-    `;
+    notification.innerHTML = this._createNotificationHTML(message, config, isPermanent, showCloseButton);
     
     // Aplicar estilos
-    notification.style.background = `${config.backgroundColor}`;
-    notification.style.borderLeft = `4px solid ${config.borderColor}`;
-    
-    // Estilos especiales para notificaciones permanentes
-    if (isPermanent) {
-        notification.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.25), 0 4px 10px rgba(0, 0, 0, 0.15)';
-        notification.style.zIndex = '10000';
-        notification.style.animation = 'pulseNotification 2s infinite';
-        
-        // Agregar clase especial para notificaciones permanentes
-        notification.classList.add('notification-permanent');
-    } else {
-        notification.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1)';
-    }
-    
-    // Agregar clase de tipo para estilos específicos
-    notification.className = `notification notification-${type} ${isPermanent ? 'notification-permanent' : ''}`;
+    this._applyStyles(notification, config, isPermanent, type);
     
     // Mostrar con animación
     notification.classList.add('show');
     
-    // Solo animar barra de progreso y auto-ocultar para notificaciones no permanentes
-    if (!isPermanent) {
-        // Animar barra de progreso
-        const progressBar = notification.querySelector('.notification-progress');
-        if (progressBar) {
-            progressBar.style.animation = `notificationProgress ${duration}ms linear`;
-        }
-        
-        // Auto-ocultar después del tiempo especificado
-        const hideTimer = setTimeout(() => {
-            hideNotification();
-        }, duration);
-        
-        // Guardar el timer para poder cancelarlo si es necesario
-        notification.hideTimer = hideTimer;
+    // Manejar auto-ocultado para notificaciones no permanentes
+    if (!isPermanent && duration > 0) {
+      this._setupAutoHide(notification, duration);
     }
-};
 
-// Función para ocultar notificación manualmente
-const hideNotification = () => {
+    // Registrar notificación activa
+    this.activeNotifications.set(notification.id, {
+      type,
+      timestamp: Date.now(),
+      isPermanent
+    });
+
+  }
+
+  // ============ MÉTODOS ESPECÍFICOS PARA TIPOS ============
+  
+  success(message, duration = null) {
+    this.show(message, 'success', duration);
+  }
+
+  warning(message, duration = null) {
+    this.show(message, 'warning', duration);
+  }
+
+  error(message, duration = null) {
+    this.show(message, 'error', duration);
+  }
+
+  info(message, duration = null) {
+    this.show(message, 'info', duration);
+  }
+
+  persistent(message) {
+    this.show(message, 'persistent', 0);
+  }
+
+  critical(message) {
+    this.show(message, 'critical', 0);
+  }
+
+  // ============ MÉTODOS HELPER ============
+  
+  quick(message, type = 'success') {
+    this.show(message, type, 2500);
+  }
+
+  long(message, type = 'info') {
+    this.show(message, type, 8000);
+  }
+
+  // ============ MÉTODOS DE CONTROL ============
+  
+  hide() {
     const notification = document.getElementById('notification');
     if (notification) {
-        // Cancelar timer si existe
-        if (notification.hideTimer) {
-            clearTimeout(notification.hideTimer);
-        }
-        
-        // Remover clases y limpiar
-        notification.classList.remove('show');
-        notification.classList.add('hide');
-        
-        // Limpiar completamente después de la animación
-        setTimeout(() => {
-            notification.classList.remove('hide', 'notification-success', 'notification-warning', 'notification-error', 'notification-info');
-            notification.innerHTML = '';
-            notification.style.cssText = '';
-        }, 300);
+      this._hideNotification(notification);
     }
-};
+  }
 
-// Función helper para notificaciones rápidas
-const showQuickNotification = (message, type = 'success') => {
-    showNotification(message, type, 2500); // Duración más corta
-};
-
-// Función helper para notificaciones persistentes
-const showPersistentNotification = (message, type = 'info') => {
-    showNotification(message, type, 8000); // Duración más larga
-};
-
-// Función para notificaciones permanentes del sistema (no se cierran automáticamente)
-const showSystemNotification = (message, type = 'persistent') => {
-    showNotification(message, type, 0); // Duration 0 = no auto-hide
-};
-
-// Función para notificaciones críticas obligatorias
-const showCriticalNotification = (message) => {
-    showNotification(message, 'critical', 0); // Siempre permanente
-};
-
-// Función para forzar el cierre de cualquier notificación permanente
-const forceHideNotification = () => {
+  forceHide() {
     const notification = document.getElementById('notification');
     if (notification) {
-        // Cancelar timer si existe
-        if (notification.hideTimer) {
-            clearTimeout(notification.hideTimer);
-        }
-        
-        // Remover todas las clases y limpiar
-        notification.classList.remove('show', 'notification-permanent');
-        notification.classList.add('hide');
-        
-        // Limpiar completamente después de la animación
-        setTimeout(() => {
-            notification.classList.remove('hide', 'notification-success', 'notification-warning', 'notification-error', 'notification-info', 'notification-persistent', 'notification-critical');
-            notification.innerHTML = '';
-            notification.style.cssText = '';
-        }, 300);
+      this._forceHideNotification(notification);
     }
-};
+  }
 
-// Función para verificar si hay una notificación permanente activa
-const hasPermanentNotification = () => {
+  hideAll() {
+    const notifications = ['notification', 'notificationFixed'];
+    notifications.forEach(id => {
+      const element = document.getElementById(id);
+      if (element) {
+        this._forceHideNotification(element);
+      }
+    });
+  }
+
+  // ============ MÉTODOS DE CONSULTA ============
+  
+  hasPermanent() {
     const notification = document.getElementById('notification');
     return notification && notification.classList.contains('notification-permanent');
-};
-const animateProgress = (progressElement, duration, callback) => {
+  }
+
+  getActive() {
+    return Array.from(this.activeNotifications.entries()).map(([id, data]) => ({
+      id,
+      ...data
+    }));
+  }
+
+  // ============ MÉTODOS PRIVADOS ============
+  
+  _createNotificationHTML(message, config, isPermanent, showCloseButton) {
+    return `
+      <div class="notification-content">
+        <div class="notification-icon" style="color: ${config.iconColor};">
+          ${config.icon}
+        </div>
+        <div class="notification-message" style="color: ${config.textColor};">
+          ${message}
+          ${isPermanent ? '<a href="#" onclick="location.reload();" style="text-decoration: underline;">Recargar</a>' : ''}
+        </div>
+        ${showCloseButton ? `<button class="notification-close" onclick="notificationManager.hide()" style="color: ${config.textColor};">×</button>` : ''}
+      </div>
+      ${isPermanent ? '' : '<div class="notification-progress"></div>'}
+    `;
+  }
+
+  _applyStyles(notification, config, isPermanent, type) {
+    notification.style.background = config.backgroundColor;
+    notification.style.borderLeft = `4px solid ${config.borderColor}`;
+    
+    if (isPermanent) {
+      notification.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.25), 0 4px 10px rgba(0, 0, 0, 0.15)';
+      notification.style.zIndex = '10000';
+      notification.style.animation = 'pulseNotification 2s infinite';
+      notification.classList.add('notification-permanent');
+    } else {
+      notification.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1)';
+    }
+    
+    notification.className = `notification notification-${type} ${isPermanent ? 'notification-permanent' : ''}`;
+  }
+
+  _setupAutoHide(notification, duration) {
+    // Animar barra de progreso
+    const progressBar = notification.querySelector('.notification-progress');
+    if (progressBar) {
+      progressBar.style.animation = `notificationProgress ${duration}ms linear`;
+    }
+    
+    // Auto-ocultar después del tiempo especificado
+    const hideTimer = setTimeout(() => {
+      this._hideNotification(notification);
+    }, duration);
+    
+    notification.hideTimer = hideTimer;
+  }
+
+  _hideNotification(notification) {
+    if (notification.hideTimer) {
+      clearTimeout(notification.hideTimer);
+    }
+    
+    notification.classList.remove('show');
+    notification.classList.add('hide');
+    
+    setTimeout(() => {
+      this._cleanupNotification(notification);
+    }, 300);
+  }
+
+  _forceHideNotification(notification) {
+    if (notification.hideTimer) {
+      clearTimeout(notification.hideTimer);
+    }
+    
+    notification.classList.remove('show', 'notification-permanent');
+    notification.classList.add('hide');
+    
+    setTimeout(() => {
+      this._cleanupNotification(notification);
+    }, 300);
+  }
+
+  _cleanupNotification(notification) {
+    notification.classList.remove(
+      'hide', 'notification-success', 'notification-warning', 
+      'notification-error', 'notification-info', 'notification-persistent', 
+      'notification-critical', 'notification-permanent'
+    );
+    notification.innerHTML = '';
+    notification.style.cssText = '';
+    
+    // Remover de notificaciones activas
+    this.activeNotifications.delete(notification.id);
+  }
+
+  // ============ MÉTODOS DE CONFIGURACIÓN ============
+  
+  setDefaultDuration(type, duration) {
+    if (this.defaultDurations.hasOwnProperty(type)) {
+      this.defaultDurations[type] = duration;
+      console.log(`⚙️ Duración por defecto para '${type}' actualizada: ${duration}ms`);
+    }
+  }
+
+  updateConfig(type, config) {
+    if (this.configs.hasOwnProperty(type)) {
+      this.configs[type] = { ...this.configs[type], ...config };
+      console.log(`⚙️ Configuración para '${type}' actualizada:`, this.configs[type]);
+    }
+  }
+
+  // ============ MÉTODO DE UTILIDAD PARA ANIMACIONES ============
+  
+  animateProgress(progressElement, duration, callback) {
     return new Promise((resolve) => {
-        let start = null;
-        const animate = (timestamp) => {
-            if (!start) start = timestamp;
-            const progress = (timestamp - start) / duration;
-            const percentage = Math.min(progress * 100, 100);
+      let start = null;
+      const animate = (timestamp) => {
+        if (!start) start = timestamp;
+        const progress = (timestamp - start) / duration;
+        const percentage = Math.min(progress * 100, 100);
 
-            progressElement.style.width = `${percentage}%`;
+        progressElement.style.width = `${percentage}%`;
 
-            if (callback) callback(percentage);
+        if (callback) callback(percentage);
 
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            } else {
-                resolve();
-            }
-        };
-        requestAnimationFrame(animate);
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          resolve();
+        }
+      };
+      requestAnimationFrame(animate);
     });
-};
+  }
+}
+
+// ============ INSTANCIA GLOBAL DEL NOTIFICATION MANAGER ============
+
+
+// ============ FUNCIONES DE COMPATIBILIDAD (WRAPPER FUNCTIONS) ============
+// Mantener compatibilidad con el código existente
+
+
+// ============ EXPORTAR A VENTANA GLOBAL ============
+  const notificationManager = new NotificationManager();
+  // Exportar la clase y la instancia
+  window.NotificationManager = NotificationManager;
+  window.notificationManager = notificationManager;

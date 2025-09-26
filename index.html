@@ -389,74 +389,85 @@
       <!-- Navegación principal -->
       <nav>
         <ul class="nav-menu">
-          <li class="nav-item fade-in-up">
-            <a href="#dashboard" class="nav-link active" data-section="dashboard" onclick="showSection(event)">
-              <span class="nav-icon">
-                <img class="custom-icon" src="./icons/dashboard.svg" alt="Dashboard" loading="lazy">
+          <li class="nav-item fade-in-up" data-section="dashboard" onclick="showSection(event)">
+            <a href="#dashboard" class="nav-link active" data-section="dashboard" >
+              <span class="nav-icon" data-section="dashboard">
+                <img class="custom-icon" src="./icons/dashboard.svg" alt="Dashboard" loading="lazy" data-section="dashboard">
               </span>
               Dashboard
             </a>
           </li>
-          <li class="nav-item fade-in-up">
-            <a href="#graficas" class="nav-link" data-section="graficas" onclick="showSection(event)">
-              <span class="nav-icon">
-                <img class="custom-icon" src="./icons/graph.svg" alt="Gráficas" loading="lazy">
+          <li id="navGraficas" class="nav-item fade-in-up" data-section="graficas" onclick="showSection(event)">
+            <a href="#graficas" class="nav-link" data-section="graficas" >
+              <span class="nav-icon" data-section="graficas">
+                <img class="custom-icon" src="./icons/graph.svg" alt="Gráficas" loading="lazy" data-section="graficas">
               </span>
-              Gráficas
+              Proceso Actual
             </a>
           </li>
-          <!-- <li class="nav-item fade-in-up">
-            <a href="#usuarios" class="nav-link" data-section="usuarios" onclick="showSection(event)">
-              <span class="nav-icon">
-                <img class="custom-icon" src="./icons/users.svg" alt="Usuarios" loading="lazy">
+          <li class="nav-item fade-in-up" data-section="recetas" onclick="showSection(event)">
+            <a href="#recetas" class="nav-link" data-section="recetas" >
+              <span class="nav-icon" data-section="recetas">
+                <img class="custom-icon" src="./icons/recipe.svg" alt="Recetas" loading="lazy" data-section="recetas">
+              </span>
+              Recetas
+            </a>
+          </li>
+          <li class="nav-item fade-in-up" data-section="curvas" onclick="showSection(event)">
+            <a href="#curvas" class="nav-link" data-section="curvas" >
+              <span class="nav-icon" data-section="curvas">
+                <img class="custom-icon" src="./icons/flask.svg" alt="Curvas" loading="lazy" data-section="curvas">
+              </span>
+              Curvas
+            </a>
+          </li>
+          
+          <!-- <li class="nav-item fade-in-up" data-section="usuarios"  onclick="showSection(event)">
+            <a href="#usuarios" class="nav-link" data-section="usuarios">
+              <span class="nav-icon" data-section="usuarios" >
+                <img class="custom-icon" src="./icons/users.svg" alt="Usuarios" loading="lazy" data-section="usuarios" >
               </span>
               Usuarios
             </a>
           </li>
-          <li class="nav-item fade-in-up">
-            <a href="#conexiones" class="nav-link" data-section="conexiones" onclick="showSection(event)">
-              <span class="nav-icon">
-                <img class="custom-icon" src="./icons/wifi.svg" alt="WiFi" loading="lazy">
+          <li class="nav-item fade-in-up" data-section="conexiones" onclick="showSection(event)"">
+            <a href="#conexiones" class="nav-link" data-section="conexiones" >
+              <span class="nav-icon" data-section="conexiones">
+                <img class="custom-icon" src="./icons/wifi.svg" alt="WiFi" loading="lazy" data-section="conexiones">
               </span>
               Conexiones
             </a>
           </li> -->
-          <li class="nav-item fade-in-up">
-            <a href="#ayuda" class="nav-link" data-section="ayuda" onclick="showSection(event)">
-              <span class="nav-icon">
-                <img class="custom-icon" src="./icons/help.svg" alt="Ayuda" loading="lazy">
+          <li class="nav-item fade-in-up" data-section="ayuda" onclick="showSection(event)">
+            <a href="#ayuda" class="nav-link"  data-section="ayuda">
+              <span class="nav-icon" data-section="ayuda">
+                <img class="custom-icon" src="./icons/help.svg" alt="Ayuda" loading="lazy" data-section="ayuda">
               </span>
               Ayuda
             </a>
           </li>
+          
+          <!-- Botón de cambio de tema -->
+          <li class="nav-item fade-in-up">
+            <a href="#" class="nav-link" id="themeToggle" onclick="toggleTheme()">
+              <span class="nav-icon">
+                <span class="theme-icon" id="themeIcon">🌙</span>
+              </span>
+              <span class="theme-text" id="themeText">Tema Oscuro</span>
+            </a>
+          </li>
+
+          <!-- Botón de demo -->
+          <li class="nav-item fade-in-up demo-toggle-item">
+            <a href="#" class="nav-link demo-toggle-btn" id="demoToggle" onclick="toggleDemoMode()">
+              <span class="nav-icon">
+                <span class="demo-icon" id="demoIcon">🧪</span>
+              </span>
+              <span class="demo-text" id="demoText">Demo</span>
+            </a>
+          </li>
         </ul>
       </nav>
-
-      <!-- Botón de cambio de tema -->
-      <div class="theme-toggle-container">
-        <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()">
-          <span class="theme-icon" id="themeIcon">🌙</span>
-          <span class="theme-text" id="themeText">Tema Oscuro</span>
-        </button>
-      </div>
-
-      <div class="demo-toggle-container">
-        <button class="demo-toggle-btn" id="demoToggle" onclick="toggleDemoMode()">
-          <span class="demo-icon" id="demoIcon">🧪</span>
-          <span class="demo-text" id="demoText">Demo</span>
-        </button>
-      </div>
-      <!-- Dos botones en columna, uno para simular un start y otro para simular un stop -->
-      <div class="action-buttons-container" id="actionButtonsContainer">
-        <button class="action-button" id="startButton" onclick="simulateStart()">
-          <span class="action-icon">▶︎</span>
-          <span class="action-text">Iniciar Proceso</span>
-        </button>
-        <button class="action-button" id="stopButton" onclick="simulateStop()">
-          <span class="action-icon">⏹</span>
-          <span class="action-text">Detener Proceso</span>
-        </button>
-      </div>
     </div>
 
     <!-- Overlay para cerrar sidebar en móviles -->
@@ -468,27 +479,32 @@
 
       <div class="content" id="dashboard" style="display: block">
         <!-- Indicador de modo demo HTTP -->
-        <div class="demo-indicator" id="demoIndicator" style="display: none; position: fixed; top: 10px; right: 10px; background: #ff9800; color: white; padding: 5px 10px; border-radius: 5px; z-index: 9999; font-size: 12px;">
-          🎭 MODO DEMO HTTP
-        </div>
-        
         <div class="demo-indicator" id="demoIndicator" style="display: none;">
           <span class="demo-text">Modo Demo Activado</span>
         </div>
+
+        <div class="header-mobile">
+          <img src="./icons/pyh.png" alt="Penagos y Hermanos Logo" loading="eager">
+          <div class="header-mobile-title">Biomaster Pro V2 IA</div>
+        </div>
+
         <div class="indicators">
 
           <div class="indicator-card" id="TimePanel">
-            <div class="indicator-title help-icon position-relative" title="Calibra la presión del sistema">
+            <div class="indicator-title indicator-title-responsive help-icon position-relative" title="Tiempo del proceso">
               Tiempo de proceso
             </div>
-            <div id="processTextStatus" class="processTextStatus indicator-title indicator-title-responsive help-icon position-relative" title="Calibra la presión del sistema">
-              Detenido
+            <div class="indicator-title help-icon position-relative" title="Tiempo del proceso">
+              Tiempo de proceso
             </div>
             <span class="status-ready">
               <span id="timer-hours">00</span> hrs
               <span class="timer-separator">:</span>
               <span id="timer-minutes">00</span> <span>min</span>
             </span>
+            <div id="processTextStatus" class="processTextStatus indicator-title indicator-title-responsive help-icon position-relative" title="Calibra la presión del sistema">
+              Detenido
+            </div>
             <div class="system-status">
               <div class="status-item">
                 <span>Proceso:</span>
@@ -497,20 +513,34 @@
             </div>
           </div>
 
-          <div class="indicator-card card-header-info">
-            <div class="header-responsive">
-              <img src="./icons/pyh.png" alt="Penagos y Hermanos Logo" loading="eager">
+          <div class="indicator-card">
+            <div class="indicator-title help-icon position-relative" title="Nivel del lixiviado">
+              Nivel de Lixiviado
             </div>
-            <div class="system-status">
-              <div class="status-item">
-                <span>Conexión:</span>
-                <span class="connection-text">Offline</span>
-              </div>
-              <div class="status-item">
-                <span>T. Controlador:</span>
-                <span id="temp_sp">0 °C</span>
-              </div>
+            <div class="indicator-title indicator-title-responsive help-icon position-relative" title="Nivel del lixiviado">
+              Nivel Lix
             </div>
+            <div class="progress-container">
+              <div class="vertical-progress-bar" id="lixLevelProgress2"></div>
+            </div>
+            <div class="indicator-data">
+              <span class="current-value" id="lixLevelValue2">Sin datos</span>
+            </div>
+            <div class="lix-level-controls">
+              <span>Alto</span>
+              <label class="switch">
+                <input type="radio" name="lixLevel" id="lixLevelHigh" disabled="" />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="lix-level-controls">
+              <span>Medio</span>
+              <label class="switch">
+                <input type="radio" name="lixLevel" id="lixLevelMedium" disabled="" />
+                <span class="slider"></span>
+              </label>
+            </div>
+            
           </div>
 
 
@@ -670,7 +700,7 @@
                     </label>
                   </div>
                   <div class="input-group1" id="temperatureInput">
-                    <input type="number" placeholder="Temperatura (0-100)" min="0" max="100" />
+                    <input id="temperatureInputElement" type="number" placeholder="Temperatura (0-100)" min="0" max="100" />
                     <button class="send-btn btn">Enviar</button>
                   </div>
                 </div>
@@ -692,7 +722,7 @@
                     </label>
                   </div>
                   <div class="input-group1" id="naturalPressureInput">
-                    <input type="number" placeholder="PSI (0-10)" min="0" max="10" />
+                    <input id="naturalPressureInputElement" type="number" placeholder="PSI (0-10)" min="0" max="10" />
                     <button class="send-btn btn">Enviar</button>
                   </div>
                 </div>
@@ -708,7 +738,7 @@
                     </label>
                   </div>
                   <div class="input-group1" id="carbonicMacerationInput">
-                    <input type="number" placeholder="PSI (0-10)" min="0" max="10" />
+                    <input type="number" id="carbonicMacerationInputElement" placeholder="PSI (0-10)" min="0" max="10" />
                     <button class="send-btn btn">Enviar</button>
                   </div>
                 </div>
@@ -1099,6 +1129,93 @@
         <!-- Fin boton play pausa stop---------------------------------------------------------- -->
       </div>
 
+      <!-- Sección de Curvas (Fermentaciones) -->
+      <div class="content" id="curvas" style="display: none">
+        <h2>Curvas Guardadas</h2>
+        
+        <div class="curves-container">
+          <!-- El contenido será cargado dinámicamente por curves.js -->
+          <div class="curve-loading-state">
+            <div class="loading-spinner"></div>
+            <h3>Cargando curvas...</h3>
+            <p>Obteniendo la lista de curvas guardadas desde el sistema...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección de Recetas -->
+      <div class="content" id="recetas" style="display: none">
+        <h2>Gestión de Recetas</h2>
+        
+        <!-- Sección de Control Superior -->
+        <div class="recipes-control-section">
+          <div class="recipes-filter-container">
+            <label for="recipesFilter" class="filter-label">Filtrar por tipo:</label>
+            <select id="recipesFilter" class="recipes-filter-select" onchange="filterRecipesByType(this.value)">
+              <option value="created" selected>Recetas Personalizadas</option>
+              <option value="parametrized">Recetas Parametrizadas</option>
+              <option value="predetermined">Recetas Predeterminadas</option>
+            </select>
+          </div>
+          <div class="recipes-actions-container">
+            <button class="btn create-recipe-btn-main" onclick="openRecipeModal()">
+              Crear Nueva Receta
+            </button>
+          </div>
+        </div>
+
+        <!-- Sección de Recetas Creadas -->
+        <div class="recipes-section" id="createdRecipesSection">
+          
+          <div class="recipes-list-manual">
+            <!-- Contenido será reemplazado por recipes.js -->
+            <div class="recipe-loading-state">
+              <div class="loading-spinner">
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+              </div>
+              <h3>Cargando recetas...</h3>
+              <p>Obteniendo la lista de recetas desde el sistema...</p>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Sección de Recetas manuales -->
+        <div class="recipes-section" id="parametrizedRecipesSection" style="display: none;">
+          <div class="recipes-list">
+            <!-- Contenido será reemplazado por recipes.js -->
+            <div class="recipe-loading-state">
+              <div class="loading-spinner">
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+              </div>
+              <h3>Cargando recetas...</h3>
+              <p>Obteniendo la lista de recetas desde el sistema...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sección de Recetas Predeterminadas -->
+        <div class="recipes-section" id="predeterminedRecipesSection" style="display: none;">
+          <div class="recipes-list-predeterminada">
+            <!-- Contenido será reemplazado por recipes.js -->
+            <div class="recipe-loading-state">
+              <div class="loading-spinner">
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+              </div>
+              <h3>Cargando recetas...</h3>
+              <p>Obteniendo la lista de recetas desde el sistema...</p>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+
 
     </div>
     
@@ -1106,6 +1223,9 @@
 
     <!-- Header de información de sensores - Elemento único reutilizable -->
     <div id="globalHeaderInfo" class="header-info" style="display: none;">
+      <button id="processStage" class="connection-btn-fixed online">
+        <span>📋</span> <span class="stageValue">0 de 0</span>
+      </button>
       <button class="connection-btn-fixed online">
         <span>🔘 P</span> <span class="pressureValue">0</span>
       </button>
@@ -1139,7 +1259,7 @@
           <button class="close-btn" onclick="closeModal()">×</button>
         </div>
         <div class="modal-body">
-          <p>¿Estás seguro de que deseas realizar esta acción?</p>
+          <p id="confirmation-modal-text">¿Estás seguro de que deseas realizar esta acción?</p>
         </div>
         <div class="modal-footer">
           <button class="btn cancel-btn" onclick="closeModal()">Cancelar</button>
@@ -1157,6 +1277,11 @@
     <!-- Scripts críticos que se cargan inmediatamente en orden correcto -->
     <script src="./js/state.js"></script>
     <script defer src="./js/progressManager.js"></script>
+    <script defer src="./js/notification.js"></script>
+    <script src="./js/recipeTemplates.js"></script>
+    <script src="./js/recipes.js"></script>
+    <script src="./js/curveTemplates.js"></script>
+    <script src="./js/curves.js"></script>
     <script defer src="./js/http-polling.js"></script>
     <script src="./js/initialization.js"></script>
 
@@ -1184,8 +1309,8 @@
     <script defer src="./js/theme.js"></script>
 
     <!-- Scripts no críticos que se cargan de forma diferida -->
+
     <script defer src="./js/buttonLogic.js"></script>
-    <script defer src="./js/notification.js"></script>
     <script defer src="./js/calibration.js"></script>
     <script defer src="./js/eventListeners.js"></script>
     <script defer src="./js/telegram.js"></script>

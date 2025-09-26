@@ -27,6 +27,11 @@ function updateIndicators() {
         element.textContent = `${state.temperatureLix.toFixed(1)}`;
     });
 
+    const stageElements = document.querySelectorAll('.stageValue');
+    stageElements.forEach((element) => {
+        element.textContent = `${state.etapa} de ${state.total_etapas}`;
+    });
+
     // Temperatura - usando acceso seguro a elementos
     const tempValueElement = getElement('tempValue');
     if (tempValueElement) {
@@ -150,8 +155,8 @@ function updateTimer() {
 }
 
 function upateTemperature() {
-    const sp = document.getElementById('temp_sp');
-    sp.textContent = (state.temperatura_sp ? state.temperatura_sp: '0') + '°C';
+    // const sp = document.getElementById('temp_sp');
+    // sp.textContent = (state.temperatura_sp ? state.temperatura_sp: '0') + '°C';
 }
 // FIN  Función para actualizar un valor específico del timer con animación
 
@@ -167,7 +172,7 @@ function initializeHeader() {
     if (!globalHeaderInfo) return;
     
     // Lista de secciones que necesitan el header-info
-    const sectionsWithHeader = ['graficas', 'usuarios', 'conexiones', 'ayuda'];
+    const sectionsWithHeader = ['graficas', 'usuarios', 'conexiones', 'ayuda', 'curvas', 'recetas'];
     
     if (activeSection && sectionsWithHeader.includes(activeSection.id)) {
         // Mostrar el header global

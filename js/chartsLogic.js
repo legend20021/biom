@@ -7,7 +7,7 @@ let inputChartData = {
       borderColor: "rgb(255, 99, 132)",
       backgroundColor: "rgba(255, 99, 132, 0.4)",
       borderWidth: 2,
-      radius: 4,
+      radius: 2,
       tension: 0.4,
       yAxisID: "y_temp",
       pointBackgroundColor: "rgb(255, 99, 132)",
@@ -20,7 +20,7 @@ let inputChartData = {
             borderColor: "rgb(255, 159, 64)",
       backgroundColor: "rgba(255, 159, 64, 0.4)",
       borderWidth: 2,
-      radius: 4,
+      radius: 2,
       tension: 0.4,
       yAxisID: "y_temp",
       pointBackgroundColor: "rgb(255, 159, 64)",
@@ -33,7 +33,7 @@ let inputChartData = {
             borderColor: "rgb(54, 162, 235)",
       backgroundColor: "rgba(54, 162, 235, 0.4)",
       borderWidth: 2,
-      radius: 4,
+      radius: 2,
       tension: 0.4,
       yAxisID: "y_presion",
       pointBackgroundColor: "rgb(54, 162, 235)",
@@ -46,7 +46,7 @@ let inputChartData = {
             borderColor: "rgb(75, 192, 192)",
       backgroundColor: "rgba(75, 192, 192, 0.4)",
       borderWidth: 2,
-      radius: 4,
+      radius: 2,
       tension: 0.4,
       yAxisID: "y_ph",
       pointBackgroundColor: "rgb(75, 192, 192)",
@@ -61,6 +61,10 @@ const originalData = {
   labels: [],
   datasets: []
 };
+
+
+let graphLocalData = null;
+let graphHeaderData = null;
 
 // Variable para trackear si estamos en modo filtrado
 let isFiltered = false;
@@ -80,7 +84,7 @@ let aggregatedData = {
 let autoRefreshInterval = null;
 let lastExecutedFunction = null;
 let lastExecutedParams = null;
-const AUTO_REFRESH_TIME = 10 * 60 * 1000; // 10 minutos en milisegundos
+const AUTO_REFRESH_TIME = 10 * (60 * 1000); // 10 minutos en milisegundos
 
 // Función para iniciar la actualización automática
 function startAutoRefresh(functionName, params = null) {
@@ -100,14 +104,14 @@ function startAutoRefresh(functionName, params = null) {
       console.log(`⏰ Auto-refresh ejecutando: ${functionName}`, params);
       
       // Mostrar notificación discreta
-      if (typeof showNotification === 'function') {
+      if (typeof notificationManager.show === 'function') {
         const functionNames = {
           'getInitialChartData': 'datos iniciales',
           'cargarTodosLosDatos': 'todos los datos',
           'filtrarPuntos': 'datos filtrados'
         };
         const friendlyName = functionNames[functionName] || functionName;
-        showNotification(`Actualizando ${friendlyName}...`, 'info', 3000);
+        notificationManager.show(`Actualizando ${friendlyName}...`, 'info', 3000);
       }
       
       switch (functionName) {
@@ -130,18 +134,18 @@ function startAutoRefresh(functionName, params = null) {
     }
   }, AUTO_REFRESH_TIME);
   
-  console.log(`✅ Auto-refresh configurado cada ${AUTO_REFRESH_TIME / 1000 / 60} minutos`);
+  console.log(`✅ Auto-refresh configurado cada ${AUTO_REFRESH_TIME / (1000 * 60)} minutos`);
   
-  // Mostrar notificación de confirmación
-  if (typeof showNotification === 'function') {
-    const functionNames = {
-      'getInitialChartData': 'datos iniciales',
-      'cargarTodosLosDatos': 'todos los datos', 
-      'filtrarPuntos': 'datos filtrados'
-    };
-    const friendlyName = functionNames[functionName] || functionName;
-    showNotification(`Auto-actualización cada 10min: ${friendlyName}`, 'success');
-  }
+  // // Mostrar notificación de confirmación
+  // if (typeof notificationManager.show === 'function') {
+  //   const functionNames = {
+  //     'getInitialChartData': 'datos iniciales',
+  //     'cargarTodosLosDatos': 'todos los datos', 
+  //     'filtrarPuntos': 'datos filtrados'
+  //   };
+  //   const friendlyName = functionNames[functionName] || functionName;
+  //   notificationManager.show(`Auto-actualización cada 10min: ${friendlyName}`, 'success');
+  // }
 }
 
 // Función para detener la actualización automática
@@ -154,9 +158,6 @@ function stopAutoRefresh() {
   lastExecutedFunction = null;
   lastExecutedParams = null;
 }
-
-// ============ FUNCIONES PÚBLICAS PARA CONTROL EXTERNO ============
-// Estas funciones se pueden llamar cuando cambie el estado del proceso
 
 // Función para pausar el auto-refresh (cuando se detiene el proceso)
 function pauseAutoRefresh() {
@@ -173,20 +174,17 @@ function resumeAutoRefresh() {
     startAutoRefresh(lastExecutedFunction, lastExecutedParams);
     
     // Mostrar notificación informativa
-    if (typeof showNotification === 'function') {
+    if (typeof notificationManager.show === 'function') {
       const functionNames = {
         'getInitialChartData': 'datos iniciales',
         'cargarTodosLosDatos': 'todos los datos',
         'filtrarPuntos': 'datos filtrados'
       };
       const friendlyName = functionNames[lastExecutedFunction] || lastExecutedFunction;
-      showNotification(`Auto-actualización cada 10min: ${friendlyName}`, 'success');
+      notificationManager.show(`Auto-actualización cada 10min: ${friendlyName}`, 'success');
     }
   } else {
     console.log("ℹ️ No hay función previa para reanudar auto-refresh");
-    if (typeof showNotification === 'function') {
-      showNotification("Auto-actualización activada - navega a gráficas para comenzar", 'info');
-    }
   }
 }
 
@@ -203,7 +201,7 @@ function actualizarGrafica() {
     (state.grafica_ph && state.grafica_ph.length > 0)
   )) {
     hideChartLoading();
-    showNotification('Datos de gráfica cargados correctamente', 'success');
+    notificationManager.show('Datos de gráfica cargados correctamente', 'success');
   }
   
   // Siempre actualizar inputChartData y originalData con los nuevos datos del state
@@ -404,7 +402,7 @@ function setGranularity(granularity) {
     18: '3 horas'
   };
   
-  showNotification(`Granularidad cambiada a: ${granularityNames[granularity]}`, 'success');
+  notificationManager.show(`Granularidad cambiada a: ${granularityNames[granularity]}`, 'success');
 }
 
 // Función helper para reaplicar el filtro actual cuando llegan datos nuevos
@@ -713,7 +711,7 @@ const config = {
         borderColor: '#e0e0e0',
         borderWidth: 1,
         padding: 12,
-        cornerRadius: 4,
+        cornerRadius: 2,
         displayColors: true
       },
       zoom: {
@@ -946,8 +944,8 @@ function updateResponsiveDisplay() {
   const isMobile = width < 768;
 
   myChart.data.datasets.forEach(dataset => {
-    dataset.radius = isMobile ? 4 : 4;
-    dataset.pointHoverRadius = isMobile ? 4 : 4;
+    dataset.radius = isMobile ? 1 : 1;
+    dataset.pointHoverRadius = isMobile ? 1 : 1;
   });
 
   if (isMobile) {
@@ -1236,7 +1234,7 @@ function descargarGrafica() {
     // Limpiar el chart temporal
     tempChart.destroy();
     
-    showNotification('Se ha descargado la imagen en formato JPG con fondo blanco');
+    notificationManager.show('Se ha descargado la imagen en formato JPG con fondo blanco');
   }, 100);
 }
 
@@ -1267,7 +1265,7 @@ function descargarCSV() {
   link.click();
   document.body.removeChild(link);
 
-  showNotification(`Se ha descargado el archivo`);
+  notificationManager.show(`Se ha descargado el archivo`);
 }
 
 function resetZoom() {
@@ -1276,6 +1274,11 @@ function resetZoom() {
 }
 
 function filtrarPuntos(cantidad) {
+
+  let fileNameParam = null;
+  if (graphLocalData !== null && graphHeaderData !== null && graphHeaderData.filename !== null && graphHeaderData.filename !== '') {
+    fileNameParam = graphHeaderData.filename;
+  }
   // Mostrar animación de carga
   showChartLoading();
   
@@ -1287,7 +1290,10 @@ function filtrarPuntos(cantidad) {
   currentFilterPoints = cantidad;
   
   // ============ INICIAR AUTO-REFRESH PARA FILTRADO ============
-  startAutoRefresh('filtrarPuntos', { cantidad: cantidad });
+  // solo sin no hay un proceso activo
+  if (graphHeaderData == null) {
+    startAutoRefresh('filtrarPuntos', { cantidad: cantidad });
+  }
   
   // ============ NUEVA LÓGICA CON API ============
   
@@ -1305,22 +1311,8 @@ function filtrarPuntos(cantidad) {
   async function loadFilteredGraphData() {
     try {
       
-      // Llamar al endpoint optimizado con el límite específico
-      const response = await fetch(`${API_BASE_URL}/api/graph/recent?limit=${cantidad}`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache'
-        },
-        signal: AbortSignal.timeout(10000)
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log(`📈 Datos filtrados recibidos (${cantidad} puntos):`, data);
+      // Llamar al endpoint optimizado con el límite específico usando ApiManager
+      const data = await apiManager.getRecentGraphData(cantidad, fileNameParam);
       
       // Mapear los datos del endpoint a las gráficas del estado
       const graphData = {
@@ -1330,64 +1322,35 @@ function filtrarPuntos(cantidad) {
         grafica_ph: data.ph_reciente || []
       };
       
-      console.log("🔄 Mapeando datos filtrados a gráficas:", graphData);
       
       // Actualizar UI con los datos filtrados
       updateChartsNewData(graphData);
       
-      const totalPoints = Object.values(graphData).reduce((sum, arr) => sum + arr.length, 0);
-      
     } catch (error) {
       console.error("❌ Error cargando datos filtrados de gráficas:", error);
       
-      if (typeof showNotification === 'function') {
-        showNotification("Error cargando datos filtrados", "error");
+      if (typeof notificationManager.show === 'function') {
+        notificationManager.show("Error cargando datos filtrados", "error");
       }
     } finally {
       checkAndHideLoading();
     }
   }
-  
-  async function loadGraphStats() {
-    try {
-      
-      const response = await fetch(`${API_BASE_URL}/api/graph/stats`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache'
-        },
-        signal: AbortSignal.timeout(5000)
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
-      }
-
-      const stats = await response.json();
-      console.log("📊 ESTADÍSTICAS FILTRADAS:", stats);
-      
-    } catch (error) {
-      console.error("❌ Error cargando estadísticas filtradas:", error);
-    } finally {
-      checkAndHideLoading();
-    }
-  }
-  
   // Ejecutar ambas cargas con delay
   setTimeout(loadFilteredGraphData, 300);
-  setTimeout(loadGraphStats, 800);
   
   // Mostrar notificación de éxito
   const horas = Math.round(cantidad/6);
-  showNotification(`Cargando últimos ${cantidad} puntos (${horas} horas aprox.) desde API`, 'info');
+  notificationManager.show(`Cargando últimos ${cantidad} puntos (${horas} horas aprox.) desde API`, 'info');
 }
+
+
 
 function restaurarDatos() {
   // Verificar que originalData tenga datos
   if (!originalData.labels || originalData.labels.length === 0) {
     console.warn('No hay datos originales para restaurar');
-    showNotification('No hay datos originales para restaurar', 'warning');
+    notificationManager.show('No hay datos originales para restaurar', 'warning');
     return;
   }
   
@@ -1432,7 +1395,7 @@ function restaurarDatos() {
     updateResponsiveDisplay();
   }
   
-  showNotification('Mostrando todos los datos disponibles', 'success');
+  notificationManager.show('Mostrando todos los datos disponibles', 'success');
 }
 
 function filtrarPorHoras() {
@@ -1444,7 +1407,7 @@ function filtrarPorHoras() {
     // Limpiar el input después de aplicar el filtro
     document.getElementById("horasInput").value = "";
   } else {
-    showNotification("Por favor, ingresa un número válido de horas mayor a 0.", 'warning');
+    notificationManager.show("Por favor, ingresa un número válido de horas mayor a 0.", 'warning');
   }
 }
 
@@ -1559,55 +1522,31 @@ function hideChartLoading() {
   myChart.update('none');
 }
 
-function getInitialChartData() {
+function getInitialChartData(curveDetail = null) {
   // Resetear las gráficas
     myChart.data.labels = [];
     myChart.data.datasets.forEach((dataset) => {
       dataset.data = [];
     });
     myChart.update('none');
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
     
     // Mostrar animación de carga
     showChartLoading();
     
     // ============ INICIAR AUTO-REFRESH ============
-    startAutoRefresh('getInitialChartData');
-    
-    // ============ USANDO ENDPOINT OPTIMIZADO graph/recent ============
-    
-    // Variables para controlar cuándo ocultar el loading
-    let completedRequests = 0;
-    const totalRequests = 2; // loadInitialGraphData + loadGraphStats
-    
-    function checkAndHideLoading() {
-      completedRequests++;
-      console.log(`✅ Completado request ${completedRequests}/${totalRequests}`);
-      if (completedRequests >= totalRequests) {
-        hideChartLoading();
-        console.log("🎯 Ambos requests completados - Loading ocultado");
-      }
+    if (curveDetail !== null) {
+      startAutoRefresh('getInitialChartData');
     }
     
+    // ============ USANDO ENDPOINT OPTIMIZADO graph/recent ============
     async function loadInitialGraphData() {
       try {
-        console.log("📊 Cargando datos iniciales de gráficas con endpoint optimizado");
         
-        // Usar el endpoint optimizado que trae todas las gráficas en una sola llamada
-        const response = await fetch(`${API_BASE_URL}/api/graph/recent?limit=50`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
-          },
-          signal: AbortSignal.timeout(10000) // 10 segundos timeout
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        console.log("📈 Datos recientes recibidos:", data);
+        // Usar el endpoint optimizado que trae todas las gráficas en una sola llamada con ApiManager
+        const data = await apiManager.getRecentGraphData(50);
         
         // Mapear los datos del endpoint a las gráficas del estado
         const graphData = {
@@ -1617,76 +1556,133 @@ function getInitialChartData() {
           grafica_ph: data.ph_reciente || []
         };
         
-        console.log("� Mapeando datos a gráficas:", graphData);
         
         // Actualizar UI con todos los datos de una vez
         updateChartsNewData(graphData);
         
-        const totalPoints = Object.values(graphData).reduce((sum, arr) => sum + arr.length, 0);
-        console.log(`✅ Gráficas iniciales cargadas exitosamente: ${totalPoints} puntos totales`);
         
       } catch (error) {
         console.error("❌ Error cargando datos iniciales de gráficas:", error);
         
-        if (typeof showNotification === 'function') {
-          showNotification("Error cargando gráficas iniciales", "error");
+        if (typeof notificationManager.show === 'function') {
+          notificationManager.show("Error cargando gráficas iniciales", "error");
         }
       } finally {
-        checkAndHideLoading(); // Verificar si ya se completaron ambos requests
+        hideChartLoading(); // Verificar si ya se completaron ambos requests
       }
     }
-    
-    // ============ FUNCIÓN PARA CARGAR ESTADÍSTICAS ============
-    
-    async function loadGraphStats() {
+
+    function loadDataFromObject(curveDetail) {
       try {
-        console.log("📈 Cargando estadísticas de gráficas...");
-        
-        const response = await fetch(`${API_BASE_URL}/api/graph/stats`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
-          },
-          signal: AbortSignal.timeout(5000) // 5 segundos timeout
-        });
+        // Mapear los datos del objeto curveDetail a las gráficas del estado
 
-        if (!response.ok) {
-          throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
-        }
+        graphLocalData = {
+          grafica_presion: curveDetail.dataPoints.map(point => (point.presion)),
+          grafica_temperatura_masa: curveDetail.dataPoints.map(point => (point.temp_masa)),
+          grafica_temperatura_lixiviados: curveDetail.dataPoints.map(point => (point.temp_lixiviados)),
+          grafica_ph: curveDetail.dataPoints.map(point => (point.ph))
+        };
+        graphHeaderData = {
+          processName: curveDetail.processName,
+          recipeName: curveDetail.recipeName,
+          coffeeType: curveDetail.coffeeType,
+          pressureType: curveDetail.pressureType,
+          comments: curveDetail.comments,
+          filename: curveDetail.filename,
+          duration: curveDetail.duration
+        };
 
-        const stats = await response.json();
-        
-        console.log("📊 ESTADÍSTICAS DE GRÁFICAS:", stats);
-        console.log("📊 Estructura detallada:");
-        
-        // Mostrar estadísticas de cada tipo de gráfica
-        Object.keys(stats).forEach(graphType => {
-          const graphStats = stats[graphType];
-          console.log(`📈 ${graphType.toUpperCase()}:`, {
-            count: graphStats.count,
-            min: graphStats.min,
-            max: graphStats.max,
-            avg: graphStats.avg,
-            first_timestamp: graphStats.first_timestamp,
-            last_timestamp: graphStats.last_timestamp
-          });
-        });
-        
-        // Calcular estadísticas generales
-        const totalPoints = Object.values(stats).reduce((sum, stat) => sum + (stat.count || 0), 0);
-        console.log(`📊 RESUMEN GENERAL: ${totalPoints} puntos totales en todas las gráficas`);
-        
+        //crea un template html para agregar como primer hijo del elemento con clase .chart-page donde se encuentra toda la información de graphHeaderData
+        const headerHtml = `
+          <div class="chart-header-info" id="chart-header-info">
+            <div class="process-header">
+              <div class="process-header-content">
+                <button class="back-button" onclick="navigateToSection('curvas')" title="Volver a Curvas">
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m12 19-7-7 7-7"/>
+                    <path d="M19 12H5"/>
+                  </svg>
+                </button>
+                <h2 class="process-name">${graphHeaderData.processName || 'Proceso Desconocido'}</h2>
+              </div>
+            </div>
+            
+            <div class="header-details">
+              <div class="details-grid">
+                <div class="detail-card">
+                  <span class="detail-icon">📋</span>
+                  <div class="detail-content">
+                    <span class="detail-label">Receta</span>
+                    <span class="detail-value">${graphHeaderData.recipeName || 'No especificada'}</span>
+                  </div>
+                </div>
+                
+                <div class="detail-card">
+                  <span class="detail-icon">☕</span>
+                  <div class="detail-content">
+                    <span class="detail-label">Tipo de Café</span>
+                    <span class="detail-value">${graphHeaderData.coffeeType || 'No especificado'}</span>
+                  </div>
+                </div>
+                
+                <div class="detail-card">
+                  <span class="detail-icon">⚙️</span>
+                  <div class="detail-content">
+                    <span class="detail-label">Presión</span>
+                    <span class="detail-value">${graphHeaderData.pressureType || 'No especificado'}</span>
+                  </div>
+                </div>
+                
+                <div class="detail-card">
+                  <span class="detail-icon">⏱️</span>
+                  <div class="detail-content">
+                    <span class="detail-label">Duración total</span>
+                    <span class="detail-value">${graphHeaderData.duration || 'No disponible'}</span>
+                  </div>
+                </div>
+              </div>
+              
+              ${graphHeaderData.comments && graphHeaderData.comments !== 'Sin comentarios' ? `
+                <div class="comments-section">
+                  <div class="detail-card">
+                    <span class="detail-icon">💬</span>
+                    <div class="detail-content">
+                      <span class="detail-label">Comentarios</span>
+                      <span class="detail-value comment-text">${graphHeaderData.comments}</span>
+                    </div>
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+
+        // Agregar el template al DOM
+        const chartPage = document.querySelector('.chart-page');
+        chartPage.insertAdjacentHTML('afterbegin', headerHtml);
+
+        // Actualizar UI con los datos del objeto
+        updateChartsNewData(graphLocalData);
       } catch (error) {
-        console.error("❌ Error cargando estadísticas de gráficas:", error);
+        console.error("❌ Error cargando datos desde objeto curveDetail:", error);
       } finally {
-        checkAndHideLoading(); // Verificar si ya se completaron ambos requests
+        hideChartLoading();
       }
     }
     
     // Ejecutar ambas cargas: datos iniciales y estadísticas
-    setTimeout(loadInitialGraphData, 300);
-    setTimeout(loadGraphStats, 800); // Con delay para no saturar el ESP32
+    //elimina el elemento con id chart-header-info si existe
+    const existingHeader = document.getElementById('chart-header-info');
+    if (existingHeader) {
+      existingHeader.remove();
+    }
+    if (curveDetail == null) {
+      graphHeaderData = null;
+      graphLocalData = null;
+      setTimeout(loadInitialGraphData, 300);
+    } else {
+      loadDataFromObject(curveDetail);
+    }
 }
 
 // ============ NUEVA FUNCIÓN: UPDATE UI ELEMENTS ============
@@ -1727,7 +1723,11 @@ const graficasDiv = document.getElementById('graficas');
 observer.observe(graficasDiv, { attributes: true, attributeFilter: ['style'] });
 
 function cargarTodosLosDatos() {
-  console.log('🔄 Iniciando carga de TODOS los datos históricos...');
+
+  let fileNameParam = null;
+  if (graphLocalData !== null && graphHeaderData !== null && graphHeaderData.filename !== null && graphHeaderData.filename !== '') {
+    fileNameParam = graphHeaderData.filename;
+  }
   
   // Mostrar animación de carga
   showChartLoading();
@@ -1740,7 +1740,10 @@ function cargarTodosLosDatos() {
   updateFilterUI(0);
   
   // ============ INICIAR AUTO-REFRESH PARA TODOS LOS DATOS ============
-  startAutoRefresh('cargarTodosLosDatos');
+  //solo si no hay un proceso activo
+  if (graphHeaderData == null) {
+    startAutoRefresh('cargarTodosLosDatos');
+  }
   
   // Variables para controlar cuándo ocultar el loading
   let completedRequests = 0;
@@ -1748,7 +1751,6 @@ function cargarTodosLosDatos() {
   
   function checkAndHideLoading() {
     completedRequests++;
-    console.log(`✅ Completado request histórico ${completedRequests}/${totalRequests}`);
     if (completedRequests >= totalRequests) {
       hideChartLoading();
       console.log("🎯 Ambos requests históricos completados - Loading ocultado");
@@ -1757,141 +1759,46 @@ function cargarTodosLosDatos() {
   
   async function loadAllHistoricalData() {
     try {
-      console.log("📊 Cargando TODOS los datos históricos desde endpoints individuales...");
       
-      // Definir los endpoints individuales
-      const endpoints = {
-        temperatura_masa: `${API_BASE_URL}/api/graph/temperatura-masa`,
-        temperatura_lixiviados: `${API_BASE_URL}/api/graph/temperatura-lixiviados`,
-        presion: `${API_BASE_URL}/api/graph/presion`,
-        ph: `${API_BASE_URL}/api/graph/ph`
-      };
+      const data = await apiManager.getAllGraphData(fileNameParam);
       
-      console.log("🔗 Endpoints a consultar:", endpoints);
-      
-      // Hacer todas las peticiones en paralelo
-      const promises = Object.entries(endpoints).map(async ([graphType, url]) => {
-        try {
-          console.log(`📡 Consultando ${graphType} desde: ${url}`);
-          
-          const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-              'Accept': 'application/json',
-              'Cache-Control': 'no-cache'
-            },
-            signal: AbortSignal.timeout(15000) // 15 segundos por endpoint
-          });
-
-          if (!response.ok) {
-            throw new Error(`HTTP Error para ${graphType}: ${response.status} ${response.statusText}`);
-          }
-
-          const data = await response.json();
-          console.log(`📈 Datos de ${graphType} recibidos:`, data.length, 'puntos');
-          
-          return { graphType, data: data || [] };
-          
-        } catch (error) {
-          console.error(`❌ Error cargando ${graphType}:`, error);
-          return { graphType, data: [], error: error.message };
-        }
-      });
-      
-      // Esperar a que se completen todas las peticiones
-      const results = await Promise.all(promises);
-      console.log("📊 Resultados de todas las consultas:", results);
-      
-      // Mapear los resultados al formato esperado
+      // Mapear los datos del endpoint unificado al formato esperado
       const graphData = {
-        grafica_presion: [],
-        grafica_temperatura_masa: [],
-        grafica_temperatura_lixiviados: [],
-        grafica_ph: []
+        grafica_presion: data.presion || [],
+        grafica_temperatura_masa: data.temperatura_masa || [],
+        grafica_temperatura_lixiviados: data.temperatura_lixiviados || [],
+        grafica_ph: data.ph || []
       };
-      
-      // Procesar cada resultado
-      results.forEach(result => {
-        if (result.error) {
-          console.warn(`⚠️ ${result.graphType} tuvo error: ${result.error}`);
-          return;
-        }
-        
-        switch (result.graphType) {
-          case 'temperatura_masa':
-            graphData.grafica_temperatura_masa = result.data.grafica_temperatura_masa;
-            break;
-          case 'temperatura_lixiviados':
-            graphData.grafica_temperatura_lixiviados = result.data.grafica_temperatura_lixiviados;
-            break;
-          case 'presion':
-            graphData.grafica_presion = result.data.grafica_presion;
-            break;
-          case 'ph':
-            graphData.grafica_ph = result.data.grafica_ph;
-            break;
-        }
-      });
-      
-      console.log("🔄 Mapeando TODOS los datos históricos a gráficas:", {
-        presion: graphData.grafica_presion.length,
-        temp_masa: graphData.grafica_temperatura_masa.length,
-        temp_lix: graphData.grafica_temperatura_lixiviados.length,
-        ph: graphData.grafica_ph.length
-      });
       
       // Actualizar UI con todos los datos históricos
       updateChartsNewData(graphData);
       
       const totalPoints = Object.values(graphData).reduce((sum, arr) => sum + arr.length, 0);
-      console.log(`✅ TODOS los datos históricos cargados exitosamente: ${totalPoints} puntos totales`);
       
-      // Mostrar notificación de éxito
-      const graphCounts = results.map(r => `${r.graphType}: ${r.data.length}`).join(', ');
-      showNotification(`Datos históricos cargados: ${graphCounts}`, 'success');
+      // Mostrar información adicional del endpoint
+      if (data.total_points !== undefined) {
+        
+        const processStatus = data.proceso_activo ? "🔄 ACTIVO" : "⏹️ FINALIZADO";
+        notificationManager.show(`${totalPoints} puntos cargados - Proceso ${processStatus}`, 'success');
+      } else {
+        notificationManager.show(`${totalPoints} puntos históricos cargados desde API unificada`, 'success');
+      }
       
     } catch (error) {
-      console.error("❌ Error general cargando TODOS los datos históricos:", error);
+      console.error("❌ Error cargando TODOS los datos históricos:", error);
       
-      if (typeof showNotification === 'function') {
-        showNotification("Error cargando datos históricos completos", "error");
+      if (typeof notificationManager.show === 'function') {
+        notificationManager.show("Error cargando datos históricos desde API unificada", "error");
       }
     } finally {
       checkAndHideLoading();
     }
   }
   
-  async function loadGraphStats() {
-    try {
-      console.log("📈 Cargando estadísticas completas...");
-      
-      const response = await fetch(`${API_BASE_URL}/api/graph/stats`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache'
-        },
-        signal: AbortSignal.timeout(5000)
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
-      }
-
-      const stats = await response.json();
-      console.log("📊 ESTADÍSTICAS COMPLETAS:", stats);
-      
-    } catch (error) {
-      console.error("❌ Error cargando estadísticas completas:", error);
-    } finally {
-      checkAndHideLoading();
-    }
-  }
   
   // Ejecutar ambas cargas con delay
   setTimeout(loadAllHistoricalData, 300);
-  setTimeout(loadGraphStats, 800);
   
   // Mostrar notificación
-  showNotification("Cargando TODOS los datos históricos desde API...", 'info');
+  notificationManager.show("Cargando TODOS los datos históricos desde API...", 'info');
 }

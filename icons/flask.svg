@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+  <!-- Base del tubo de ensayo (matraz triangular) -->
+  <path d="M9 2h6v2h-1v6l4.5 6.5c0.5 0.7 0.1 1.5-0.7 1.5H6.2c-0.8 0-1.2-0.8-0.7-1.5L10 10V4H9V2z" stroke="currentColor" stroke-width="1" fill="none"/>
+  
+  <!-- Contenido líquido del matraz -->
+  <path d="M10.5 11l3 4.3c0.2 0.3 0.05 0.7-0.3 0.7H10.8c-0.35 0-0.5-0.4-0.3-0.7L13.5 11z" fill="currentColor" opacity="0.3"/>
+  
+  <!-- Burbujas de fermentación -->
+  <circle cx="11.5" cy="13" r="0.8" fill="currentColor" opacity="0.6"/>
+  <circle cx="12.8" cy="14.5" r="0.5" fill="currentColor" opacity="0.4"/>
+  <circle cx="10.2" cy="14.8" r="0.4" fill="currentColor" opacity="0.5"/>
+  
+  <!-- Líneas de nivel del líquido -->
+  <line x1="10.8" y1="12.5" x2="13.2" y2="12.5" stroke="currentColor" stroke-width="0.5" opacity="0.7"/>
+  <line x1="10.5" y1="13.8" x2="13.5" y2="13.8" stroke="currentColor" stroke-width="0.5" opacity="0.7"/>
+  
+  <!-- Tapa del matraz -->
+  <rect x="10" y="2" width="4" height="0.5" fill="currentColor"/>
+  
+  <!-- Indicador de proceso activo (pequeña línea de vapor) -->
+  <path d="M11.5 1.5 Q11.8 1 12 1.5 Q12.2 1 12.5 1.5" stroke="currentColor" stroke-width="0.8" fill="none" opacity="0.8"/>
+</svg>
