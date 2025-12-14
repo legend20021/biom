@@ -72,7 +72,7 @@
       overflow: hidden;
     }
 
-    /* Loader inicial - estilos críticos que coinciden con el diseño principal */
+    /* Loader inicial - diseño simplificado */
     .initial-loader {
       position: fixed;
       top: 0;
@@ -96,57 +96,35 @@
 
     .loader-container {
       text-align: center;
-      transform: scale(0.9);
-      animation: loaderEntry 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      animation: fadeIn 0.8s ease-out;
     }
 
-    .company-logo {
-      margin-bottom: 1rem;
-      animation: logoFloat 3s ease-in-out infinite;
+    .loader-spinner-container {
+      position: relative;
+      width: 160px;
+      height: 160px;
+      margin: 0 auto 3rem;
     }
 
     .logo-circle {
-      width: 80px;
-      height: 80px;
-      margin: 0 auto 1rem;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 120px;
+      height: 120px;
       border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: var(--card-shadow);
-      position: relative;
-      overflow: hidden;
+      background-image: url('./icons/pyh.png');
       background-position: center;
       background-size: contain;
-      background-image: url('./icons/pyh.png');
-    }
-
-    .loader-text {
-      color: var(--text-primary);
-      text-align: center;
-      animation: textFadeIn 1s ease-out 0.5s both;
-      display: grid;
-      place-items: center;
-    }
-
-    .loader-text h3 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .loader-spinner-modern {
-      position: relative;
-      width: 60px;
-      height: 60px;
+      background-repeat: no-repeat;
+      z-index: 2;
     }
 
     .spinner-ring {
       position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
       border-radius: 50%;
@@ -155,19 +133,19 @@
 
     .spinner-ring:nth-child(1) {
       border-top-color: var(--primary-color);
-      animation: spinRing 1.5s linear infinite;
+      animation: spinRing 2s linear infinite;
     }
 
     .spinner-ring:nth-child(2) {
       border-right-color: var(--secondary-color);
-      animation: spinRing 1.5s linear infinite reverse;
-      animation-delay: 0.2s;
+      animation: spinRing 2s linear infinite reverse;
+      animation-delay: 0.3s;
     }
 
-    .spinner-ring:nth-child(3) {
-      border-bottom-color: var(--primary-color);
-      animation: spinRing 1.5s linear infinite;
-      animation-delay: 0.4s;
+    .loader-text {
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      opacity: 0.8;
     }
 
     .main-container {
@@ -179,28 +157,15 @@
       opacity: 1;
     }
 
-    /* Animaciones críticas */
-    @keyframes loaderEntry {
+    /* Animaciones simplificadas */
+    @keyframes fadeIn {
       from {
         opacity: 0;
-        transform: scale(0.8) translateY(20px);
+        transform: translateY(20px);
       }
-
       to {
         opacity: 1;
-        transform: scale(1) translateY(0);
-      }
-    }
-
-    @keyframes logoFloat {
-
-      0%,
-      100% {
         transform: translateY(0);
-      }
-
-      50% {
-        transform: translateY(-8px);
       }
     }
 
@@ -208,29 +173,14 @@
       0% {
         transform: rotate(0deg);
       }
-
       100% {
         transform: rotate(360deg);
-      }
-    }
-
-    @keyframes textFadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
       }
     }
   </style>
 
   <!-- Preload de iconos críticos -->
   <link rel="preload" href="./icons/pyh.png" as="image">
-  <link rel="preload" href="./icons/menu.svg" as="image">
-  <link rel="preload" href="./icons/config-white.svg" as="image">
 
   <!-- Eliminamos el link normal del CSS ya que se carga con preload -->
   <link rel="icon" type="image/x-icon" href="" />
@@ -256,16 +206,15 @@
 
   <!-- Script inline para manejo de FOUC -->
   <script>
-    // Prevenir FOUC y manejar carga de estilos
+    // Prevenir FOUC y manejar carga de estilos - Optimizado para no esperar imágenes
     (function () {
       let stylesLoaded = false;
-      let domReady = false;
 
-      // Función para mostrar el contenido cuando todo esté listo
+      // Función para mostrar el contenido cuando los estilos estén listos
       function showContent() {
-        if (stylesLoaded && domReady) {
+        if (stylesLoaded) {
           document.body.classList.add('loaded');
-          // Pequeño delay adicional para asegurar que todo esté renderizado
+          // Mostrar contenido inmediatamente después de cargar CSS
           requestAnimationFrame(() => {
             document.body.style.visibility = 'visible';
           });
@@ -280,11 +229,7 @@
         }
       }
 
-      // Detectar cuando el DOM esté listo
-      function handleDOMReady() {
-        domReady = true;
-        showContent();
-      }
+
 
       // Verificar estilos periódicamente
       const styleCheck = setInterval(() => {
@@ -294,58 +239,139 @@
         }
       }, 50);
 
-      // Si los estilos ya están cargados
-      if (document.readyState !== 'loading') {
-        handleDOMReady();
-        checkStylesLoaded();
-      } else {
-        // Esperar a que el DOM esté listo
-        document.addEventListener('DOMContentLoaded', handleDOMReady);
-      }
-
-      // Fallback: forzar carga después de tiempo límite
+      // Fallback: Mostrar contenido después de 2 segundos máximo (reducido de 3s)
       setTimeout(() => {
         if (!stylesLoaded) {
-          console.warn('BIOMASTER: Timeout en carga de estilos, mostrando contenido');
+          console.log('BIOMASTER: Timeout CSS - mostrando contenido sin estilos');
           stylesLoaded = true;
           showContent();
         }
         clearInterval(styleCheck);
-      }, 3000);
+      }, 2000);
 
-      // Fallback más agresivo para casos extremos
+      // Verificación inicial - si el DOM ya está listo, verificar estilos
+      if (document.readyState !== 'loading') {
+        console.log('BIOMASTER: DOM ya está listo');
+        checkStylesLoaded();
+      } else {
+        // Esperar a que el DOM esté listo y verificar estilos
+        document.addEventListener('DOMContentLoaded', () => {
+          console.log('BIOMASTER: DOM listo para interacción');
+          checkStylesLoaded();
+        });
+      }
+
+      // Fallback de seguridad más agresivo - aumentado para ver el texto dinámico
       setTimeout(() => {
         document.body.classList.add('loaded');
         document.body.style.opacity = '1';
         document.body.style.visibility = 'visible';
-      }, 5000);
+        console.log('BIOMASTER: Fallback de seguridad activado');
+      }, 8000); // Aumentado a 8 segundos para ver mejor el texto dinámico
     })();
   </script>
 
   <!-- Loader inicial -->
   <div class="initial-loader">
     <div class="loader-container">
-      <div class="company-logo">
-        <div class="logo-circle">
-          <div class="logo-inner">
-            <span class="logo-letter"></span>
-          </div>
-        </div>
+      <div class="loader-spinner-container">
+        <div class="logo-circle"></div>
+        <div class="spinner-ring"></div>
+        <div class="spinner-ring"></div>
       </div>
-      <div class="loader-content">
-
-        <div class="loader-text">
-          <h3>BIOMASTER Pro V2 IA</h3>
-          <p>Inicializando componentes del sistema...</p>
-          <div class="loader-spinner-modern">
-            <div class="spinner-ring"></div>
-            <div class="spinner-ring"></div>
-            <div class="spinner-ring"></div>
-          </div>
-        </div>
+      <div class="loader-text">
+        <p id="loadingText">Inicializando componentes del sistema...</p>
       </div>
     </div>
   </div>
+
+  <script>
+    // Script para texto de carga dinámico - ejecutar inmediatamente
+    (function() {
+      console.log('BIOMASTER: Iniciando script de texto dinámico');
+      
+      const loadingMessages = [
+        'Inicializando componentes del sistema...',
+        'Cargando recursos críticos...',
+        'Preparando interfaz de usuario...',
+        'Cargando imágenes y gráficos...',
+        'Inicializando scripts de aplicación...',
+        'Configurando sistema de sensores...',
+        'Estableciendo conexiones de red...',
+        'Cargando módulos de control...',
+        'Preparando dashboard principal...',
+        'Verificando configuración del sistema...',
+        'Inicializando gráficas de datos...',
+        'Cargando componentes de calibración...',
+        'Preparando sistema de recetas...',
+        'Finalizando inicialización...'
+      ];
+
+      let currentIndex = 0;
+      let intervalId = null;
+      
+      // Función para iniciar el texto dinámico
+      function startDynamicText() {
+        const loadingTextElement = document.getElementById('loadingText');
+        
+        if (loadingTextElement) {
+          console.log('BIOMASTER: Elemento loadingText encontrado, iniciando animación');
+          
+          intervalId = setInterval(() => {
+            currentIndex = (currentIndex + 1) % loadingMessages.length;
+            loadingTextElement.textContent = loadingMessages[currentIndex];
+            console.log('BIOMASTER: Cambiando texto a:', loadingMessages[currentIndex]);
+          }, 1200); 
+          
+          return true;
+        } else {
+          console.log('BIOMASTER: Elemento loadingText no encontrado');
+          return false;
+        }
+      }
+      
+      // Función para limpiar el intervalo
+      function stopDynamicText() {
+        if (intervalId) {
+          clearInterval(intervalId);
+          intervalId = null;
+          console.log('BIOMASTER: Texto dinámico detenido');
+        }
+      }
+      
+      // Intentar iniciar inmediatamente
+      if (!startDynamicText()) {
+        // Si no funciona, esperar un poco y reintentar
+        setTimeout(() => {
+          if (!startDynamicText()) {
+            console.log('BIOMASTER: No se pudo iniciar el texto dinámico después del segundo intento');
+          }
+        }, 100);
+      }
+
+      // Limpiar el intervalo cuando la página esté cargada
+      window.addEventListener('load', () => {
+        setTimeout(stopDynamicText, 3000); // Aumentado a 3 segundos
+      });
+
+      // También limpiar cuando el body tenga la clase 'loaded'
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.target.classList.contains('loaded')) {
+            setTimeout(stopDynamicText, 3000); // Aumentado a 3 segundos
+            observer.disconnect();
+          }
+        });
+      });
+
+      if (document.body) {
+        observer.observe(document.body, {
+          attributes: true,
+          attributeFilter: ['class']
+        });
+      }
+    })();
+  </script>
 
   <div class="main-container">
 
@@ -357,24 +383,19 @@
 
     <!-- Botón de menú, visible solo en dispositivos pequeños -->
     <div class="menu-button" id="menuButton" onclick="toggleMenu()">
-      <img class="custom-icon" src="./icons/menu.svg" alt="Menú" loading="eager">
+      <img class="custom-icon" src="./icons/menu.svg" alt="Menú" loading="lazy">
     </div>
-
-    <div class="menu-button scroll-top" id="scrollTop" onclick="scrollToTop()">
-      <img class="custom-icon" src="./icons/up.svg" alt="Menú" loading="eager">
-    </div>
-
     <div class="control-button" id="controlButton" onclick="toggleActionButtons()">
-      <img class="custom-icon" src="./icons/config-white.svg" alt="Configuración" loading="eager">
+      <img class="custom-icon" src="./icons/config-white.svg" alt="Configuración" loading="lazy">
     </div>
     <div class="control-button play-button" id="playButton" onclick="actionPlay()">
-      <img class="custom-icon" src="./icons/play.svg" alt="Menú" loading="eager">
+      <img class="custom-icon" src="./icons/play.svg" alt="Menú" loading="lazy">
     </div>
     <div class="control-button stop-button" id="stopButton" onclick="actionStop()">
-      <img class="custom-icon" src="./icons/stop.svg" alt="Menú" loading="eager">
+      <img class="custom-icon" src="./icons/stop.svg" alt="Menú" loading="lazy">
     </div>
     <div class="control-button close-button" id="closeButton" onclick="actionClose()">
-      <img class="custom-icon" src="./icons/close.svg" alt="Menú" loading="eager">
+      <img class="custom-icon" src="./icons/close.svg" alt="Menú" loading="lazy">
     </div>
 
 
@@ -421,23 +442,15 @@
               Curvas
             </a>
           </li>
-          
-          <!-- <li class="nav-item fade-in-up" data-section="usuarios"  onclick="showSection(event)">
-            <a href="#usuarios" class="nav-link" data-section="usuarios">
-              <span class="nav-icon" data-section="usuarios" >
-                <img class="custom-icon" src="./icons/users.svg" alt="Usuarios" loading="lazy" data-section="usuarios" >
-              </span>
-              Usuarios
-            </a>
-          </li>
-          <li class="nav-item fade-in-up" data-section="conexiones" onclick="showSection(event)"">
+
+          <li class="nav-item fade-in-up" data-section="conexiones" onclick="showSection(event)">
             <a href="#conexiones" class="nav-link" data-section="conexiones" >
               <span class="nav-icon" data-section="conexiones">
                 <img class="custom-icon" src="./icons/wifi.svg" alt="WiFi" loading="lazy" data-section="conexiones">
               </span>
-              Conexiones
+              WiFi
             </a>
-          </li> -->
+          </li>
           <li class="nav-item fade-in-up" data-section="ayuda" onclick="showSection(event)">
             <a href="#ayuda" class="nav-link"  data-section="ayuda">
               <span class="nav-icon" data-section="ayuda">
@@ -484,7 +497,7 @@
         </div>
 
         <div class="header-mobile">
-          <img src="./icons/pyh.png" alt="Penagos y Hermanos Logo" loading="eager">
+          <img src="./icons/pyh.png" alt="Penagos y Hermanos Logo" loading="lazy">
           <div class="header-mobile-title">Biomaster Pro V2 IA</div>
         </div>
 
@@ -932,37 +945,108 @@
 
       <div class="content" id="conexiones" style="display: none">
         <h2>Conexiones WIFI</h2>
-        <!-- contenido wifi -->
-        <div class="panel wifi-table">
-          <div class="container5">
-            <table id="wifiTable5">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Nombre de Red</th>
-                  <th>Intensidad</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <!-- Las redes Wi-Fi se agregarán aquí -->
-              </tbody>
-            </table>
+        
+        <!-- Sección de Redes Disponibles -->
+        <div class="panel wifi-networks-panel" id="wifiNetworksPanel">
+          <h3>🔍 Redes WiFi Disponibles</h3>
+          <p class="wifi-description">Conecta a red WiFi externa para acceso a internet manteniendo tu punto de acceso activo.</p>
+          
+          <!-- Estado de escaneo -->
+          <div class="wifi-scan-status" id="wifiScanStatus">
+            <div class="wifi-scan-loading">
+              <span class="wifi-scan-spinner">🔄</span>
+              <span>Escaneando redes disponibles...</span>
+            </div>
+          </div>
+          
+          <!-- Lista de redes -->
+          <div class="wifi-networks-list" id="wifiNetworksList">
+            <!-- Las redes se cargarán dinámicamente aquí -->
+          </div>
+          
+          <!-- Botón para actualizar manualmente -->
+          <div class="wifi-scan-controls">
+            <button type="button" class="btn wifi-submit-btn"  id="refreshWiFiScan">
+                <span class="btn-text">Actualizar Lista</span>
+              </button>
+          </div>
+          <div class="wifi-scan-controls" id="disconectContainer">
           </div>
         </div>
+        
+        <!-- Formulario de Configuración WiFi -->
+        <div class="panel wifi-config-panel" id="wifiNetworksFormPanel">
+          <h3>Configuración del Punto de Acceso WiFi</h3>
+          <p class="wifi-description">Configure el nombre de la red WiFi y la contraseña. Los campos son opcionales - solo complete los que desea cambiar. <strong>El nombre de la red será el nombre del punto de acceso (http://nombre_red.local)</strong></p>
+          
+          <form id="wifiConfigForm" class="wifi-form">
+            <!-- Campo SSID -->
+            <div class="wifi-field-group">
+              <label for="wifiSSID" class="wifi-label">
+                <span class="wifi-label-text">Nombre de la Red WiFi (SSID)</span>
+                <span class="wifi-label-optional">Opcional</span>
+              </label>
+              <input 
+                type="text" 
+                id="wifiSSID" 
+                name="ssid"
+                class="wifi-input" 
+                placeholder="Ej: BIOMASTER_CAFE" 
+                maxlength="32"
+                autocomplete="off"
+              />
+              <div class="wifi-field-info">
+                <span class="wifi-char-count" id="ssidCharCount">0/32 caracteres</span>
+                <span class="wifi-field-description">Entre 1 y 32 caracteres</span>
+              </div>
+              <div class="wifi-field-error" id="ssidError"></div>
+            </div>
 
-        <div class="panel wifi-container" id="wifiPasswordContainer5" style="display: none">
-          <label id="labelWifiPassword5" for="wifiPassword5"></label>
-          <div class="input-container5">
-            <input type="password" id="wifiPassword5" required />
-            <button class="eye-button5" id="togglePassword5">👁️</button>
-          </div>
-          <button id="connectWifi5" class="btn connect-button5" style="display: none">
-            Conectar
-          </button>
-          <button id="disconnectWifi5" class=" btn disconnect-button5" style="display: none">
-            Desconectar
-          </button>
+            <!-- Campo Password -->
+            <div class="wifi-field-group">
+              <label for="wifiPassword" class="wifi-label">
+                <span class="wifi-label-text">Contraseña WiFi</span>
+                <span class="wifi-label-optional">Opcional</span>
+              </label>
+              <div class="wifi-password-container">
+                <input 
+                  type="password" 
+                  id="wifiPASSWORD" 
+                  name="password"
+                  class="wifi-input wifi-password-input" 
+                  placeholder="Ingrese nueva contraseña" 
+                  maxlength="63"
+                  autocomplete="new-password"
+                />
+                <button type="button" class="wifi-toggle-password" id="togglePassword" title="Mostrar/ocultar contraseña">
+                  <span class="password-icon">👁️</span>
+                </button>
+              </div>
+              <div class="wifi-field-info">
+                <span class="wifi-char-count" id="passwordCharCount">0/63 caracteres</span>
+                <span class="wifi-field-description">Entre 8 y 63 caracteres</span>
+              </div>
+              <div class="wifi-field-error" id="passwordError"></div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="wifi-actions">
+              <button type="submit" class="btn wifi-submit-btn" id="wifiSubmitBtn">
+                <span class="btn-text">Actualizar Configuración WiFi</span>
+              </button>
+              <button type="button" class="btn wifi-clear-btn" id="wifiClearBtn">
+                <span class="btn-text">Limpiar Campos</span>
+              </button>
+            </div>
+
+            <!-- Estado de la operación -->
+            <div class="wifi-status" id="wifiStatus" style="display: none;">
+              <div class="wifi-status-content">
+                <span class="wifi-status-icon" id="wifiStatusIcon"></span>
+                <span class="wifi-status-message" id="wifiStatusMessage"></span>
+              </div>
+            </div>
+          </form>
         </div>
       </div>
 
@@ -1053,10 +1137,9 @@
             </div>
             <div class="accordion-content">
               <ul>
-                <li><strong>Manual:</strong> Permite el encendido individual de los actuadores como la bomba, el chiller
+                <li><strong>Personalizado:</strong> Permite el encendido individual de los actuadores como la bomba, el chiller
                   y las válvulas.</li>
-                <li><strong>Personalizado:</strong> Permite configurar un valor fijo para cada variable de control.</li>
-                <li><strong>Parametrizado:</strong> Permite programar hasta dieciséis valores diferentes en cada
+                <li><strong>Parametrizado:</strong> Permite programar valores diferentes en cada
                   variable de control para crear perfiles complejos.</li>
                 <li><strong>Automático:</strong> Replica curvas de fermentación que han sido guardadas previamente.</li>
               </ul>
@@ -1133,6 +1216,80 @@
       <div class="content" id="curvas" style="display: none">
         <h2>Curvas Guardadas</h2>
         
+        <!-- Sección de Control Superior -->
+        <div class="curves-control-section">
+          <div class="curves-filter-container">
+            <label for="curvesFilterAttribute" class="filter-label">Filtrar por:</label>
+            <select id="curvesFilterAttribute" class="curves-filter-select" onchange="handleCurveAttributeChange(this.value)">
+              <option value="">Seleccionar filtro</option>
+              <option value="nombre">Nombre</option>
+              <option value="tipo_proceso">Tipo de Proceso</option>
+              <option value="fecha">Fecha</option>
+            </select>
+          </div>
+          
+          <!-- Campo dinámico para nombre -->
+          <div class="curves-dynamic-filter" id="curveNameFilter" style="display: none;">
+            <div class="curves-filter-field">
+              <label for="curveNameInput" class="filter-label">Nombre de la curva:</label>
+              <input type="text" id="curveNameInput" class="curves-input" placeholder="Ingrese el nombre a buscar">
+            </div>
+          </div>
+          
+          <!-- Campo dinámico para tipo de proceso -->
+          <div class="curves-dynamic-filter" id="curveProcessFilter" style="display: none;">
+            <div class="curves-filter-field">
+              <label for="curveProcessSelect" class="filter-label">Tipo de proceso:</label>
+              <select id="curveProcessSelect" class="curves-filter-select">
+                <option value="">Seleccionar tipo</option>
+                <option value="0">No definido</option>
+                <option value="1">Lavado (Washed)</option>
+                <option value="2">Natural (Dry)</option>
+                <option value="3">Honey (Miel)</option>
+                <option value="4">Semilavado (Wet-Hulled)</option>
+                <option value="5">Anaeróbico</option>
+                <option value="6">Maceración carbónica (Carbonic Maceration)</option>
+                <option value="7">Fermentación láctica</option>
+                <option value="8">Fermentación acética</option>
+                <option value="9">Doble fermentación (Double Fermentation)</option>
+                <option value="10">Proceso Koji</option>
+                <option value="11">Infusionados</option>
+                <option value="12">Rehidratación</option>
+                <option value="13">Procesos Mixtos/Híbridos</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Campo dinámico para fecha -->
+          <div class="curves-dynamic-filter" id="curveDateFilter" style="display: none;">
+            <div class="curves-filter-field">
+              <label class="filter-label">Rango de fechas:</label>
+              <div class="date-range-container">
+                <div class="date-input-group">
+                  <label for="curveDateFrom" class="date-label">Desde:</label>
+                  <input type="date" id="curveDateFrom" class="curves-date-input">
+                </div>
+                <div class="date-input-group">
+                  <label for="curveDateTo" class="date-label">Hasta:</label>
+                  <input type="date" id="curveDateTo" class="curves-date-input">
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Botón de búsqueda -->
+          <div class="curves-actions-container" id="curveSearchActions" style="display: none;">
+            <button class="btn search-curves-btn" onclick="searchCurves()">
+              <span class="btn-icon">🔍</span>
+              Buscar Curvas
+            </button>
+            <button class="btn clear-filter-btn" onclick="clearCurveFilters()">
+              <span class="btn-icon">🗑️</span>
+              Limpiar Filtros
+            </button>
+          </div>
+        </div>
+        
         <div class="curves-container">
           <!-- El contenido será cargado dinámicamente por curves.js -->
           <div class="curve-loading-state">
@@ -1150,9 +1307,10 @@
         <!-- Sección de Control Superior -->
         <div class="recipes-control-section">
           <div class="recipes-filter-container">
-            <label for="recipesFilter" class="filter-label">Filtrar por tipo:</label>
+            <label for="recipesFilter" class="filter-label">Filtrar por:</label>
             <select id="recipesFilter" class="recipes-filter-select" onchange="filterRecipesByType(this.value)">
-              <option value="created" selected>Recetas Personalizadas</option>
+              <option value="all" selected>Todas las Recetas</option>
+              <option value="created">Recetas Personalizadas</option>
               <option value="parametrized">Recetas Parametrizadas</option>
               <option value="predetermined">Recetas Predeterminadas</option>
             </select>
@@ -1164,55 +1322,21 @@
           </div>
         </div>
 
-        <!-- Sección de Recetas Creadas -->
-        <div class="recipes-section" id="createdRecipesSection">
-          
-          <div class="recipes-list-manual">
-            <!-- Contenido será reemplazado por recipes.js -->
-            <div class="recipe-loading-state">
-              <div class="loading-spinner">
-                <div class="spinner-ring"></div>
-                <div class="spinner-ring"></div>
-                <div class="spinner-ring"></div>
-              </div>
-              <h3>Cargando recetas...</h3>
-              <p>Obteniendo la lista de recetas desde el sistema...</p>
+        <!-- Estado de carga global para todas las recetas -->
+        <div class="recipes-global-loading" id="recipesGlobalLoading">
+          <div class="curve-loading-state">
+            <div class="loading-spinner">
             </div>
+            <h3>Cargando recetas...</h3>
+            <p>Obteniendo la lista de recetas desde el sistema...</p>
           </div>
         </div>
 
-
-        <!-- Sección de Recetas manuales -->
-        <div class="recipes-section" id="parametrizedRecipesSection" style="display: none;">
-          <div class="recipes-list">
+        <!-- Contenedor Unificado de Recetas -->
+        <div class="recipes-section" id="recipesMainSection">
+          <div class="recipes-list-unified" id="recipesListUnified">
             <!-- Contenido será reemplazado por recipes.js -->
-            <div class="recipe-loading-state">
-              <div class="loading-spinner">
-                <div class="spinner-ring"></div>
-                <div class="spinner-ring"></div>
-                <div class="spinner-ring"></div>
-              </div>
-              <h3>Cargando recetas...</h3>
-              <p>Obteniendo la lista de recetas desde el sistema...</p>
-            </div>
           </div>
-        </div>
-
-        <!-- Sección de Recetas Predeterminadas -->
-        <div class="recipes-section" id="predeterminedRecipesSection" style="display: none;">
-          <div class="recipes-list-predeterminada">
-            <!-- Contenido será reemplazado por recipes.js -->
-            <div class="recipe-loading-state">
-              <div class="loading-spinner">
-                <div class="spinner-ring"></div>
-                <div class="spinner-ring"></div>
-                <div class="spinner-ring"></div>
-              </div>
-              <h3>Cargando recetas...</h3>
-              <p>Obteniendo la lista de recetas desde el sistema...</p>
-            </div>
-          </div>
-          
         </div>
       </div>
 
@@ -1224,10 +1348,10 @@
     <!-- Header de información de sensores - Elemento único reutilizable -->
     <div id="globalHeaderInfo" class="header-info" style="display: none;">
       <button id="processStage" class="connection-btn-fixed online">
-        <span>📋</span> <span class="stageValue">0 de 0</span>
+        <span class="stageValue">📋 0 de 0</span>
       </button>
       <button class="connection-btn-fixed online">
-        <span>🔘 P</span> <span class="pressureValue">0</span>
+        <span>🧯 P</span> <span class="pressureValue">0</span>
       </button>
       <button class="connection-btn-fixed online">
         <span>🌡️ Tm</span> <span class="tempValue">0</span>
@@ -1244,9 +1368,22 @@
     <div>
       <div class="connection-status">
         <button id="connection-indicator" class="connection-btn offline">
-          <span class="connection-dot"></span>
+          <svg class="connection-dot" width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13 16H16L3 0H0L3.38948 4.17167C2.58157 4.61063 1.83348 5.16652 1.17157 5.82842L0 7L1.41421 8.41421L2.58579 7.24264C3.20071 6.62772 3.90945 6.12819 4.67837 5.75799L5.98803 7.36989C5.24898 7.65114 4.56994 8.08691 4 8.65685L2.82843 9.82842L4.24264 11.2426L5.41421 10.0711C5.94688 9.5384 6.62695 9.18703 7.35855 9.05668L8.9375 11H8.00355L8 11C7.56057 11 7.13914 11.1746 6.82842 11.4853L5.65685 12.6568L8 15L10.3103 12.6897L13 16Z" fill="currentColor"/>
+            <path d="M10.3673 5.37513C11.5055 5.74521 12.5521 6.38051 13.4142 7.24264L14.5858 8.41421L16 7L14.8284 5.82842C13.1228 4.12278 10.8448 3.12107 8.44586 3.01028L10.3673 5.37513Z" fill="currentColor"/>
+          </svg>
           <!-- Espacio para mostrar el número de conectados -->
-          <span class="connection-text">Offline</span>
+          <span class="connection-text">Wifi Local</span>
+        </button>
+      </div>
+      <div class="connection-status connection-status-extern">
+        <button id="connection-indicator-extern" class="connection-btn offline">
+          <svg class="connection-dot" width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13 16H16L3 0H0L3.38948 4.17167C2.58157 4.61063 1.83348 5.16652 1.17157 5.82842L0 7L1.41421 8.41421L2.58579 7.24264C3.20071 6.62772 3.90945 6.12819 4.67837 5.75799L5.98803 7.36989C5.24898 7.65114 4.56994 8.08691 4 8.65685L2.82843 9.82842L4.24264 11.2426L5.41421 10.0711C5.94688 9.5384 6.62695 9.18703 7.35855 9.05668L8.9375 11H8.00355L8 11C7.56057 11 7.13914 11.1746 6.82842 11.4853L5.65685 12.6568L8 15L10.3103 12.6897L13 16Z" fill="currentColor"/>
+            <path d="M10.3673 5.37513C11.5055 5.74521 12.5521 6.38051 13.4142 7.24264L14.5858 8.41421L16 7L14.8284 5.82842C13.1228 4.12278 10.8448 3.12107 8.44586 3.01028L10.3673 5.37513Z" fill="currentColor"/>
+          </svg>
+          <!-- Espacio para mostrar el número de conectados -->
+          <span class="connection-text" id="external-wifi-status">Wifi Externo</span>
         </button>
       </div>
     </div>
@@ -1275,15 +1412,15 @@
     <div id="notificationFixed" class="notification notificationfixed"></div>
 
     <!-- Scripts críticos que se cargan inmediatamente en orden correcto -->
-    <script src="./js/state.js"></script>
+    <script defer src="./js/state.js"></script>
     <script defer src="./js/progressManager.js"></script>
     <script defer src="./js/notification.js"></script>
-    <script src="./js/recipeTemplates.js"></script>
-    <script src="./js/recipes.js"></script>
-    <script src="./js/curveTemplates.js"></script>
-    <script src="./js/curves.js"></script>
+    <script defer src="./js/recipeTemplates.js"></script>
+    <script defer src="./js/recipes.js"></script>
+    <script defer src="./js/curveTemplates.js"></script>
+    <script defer src="./js/curves.js"></script>
     <script defer src="./js/http-polling.js"></script>
-    <script src="./js/initialization.js"></script>
+    <script defer src="./js/initialization.js"></script>
 
     <!-- Registro del Service Worker -->
     <script>
@@ -1315,8 +1452,6 @@
     <script defer src="./js/eventListeners.js"></script>
     <script defer src="./js/telegram.js"></script>
     <script defer src="./js/wifi.js"></script>
-    <script src="https://cdn.botpress.cloud/webchat/v3.3/inject.js"></script>
-<script src="https://files.bpcontent.cloud/2025/09/26/04/20250926043134-Z7TTVWUV.js" defer></script>
 </body>
 
 </html>
