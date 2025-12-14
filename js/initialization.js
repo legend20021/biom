@@ -29,7 +29,12 @@ function updateIndicators() {
 
     const stageElements = document.querySelectorAll('.stageValue');
     stageElements.forEach((element) => {
-        element.textContent = `${state.etapa} de ${state.total_etapas}`;
+        if (state.modo === 0) {
+            element.textContent = `🕒${state.tiempo_horas}h ${state.tiempo_minutos}m`;
+        } else if (state.modo === 1) {
+            element.textContent = `📋 ${state.etapa} de ${state.total_etapas}`;
+        }
+        
     });
 
     // Temperatura - usando acceso seguro a elementos
@@ -236,7 +241,6 @@ function hideLoader() {
   const loader = document.querySelector('.initial-loader');
   loader.classList.add('hidden');
   
-  // Remover el loader del DOM después de la animación
   setTimeout(() => {
     loader.remove();
   }, 500);
@@ -247,6 +251,9 @@ window.addEventListener('load', () => {
   // Simular un tiempo mínimo de carga para mejor UX
   setTimeout(hideLoader, 2000);
   setTimeout(initializeHeader, 1500);
+  
+  // Inicializar sincronización de fecha con Microcontrolador
+  setTimeout(initializeDateSync, 3000); // Después de que se inicialice el ApiManager
 });
 
 function resetInputs() {
@@ -273,4 +280,74 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', resetInputs);
 } else {
     resetInputs();
+}
+
+// ============ FUNCIONES DE FECHA ============
+
+/**
+ * Obtiene la fecha actual en formato DD-MM-YYYY
+ * @returns {string} Fecha en formato DD-MM-YYYY
+ */
+function getCurrentDateFormatted() {
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0'); // Los meses empiezan en 0
+    const year = now.getFullYear();
+    
+    return `${day}-${month}-${year}`;
+}
+
+/**
+ * Envía la fecha actual al Microcontrolador para su almacenamiento
+ */
+async function sendCurrentDateToMicrocontrolador() {
+    try {
+        const currentDate = getCurrentDateFormatted();
+        console.log('📅 Enviando fecha actual al Microcontrolador:', currentDate);
+        
+        // Verificar que apiManager esté disponible
+        if (!window.apiManager || !window.setCurrentDate) {
+            console.warn('⚠️ ApiManager no disponible, reintentando en 2 segundos...');
+            setTimeout(sendCurrentDateToMicrocontrolador, 2000);
+            return;
+        }
+        
+        // Enviar fecha al Microcontrolador
+        const response = await window.setCurrentDate(currentDate);
+        
+        if (response && response.success) {
+            console.log('✅ Fecha enviada correctamente al Microcontrolador:', response);
+        } else {
+            console.error('❌ Error en respuesta del Microcontrolador:', response);
+        }
+        
+    } catch (error) {
+        console.error('❌ Error enviando fecha al Microcontrolador:', error);
+        
+        // Reintentar en caso de error
+        setTimeout(() => {
+            console.log('🔄 Reintentando envío de fecha al Microcontrolador...');
+            sendCurrentDateToMicrocontrolador();
+        }, 5000);
+    }
+}
+
+/**
+ * Inicializa la sincronización de fecha cuando la página carga
+ */
+function initializeDateSync() {
+    console.log('📅 Inicializando sincronización de fecha con Microcontrolador...');
+    
+    // Enviar fecha inmediatamente al cargar
+    sendCurrentDateToMicrocontrolador();
+    
+    // También enviar fecha cada vez que el usuario regrese a la pestaña
+    // (en caso de que haya cambiado de día)
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            const currentDate = getCurrentDateFormatted();
+            console.log('👁️ Pestaña visible - verificando fecha:', currentDate);
+            sendCurrentDateToMicrocontrolador();
+        }
+    });
 }

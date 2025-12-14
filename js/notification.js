@@ -83,9 +83,8 @@ class NotificationManager {
     
     // Crear estructura HTML profesional
     const isPermanent = type === 'persistent' || type === 'critical';
-    const showCloseButton = type !== 'persistent';
     
-    notification.innerHTML = this._createNotificationHTML(message, config, isPermanent, showCloseButton);
+    notification.innerHTML = this._createNotificationHTML(message, config, isPermanent, true);
     
     // Aplicar estilos
     this._applyStyles(notification, config, isPermanent, type);
@@ -146,10 +145,13 @@ class NotificationManager {
   // ============ MÉTODOS DE CONTROL ============
   
   hide() {
-    const notification = document.getElementById('notification');
-    if (notification) {
-      this._hideNotification(notification);
-    }
+    const notifications = ['notification', 'notificationFixed'];
+    notifications.forEach(id => {
+      const element = document.getElementById(id);
+      if (element) {
+        this._forceHideNotification(element);
+      }
+    });
   }
 
   forceHide() {
@@ -193,7 +195,6 @@ class NotificationManager {
         </div>
         <div class="notification-message" style="color: ${config.textColor};">
           ${message}
-          ${isPermanent ? '<a href="#" onclick="location.reload();" style="text-decoration: underline;">Recargar</a>' : ''}
         </div>
         ${showCloseButton ? `<button class="notification-close" onclick="notificationManager.hide()" style="color: ${config.textColor};">×</button>` : ''}
       </div>

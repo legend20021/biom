@@ -9,9 +9,6 @@ const RECIPE_TEMPLATES = {
   loadingState: () => `
     <div class="recipe-loading-state">
       <div class="loading-spinner">
-        <div class="spinner-ring"></div>
-        <div class="spinner-ring"></div>
-        <div class="spinner-ring"></div>
       </div>
       <p>Cargando recetas...</p>
     </div>
@@ -23,7 +20,6 @@ const RECIPE_TEMPLATES = {
       <h3>Error al cargar recetas</h3>
       <p>${errorMessage}</p>
       <button class="btn retry-btn" onclick="recipeManager.loadRecipes()">
-        <span class="btn-icon">🔄</span>
         Reintentar
       </button>
     </div>
@@ -34,26 +30,33 @@ const RECIPE_TEMPLATES = {
   
   recipeItem: (recipe, duration, createdDate, processState) => `
     <div class="recipe-info">
-      <div class="recipe-name">${recipe.recipeName}</div>
-      <div class="recipe-details">
-        <span class="recipe-detail"><strong>Tipo de café:</strong> ${recipe.coffeeType}</span>
-        <span class="recipe-detail"><strong>Presión:</strong> ${recipe.pressureType}</span>
-        <span class="recipe-detail"><strong>Etapas:</strong> ${recipe.etapas}</span>
-        <span class="recipe-detail"><strong>Duración:</strong> ${duration}</span>
+      <div class="recipe-name">📝 ${recipe.recipeName}</div>
+      <div class="recipe-details-custom">
+        <span class="recipe-detail"><strong>☕ Tipo de café:</strong> ${recipe.coffeeType}</span>
+        <span class="recipe-detail"><strong>🔘 Presión:</strong> ${recipe.pressureType}</span>
+        <span class="recipe-detail"><strong>📈 Etapas:</strong> ${recipe.etapas}</span>
+        <span class="recipe-detail"><strong>🕒 Duración:</strong> ${duration}</span>
       </div>
     </div>
     <div class="recipe-actions">
-      ${!processState ? `
-        <button class="btn start-recipe-btn" onclick="recipeManager.startRecipe('${recipe.filename}')">
-          Iniciar
+      <div class="recipe-actions-dropdown">
+        <button class="btn dropdown-toggle" onclick="toggleRecipeDropdown(this)">
+          Opciones
         </button>
-      ` : ''}
-      <button class="btn view-recipe-btn" onclick="recipeManager.viewRecipe('${recipe.filename}')">
-        Ver
-      </button>
-      <button class="btn delete-recipe-btn" onclick="recipeManager.deleteRecipe('${recipe.filename}')">
-        Borrar
-      </button>
+        <div class="dropdown-menu">
+          ${!processState ? `
+            <button class="dropdown-item" onclick="recipeManager.startRecipe('${recipe.filename}'); closeRecipeDropdown(this)">
+              Iniciar
+            </button>
+          ` : ''}
+          <button class="dropdown-item" onclick="recipeManager.viewRecipe('${recipe.filename}'); closeRecipeDropdown(this)">
+            Ver
+          </button>
+          <button class="dropdown-item delete-item" onclick="recipeManager.deleteRecipe('${recipe.filename}'); closeRecipeDropdown(this)">
+            Borrar
+          </button>
+        </div>
+      </div>
     </div>
   `,
   
@@ -62,7 +65,7 @@ const RECIPE_TEMPLATES = {
   modalStructure: (recipeDetails, generalInfoHtml, setPointsHtml, processState) => `
     <div class="recipe-modal-content">
       <div class="recipe-modal-header">
-        <h3 class="recipe-modal-title">${recipeDetails.recipeName}</h3>
+        <h3 class="recipe-modal-title">📝 ${recipeDetails.recipeName}</h3>
         <button class="recipe-modal-close" onclick="document.getElementById('recipeDetailsModal').remove()">×</button>
       </div>
       
@@ -86,24 +89,59 @@ const RECIPE_TEMPLATES = {
     </div>
   `,
   
-  generalInfo: (recipeDetails, formatDurationFn) => `
+  generalInfo: (recipeDetails, formatDurationFn, isEditing = false) => `
     <div class="recipe-info-section">
       <h4 class="section-title">
         🔧 Información General
       </h4>
-      <div class="info-grid">
+      <div class="info-grid" id="recipeInfoGrid">
+        <!-- Input hidden para el filename de la receta -->
+        <input type="hidden" id="recipeFilename" value="${recipeDetails.filename || ''}">
+        
         <div class="info-row">
           <strong>Nombre:</strong>
-          <span>${recipeDetails.recipeName}</span>
+          <span id="recipeNameDisplay" style="display: ${isEditing ? 'none' : 'inline'}">${recipeDetails.recipeName}</span>
+          <div style="display: ${isEditing ? 'flex' : 'none'}; flex-direction: column; width: 100%;">
+            <input type="text" id="recipeNameEdit" class="form-input" value="${recipeDetails.recipeName}" maxlength="30" style="display: ${isEditing ? 'inline' : 'none'}; width: 100%;">
+            <div class="field-error-message" id="recipeNameError" style="display: none;"></div>
+          </div>
         </div>
         <div class="info-row">
           <strong>Tipo de café:</strong>
-          <span>${recipeDetails.coffeeType}</span>
+          <span id="coffeeTypeDisplay" style="display: ${isEditing ? 'none' : 'inline'}">${recipeDetails.coffeeType}</span>
+          <div  style="display: ${isEditing ? 'flex' : 'none'}; flex-direction: column; width: 100%; ">
+            <input type="text" id="coffeeTypeEdit" class="form-input" value="${recipeDetails.coffeeType}" maxlength="30" style="display: ${isEditing ? 'inline' : 'none'}; width: 100%;">
+            <div class="field-error-message" id="coffeeTypeError" style="display: none;"></div>
+          </div>
         </div>
+
+        <div class="info-row">
+          <strong>Tipo de proceso:</strong>
+          <span id="processTypeDisplay" style="display: ${isEditing ? 'none' : 'inline'}">${RECIPE_TEMPLATES._getProcessTypeText(recipeDetails.processType)}</span>
+          <select id="processTypeEdit" class="form-select" style="width: 80%;  display: ${isEditing ? 'inline' : 'none'};">
+            <option value="0" ${recipeDetails.processType == 0 ? 'selected' : ''}>No definido</option>
+            <option value="1" ${recipeDetails.processType == 1 ? 'selected' : ''}>Lavado (Washed)</option>
+            <option value="2" ${recipeDetails.processType == 2 ? 'selected' : ''}>Natural (Dry)</option>
+            <option value="3" ${recipeDetails.processType == 3 ? 'selected' : ''}>Honey (Miel)</option>
+            <option value="4" ${recipeDetails.processType == 4 ? 'selected' : ''}>Semilavado (Wet-Hulled)</option>
+            <option value="5" ${recipeDetails.processType == 5 ? 'selected' : ''}>Anaeróbico</option>
+            <option value="6" ${recipeDetails.processType == 6 ? 'selected' : ''}>Maceración carbónica (Carbonic Maceration)</option>
+            <option value="7" ${recipeDetails.processType == 7 ? 'selected' : ''}>Fermentación láctica</option>
+            <option value="8" ${recipeDetails.processType == 8 ? 'selected' : ''}>Fermentación acética</option>
+            <option value="9" ${recipeDetails.processType == 9 ? 'selected' : ''}>Doble fermentación (Double Fermentation)</option>
+            <option value="10" ${recipeDetails.processType == 10 ? 'selected' : ''}>Proceso Koji</option>
+            <option value="11" ${recipeDetails.processType == 11 ? 'selected' : ''}>Infusionados</option>
+            <option value="12" ${recipeDetails.processType == 12 ? 'selected' : ''}>Rehidratación</option>
+            <option value="13" ${recipeDetails.processType == 13 ? 'selected' : ''}>Procesos Mixtos/Híbridos</option>
+          </select>
+          <div class="field-error-message" id="processTypeError" style="display: none;"></div>
+        </div>
+
         <div class="info-row">
           <strong>Tipo de presión:</strong>
           <span>${recipeDetails.pressureType}</span>
         </div>
+
         <div class="info-row">
           <strong>Modo:</strong>
           <span>${RECIPE_TEMPLATES.getModoText(recipeDetails.modo)}</span>
@@ -116,9 +154,45 @@ const RECIPE_TEMPLATES = {
           <strong>Etapas:</strong>
           <span>${recipeDetails.etapas}</span>
         </div>
+        <div class="info-row">
+          <div style="display: flex; gap: 10px; width: 100%; min-height: 30px; justify-content: flex-end;">
+            <button class="btn btn-edit-info" onclick="enableRecipeInfoEditing()" style="max-width: 150px;font-size: 0.8rem; padding: 0.3rem 0.6rem; display: ${isEditing ? 'none' : 'inline-block'};">
+              Editar
+            </button>
+            <button class="btn btn-save-info" onclick="saveRecipeInfoEditing()" style="max-width: 150px;font-size: 0.8rem; padding: 0.3rem 0.6rem; display: ${isEditing ? 'inline-block' : 'none'};">
+              Guardar
+            </button>
+            <button class="btn btn-cancel-info" onclick="cancelRecipeInfoEditing()" style="max-width: 150px;font-size: 0.8rem; padding: 0.3rem 0.6rem; display: ${isEditing ? 'inline-block' : 'none'};">
+              Cancelar
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   `,
+
+
+  // Helper para mapear processType entero a texto
+  _getProcessTypeText: (processType) => {
+    const processTypes = {
+      0: 'No definido',
+      1: 'Lavado (Washed)',
+      2: 'Natural (Dry)',
+      3: 'Honey (Miel)',
+      4: 'Semilavado (Wet-Hulled)',
+      5: 'Anaeróbico',
+      6: 'Maceración carbónica (Carbonic Maceration)',
+      7: 'Fermentación láctica',
+      8: 'Fermentación acética',
+      9: 'Doble fermentación (Double Fermentation)',
+      10: 'Proceso Koji',
+      11: 'Infusionados',
+      12: 'Rehidratación',
+      13: 'Procesos Mixtos/Híbridos'
+    };
+    
+    return processTypes[processType] || 'No especificado';
+  },
   
   setPointsSection: (setPointsHtml) => `
     <div class="recipe-setpoints-section">
@@ -215,6 +289,27 @@ const RECIPE_TEMPLATES = {
             <option value="2">Predeterminada</option>
           </select>
         </div>
+
+        <div class="form-group">
+          <label for="processType">Proceso:</label>
+          <select id="processType" name="processType" class="form-select">
+            <option value="">Seleccionar...</option>
+            <option value="0">No definido</option>
+            <option value="1">Lavado (Washed)</option>
+            <option value="2">Natural (Dry)</option>
+            <option value="3">Honey (Miel)</option>
+            <option value="4">Semilavado (Wet-Hulled)</option>
+            <option value="5">Anaeróbico</option>
+            <option value="6">Maceración carbónica (Carbonic Maceration)</option>
+            <option value="7">Fermentación láctica</option>
+            <option value="8">Fermentación acética</option>
+            <option value="9">Doble fermentación (Double Fermentation)</option>
+            <option value="10">Proceso Koji</option>
+            <option value="11">Infusionados</option>
+            <option value="12">Rehidratación</option>
+            <option value="13">Procesos Mixtos/Híbridos</option>
+          </select>
+        </div>
         
         <div class="form-group">
           <label for="recipeDescription">Descripción (opcional):</label>
@@ -294,7 +389,7 @@ const RECIPE_TEMPLATES = {
   
   getModoText: (modo) => {
     const modos = {
-      0: 'Manual',
+      0: 'Personalizada',
       1: 'Parametrizada',
       2: 'Predeterminada'
     };
@@ -302,9 +397,45 @@ const RECIPE_TEMPLATES = {
   }
 };
 
+// ============ FUNCIONES PARA DROPDOWN DE ACCIONES ============
+
+function toggleRecipeDropdown(button) {
+  const dropdown = button.nextElementSibling;
+  const isOpen = dropdown.classList.contains('show');
+  
+  // Cerrar todos los dropdowns abiertos
+  document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+    menu.classList.remove('show');
+  });
+  
+  // Toggle del dropdown actual
+  if (!isOpen) {
+    dropdown.classList.add('show');
+    
+    // Cerrar al hacer clic fuera
+    setTimeout(() => {
+      document.addEventListener('click', function closeOnClickOutside(e) {
+        if (!button.contains(e.target) && !dropdown.contains(e.target)) {
+          dropdown.classList.remove('show');
+          document.removeEventListener('click', closeOnClickOutside);
+        }
+      });
+    }, 10);
+  }
+}
+
+function closeRecipeDropdown(item) {
+  const dropdown = item.closest('.dropdown-menu');
+  if (dropdown) {
+    dropdown.classList.remove('show');
+  }
+}
+
 // Hacer disponible globalmente
 if (typeof window !== 'undefined') {
   window.RECIPE_TEMPLATES = RECIPE_TEMPLATES;
+  window.toggleRecipeDropdown = toggleRecipeDropdown;
+  window.closeRecipeDropdown = closeRecipeDropdown;
 }
 
 // Para entornos Node.js (si es necesario)

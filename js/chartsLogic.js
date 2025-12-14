@@ -84,7 +84,7 @@ let aggregatedData = {
 let autoRefreshInterval = null;
 let lastExecutedFunction = null;
 let lastExecutedParams = null;
-const AUTO_REFRESH_TIME = 10 * (60 * 1000); // 10 minutos en milisegundos
+const AUTO_REFRESH_TIME = 1 * (60 * 1000); // 10 minutos en milisegundos
 
 // Función para iniciar la actualización automática
 function startAutoRefresh(functionName, params = null) {
@@ -1537,9 +1537,7 @@ function getInitialChartData(curveDetail = null) {
     showChartLoading();
     
     // ============ INICIAR AUTO-REFRESH ============
-    if (curveDetail !== null) {
-      startAutoRefresh('getInitialChartData');
-    }
+    startAutoRefresh('getInitialChartData');
     
     // ============ USANDO ENDPOINT OPTIMIZADO graph/recent ============
     async function loadInitialGraphData() {
@@ -1586,6 +1584,7 @@ function getInitialChartData(curveDetail = null) {
           processName: curveDetail.processName,
           recipeName: curveDetail.recipeName,
           coffeeType: curveDetail.coffeeType,
+          coffeeKg: curveDetail.coffeeKg,
           pressureType: curveDetail.pressureType,
           comments: curveDetail.comments,
           filename: curveDetail.filename,
@@ -1621,7 +1620,7 @@ function getInitialChartData(curveDetail = null) {
                   <span class="detail-icon">☕</span>
                   <div class="detail-content">
                     <span class="detail-label">Tipo de Café</span>
-                    <span class="detail-value">${graphHeaderData.coffeeType || 'No especificado'}</span>
+                    <span class="detail-value">${graphHeaderData.coffeeType || 'No especificado'} (${graphHeaderData.coffeeKg || 0} kg)</span>
                   </div>
                 </div>
                 

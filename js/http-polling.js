@@ -1,5 +1,5 @@
 // ========================================
-// SISTEMA HTTP POLLING PARA BIOMASTER ESP32
+// SISTEMA HTTP POLLING PARA BIOMASTER Microcontrolador
 // ========================================
 
 // Variables para control de HTTP Polling
@@ -24,13 +24,16 @@ let automatic_updates_demo = {
         tiempo_minutos: 15,
         temperatura_sp: 90,
         num_clientes_conectados: 1,
+        nombre_ultimo_proceso: "",
+        wifi_sta_connected: true,
+        ssid_sta: 'WiFi_Casa_Demo'
       }
     };
 // Configuración de polling
 const POLLING_CONFIG = {
-  interval: 4000,
-  timeout: 6000,
-  retryDelay: 2000
+  interval: 10000,
+  timeout: 10000,
+  retryDelay: 10000
 };
 // ============ CLASE PARA GESTIÓN DE API ============
 class ApiManager {
@@ -48,11 +51,19 @@ class ApiManager {
       curveDetail: `${this.API_BASE_URL}/api/curva/detail`,
       deletefile: `${this.API_BASE_URL}/api/files/delete`,
       createRecipe: `${this.API_BASE_URL}/api/receta/create`,
-      startAutomatic: `${this.API_BASE_URL}/api/process/start-automatic`
+      startAutomatic: `${this.API_BASE_URL}/api/process/start-automatic`,
+      updateRecipe: `${this.API_BASE_URL}/api/recipe/update`,
+      updateProcess: `${this.API_BASE_URL}/api/process/update`,
+      setDate: `${this.API_BASE_URL}/api/config/date`,
+      wifiConfig: `${this.API_BASE_URL}/api/config/wifi`,
+      wifiScan: `${this.API_BASE_URL}/api/wifi/scan`,
+      wifiConnect: `${this.API_BASE_URL}/api/wifi/connect`,
+      wifiDisconnect: `${this.API_BASE_URL}/api/wifi/disconnect`,
+      wifiStatus: `${this.API_BASE_URL}/api/wifi/status`
     };
     this.config = {
-      timeout: 6000,
-      retryDelay: 2000,
+      timeout: 20000,
+      retryDelay: 20000,
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -68,16 +79,16 @@ class ApiManager {
   }
 
   // ============ MÉTODOS BÁSICOS DE API ============
-  async makeRequest(url, options = {}) {
+  async makeRequest(url, options = {}, customTimeout = null) {
+    const timeoutValue = customTimeout || this.config.timeout;
     const defaultOptions = {
       headers: this.config.headers,
-      signal: AbortSignal.timeout(this.config.timeout)
+      signal: AbortSignal.timeout(timeoutValue)
     };
     
     const requestOptions = { ...defaultOptions, ...options };
     
     try {
-      console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
       const response = await fetch(url, requestOptions);
       
       if (!response.ok) {
@@ -114,9 +125,12 @@ class ApiManager {
         tiempo_minutos: automatic_updates_demo.automatic_updates.tiempo_minutos,
         temperatura_sp: automatic_updates_demo.automatic_updates.temperatura_sp,
         num_clientes_conectados: automatic_updates_demo.automatic_updates.num_clientes_conectados,
-        modo: 1,
+        modo: 0,
         etapa: 1,
-        total_etapas: 3
+        total_etapas: 3,
+        nombre_ultimo_proceso: automatic_updates_demo.automatic_updates.nombre_ultimo_proceso,
+        wifi_sta_connected: automatic_updates_demo.automatic_updates.wifi_sta_connected,
+        ssid_sta: automatic_updates_demo.automatic_updates.ssid_sta
       };
     }
 
@@ -253,82 +267,151 @@ class ApiManager {
 
   // ============ MÉTODOS PARA ARCHIVOS ============
   
-  async getCurvasFiles() {
+  async getCurvasFiles(filterParams = null) {
     if (this.ApiDemoMode) {
       // Retornar archivos demo simulados de curvas con estructura real
-      console.log("🎭 Retornando archivos de curvas DEMO");
+      console.log("🎭 Retornando archivos de curvas DEMO", filterParams ? 'con filtros:' : '', filterParams);
+      
+      // En modo demo, simular filtrado básico para testing
+      let demoCurvas = [
+        {
+          filename: "proceso_demo_001",
+          size: 456,
+          size_kb: 0.45,
+          header_size: 196,
+          data_size: 260,
+          coffeeKg: 100,
+          creationDate: "04-09-2025",
+          processName: "Fermentación Natural Demo",
+          recipeName: "Geisha Natural Premium",
+          coffeeType: "Geisha",
+          pressureType: "Natural (5 PSI)",
+          comments: "Fermentación demo con excelente desarrollo de notas florales - 24 puntos, 72h",
+          startTime: 1725600000,
+          endTime: 1725859200,
+          totalTime: 259200,
+          totalPoints: 24,
+          duration: "72h 0m",
+          architecture: "separated",
+          files: 2
+        },
+        {
+          filename: "proceso_demo_002",
+          size: 376,
+          size_kb: 0.37,
+          header_size: 196,
+          data_size: 180,
+          coffeeKg: 150,
+          creationDate: "07-09-2025",
+          processName: "Maceración Carbónica Demo",
+          recipeName: "Bourbon Carbónico Especial",
+          coffeeType: "Bourbon",
+          pressureType: "Maceración Carbónica (8 PSI)",
+          comments: "Proceso experimental con excelentes resultados en acidez controlada - 18 puntos, 96h",
+          startTime: 1725513600,
+          endTime: 1725859200,
+          totalTime: 345600,
+          totalPoints: 18,
+          duration: "96h 0m",
+          architecture: "separated",
+          files: 2
+        },
+        {
+          filename: "proceso_demo_003",
+          size: 612,
+          size_kb: 0.60,
+          header_size: 196,
+          data_size: 416,
+          coffeeKg: 200,
+          creationDate: "10-09-2025",
+          processName: "Fermentación Controlada Demo",
+          recipeName: "Caturra Tradicional",
+          coffeeType: "Caturra",
+          pressureType: "Natural (3 PSI)",
+          comments: "Fermentación estándar con control de temperatura constante - 26 puntos, 48h",
+          startTime: 1725686400,
+          endTime: 1725859200,
+          totalTime: 172800,
+          totalPoints: 26,
+          duration: "48h 0m",
+          architecture: "separated",
+          files: 2
+        }
+      ];
+
+      // Aplicar filtros básicos en modo demo para testing
+      if (filterParams) {
+        const { attribute, value, dateFrom, dateTo } = filterParams;
+        
+        if (attribute === 'nombre' && value) {
+          demoCurvas = demoCurvas.filter(curve => 
+            curve.processName.toLowerCase().includes(value.toLowerCase())
+          );
+        } else if (attribute === 'tipo_proceso' && value && value !== '') {
+          // En demo, simular filtrado por tipo de proceso basado en el pressureType
+          demoCurvas = demoCurvas.filter(curve => {
+            if (value === '1') return curve.pressureType.includes('Natural');
+            if (value === '2') return curve.pressureType.includes('Carbónica');
+            return true;
+          });
+        }
+      }
+
       return {
-        curvas: [
-          {
-            filename: "proceso_demo_001",
-            size: 456,
-            size_kb: 0.45,
-            header_size: 196,
-            data_size: 260,
-            processName: "Fermentación Natural Demo",
-            recipeName: "Geisha Natural Premium",
-            coffeeType: "Geisha",
-            pressureType: "Natural (5 PSI)",
-            comments: "Fermentación demo con excelente desarrollo de notas florales - 24 puntos, 72h",
-            startTime: 1725600000,
-            endTime: 1725859200,
-            totalTime: 259200,
-            totalPoints: 24,
-            duration: "72h 0m",
-            architecture: "separated",
-            files: 2
-          },
-          {
-            filename: "proceso_demo_002",
-            size: 376,
-            size_kb: 0.37,
-            header_size: 196,
-            data_size: 180,
-            processName: "Maceración Carbónica Demo",
-            recipeName: "Bourbon Carbónico Especial",
-            coffeeType: "Bourbon",
-            pressureType: "Maceración Carbónica (8 PSI)",
-            comments: "Proceso experimental con excelentes resultados en acidez controlada - 18 puntos, 96h",
-            startTime: 1725513600,
-            endTime: 1725859200,
-            totalTime: 345600,
-            totalPoints: 18,
-            duration: "96h 0m",
-            architecture: "separated",
-            files: 2
-          },
-          {
-            filename: "proceso_demo_003",
-            size: 612,
-            size_kb: 0.60,
-            header_size: 196,
-            data_size: 416,
-            processName: "Fermentación Controlada Demo",
-            recipeName: "Caturra Tradicional",
-            coffeeType: "Caturra",
-            pressureType: "Natural (3 PSI)",
-            comments: "Fermentación estándar con control de temperatura constante - 26 puntos, 48h",
-            startTime: 1725686400,
-            endTime: 1725859200,
-            totalTime: 172800,
-            totalPoints: 26,
-            duration: "48h 0m",
-            architecture: "separated",
-            files: 2
-          }
-        ],
-        total_curves: 3,
-        total_files: 6,
-        total_size_bytes: 1444,
-        total_size_kb: 1.41,
+        curvas: demoCurvas,
+        total_curves: demoCurvas.length,
+        total_files: demoCurvas.length * 2,
+        total_size_bytes: demoCurvas.reduce((sum, curve) => sum + curve.size, 0),
+        total_size_kb: parseFloat((demoCurvas.reduce((sum, curve) => sum + curve.size_kb, 0)).toFixed(2)),
         folder: "/curvas",
         architecture: "separated",
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        applied_filters: filterParams || null
       };
     }
 
-    // Modo real - hacer request HTTP
-    return await this.makeRequest(this.ENDPOINTS.filesCurvas, {
+    // Modo real - construir URL con parámetros de filtro
+    let url = this.ENDPOINTS.filesCurvas;
+    
+    if (filterParams) {
+      const queryParams = new URLSearchParams();
+      
+      // Agregar parámetros basados en el tipo de filtro
+      if (filterParams.attribute) {
+        queryParams.append('filter_type', filterParams.attribute);
+        
+        switch (filterParams.attribute) {
+          case 'nombre':
+            if (filterParams.value) {
+              queryParams.append('name', filterParams.value);
+            }
+            break;
+            
+          case 'tipo_proceso':
+            if (filterParams.value) {
+              queryParams.append('process_type', filterParams.value);
+            }
+            break;
+            
+          case 'fecha':
+            if (filterParams.dateFrom) {
+              queryParams.append('date_from', filterParams.dateFrom);
+            }
+            if (filterParams.dateTo) {
+              queryParams.append('date_to', filterParams.dateTo);
+            }
+            break;
+        }
+      }
+      
+      // Solo agregar query string si hay parámetros
+      if (queryParams.toString()) {
+        url += `?${queryParams.toString()}`;
+        console.log('📡 URL con filtros construida:', url);
+      }
+    }
+
+    return await this.makeRequest(url, {
       method: 'GET'
     });
   }
@@ -485,6 +568,9 @@ class ApiManager {
         recipeName: "Receta Demo Natural",
         coffeeType: "Geisha Demo",
         pressureType: "Natural (5 PSI)",
+        //nuevo campo de kilos de cafe 
+        coffeeKg: 200,
+        creationDate: "04-09-2025",
         comments: "Fermentación demo con excelentes resultados. Control de temperatura estable y desarrollo de acidez balanceada.",
         startTime: 1725600000,
         endTime: 1725859200,
@@ -573,6 +659,240 @@ class ApiManager {
     const url = `${this.API_BASE_URL}/api/process/start-automatic?filename=${encodeURIComponent(filename)}`;
     return await this.makeRequest(url, {
       method: 'POST'
+    });
+  }
+
+  // ============ MÉTODO PARA ACTUALIZAR DATOS DE PROCESO ============
+  async updateProcessData(processData) {
+    if (this.ApiDemoMode) {
+      console.log("🎭 Modo DEMO: Simulando actualización de datos de proceso");
+      console.log("📋 Datos DEMO recibidos:", processData);
+      return {
+        success: true,
+        message: "Datos del proceso actualizados en modo DEMO",
+        data: processData,
+        timestamp: Date.now()
+      };
+    }
+
+    // Modo real - hacer request HTTP
+    console.log("📤 Enviando datos de proceso al backend:", processData);
+    return await this.makeRequest(this.ENDPOINTS.updateProcess, {
+      method: 'PUT',
+      body: JSON.stringify(processData)
+    });
+  }
+
+  // ============ MÉTODO PARA ACTUALIZAR DATOS DE RECETA ============
+  async updateRecipeData(recipeData) {
+    if (this.ApiDemoMode) {
+      console.log("🎭 Modo DEMO: Simulando actualización de datos de receta");
+      console.log("📋 Datos DEMO recibidos:", recipeData);
+      return {
+        success: true,
+        message: "Datos de la receta actualizados en modo DEMO",
+        data: recipeData,
+        timestamp: Date.now()
+      };
+    }
+
+    // Modo real - hacer request HTTP
+    console.log("📤 Enviando datos de receta al backend:", recipeData);
+    return await this.makeRequest(this.ENDPOINTS.updateRecipe, {
+      method: 'PUT',
+      body: JSON.stringify(recipeData)
+    });
+  }
+
+  // ============ MÉTODO PARA CONFIGURAR FECHA EN Microcontrolador ============
+  async setCurrentDate(dateString) {
+    if (this.ApiDemoMode) {
+      // En modo demo, simular configuración exitosa
+      console.log("🎭 Simulando configuración de fecha en modo DEMO:", dateString);
+      return {
+        success: true,
+        message: "Fecha configurada correctamente (DEMO)",
+        date: dateString,
+        formatted: dateString
+      };
+    }
+
+    // Modo real - enviar fecha al Microcontrolador
+    console.log("📅 Enviando fecha actual al Microcontrolador:", dateString);
+    
+    const dateData = {
+      fecha: dateString,
+      timestamp: Date.now()
+    };
+
+    return await this.makeRequest(this.ENDPOINTS.setDate, {
+      method: 'POST',
+      body: JSON.stringify(dateData)
+    });
+  }
+
+  // ============ MÉTODO PARA CONFIGURAR WIFI EN Microcontrolador ============
+  async setWiFiConfig(ssid = null, password = null) {
+    // Validar que al menos uno de los parámetros esté presente
+    if (!ssid && !password) {
+      throw new Error("Debe proporcionar al menos SSID o contraseña");
+    }
+
+    // Validar SSID si se proporciona
+    if (ssid && (ssid.length < 1 || ssid.length > 32)) {
+      throw new Error("El SSID debe tener entre 1 y 32 caracteres");
+    }
+
+    // Validar contraseña si se proporciona
+    if (password && (password.length < 8 || password.length > 63)) {
+      throw new Error("La contraseña debe tener entre 8 y 63 caracteres");
+    }
+
+    if (this.ApiDemoMode) {
+      // En modo demo, simular configuración exitosa
+      console.log("🎭 Simulando configuración de WiFi en modo DEMO:", { ssid, password: password ? "***" : null });
+      return {
+        success: true,
+        message: "Configuración WiFi actualizada correctamente (DEMO)",
+        ssid: ssid || "BIOMASTER_DEMO",
+        restarted: true
+      };
+    }
+
+    // Modo real - enviar configuración WiFi al Microcontrolador
+    console.log("📡 Enviando configuración WiFi al Microcontrolador:", { ssid, password: password ? "***" : null });
+
+    const wifiData = {};
+    if (ssid) wifiData.ssid = ssid;
+    if (password) wifiData.password = password;
+
+    return await this.makeRequest(this.ENDPOINTS.wifiConfig, {
+      method: 'POST',
+      body: JSON.stringify(wifiData)
+    });
+  }
+
+  // ============ MÉTODOS PARA WIFI EXTERNO ============
+  async scanWiFiNetworks() {
+    if (this.ApiDemoMode) {
+      // Datos demo para escaneo WiFi
+      console.log("🎭 Datos demo para escaneo WiFi");
+      return {
+        success: true,
+        count: 3,
+        timestamp: Date.now(),
+        networks: [
+          {
+            ssid: "WiFi_Casa_Demo",
+            rssi: -45,
+            channel: 6,
+            encryption: "WPA2-PSK",
+            bssid: "AA:BB:CC:DD:EE:FF",
+            quality: 90,
+            open: false
+          },
+          {
+            ssid: "Red_Abierta_Demo",
+            rssi: -65,
+            channel: 11,
+            encryption: "Abierta",
+            bssid: "11:22:33:44:55:66",
+            quality: 60,
+            open: true
+          },
+          {
+            ssid: "Oficina_Demo",
+            rssi: -78,
+            channel: 1,
+            encryption: "WPA3-PSK",
+            bssid: "99:88:77:66:55:44",
+            quality: 35,
+            open: false
+          }
+        ]
+      };
+    }
+
+    // Modo real - hacer request HTTP con timeout extendido
+    console.log("📡 Escaneando redes WiFi disponibles...");
+    return await this.makeRequest(this.ENDPOINTS.wifiScan, {
+      method: 'GET'
+    }, 30000); // 30 segundos timeout para escaneo WiFi
+  }
+
+  async connectToWiFiNetwork(ssid, password = "", save = true) {
+    if (this.ApiDemoMode) {
+      console.log(`🎭 Conexión demo a red: ${ssid}`);
+      return {
+        success: true,
+        ssid: ssid,
+        message: "Conectado exitosamente (DEMO)",
+        ip: "192.168.1.100",
+        config_saved: save,
+        timestamp: Date.now()
+      };
+    }
+
+    // Modo real - conectar a red WiFi
+    console.log(`🔌 Conectando a red WiFi: ${ssid}`);
+    
+    const connectionData = {
+      ssid: ssid,
+      password: password,
+      save: save
+    };
+
+    return await this.makeRequest(this.ENDPOINTS.wifiConnect, {
+      method: 'POST',
+      body: JSON.stringify(connectionData)
+    });
+  }
+
+  async disconnectFromWiFiNetwork() {
+    if (this.ApiDemoMode) {
+      console.log("🎭 Desconexión demo de red WiFi");
+      return {
+        success: true,
+        message: "Desconectado exitosamente (DEMO)",
+        timestamp: Date.now()
+      };
+    }
+
+    // Modo real - desconectar de red WiFi
+    console.log("🔌 Desconectando de red WiFi externa...");
+    
+    return await this.makeRequest(this.ENDPOINTS.wifiDisconnect, {
+      method: 'POST'
+    });
+  }
+
+  async getWiFiStatus() {
+    if (this.ApiDemoMode) {
+      console.log("🎭 Estado demo de conexiones WiFi");
+      return {
+        success: true,
+        ap: {
+          enabled: true,
+          ssid: "BIOMASTER_DEMO",
+          ip: "192.168.4.1",
+          clients: 1
+        },
+        sta: {
+          enabled: false,
+          connected: false,
+          ssid: "",
+          ip: "",
+          rssi: 0
+        },
+        timestamp: Date.now()
+      };
+    }
+
+    // Modo real - obtener estado WiFi
+    console.log("📊 Obteniendo estado de conexiones WiFi...");
+    
+    return await this.makeRequest(this.ENDPOINTS.wifiStatus, {
+      method: 'GET'
     });
   }
 
@@ -690,7 +1010,6 @@ function setInitialStateValues() {
     console.warn('resetAppState no está disponible - usando fallback');
     if (window.state) {
       Object.assign(window.state, {
-        mode: "manual",
         temperature: 0,
         temperatureLix: 0,
         tempLixSetpoint: 27,
@@ -767,12 +1086,42 @@ async function pollSensorData() {
         tiempo_horas: data.tiempo_horas,
         tiempo_minutos: data.tiempo_minutos,
         temperatura_sp: data.temperatura_sp || 0,
-        num_clientes_conectados: data.num_clientes_conectados || 0,
         modo: data.modo, //0 manual, 1 automatico
         etapa: data.etapa ? data.etapa : 0,
-        total_etapas: data.total_etapas ? data.total_etapas : 0
+        total_etapas: data.total_etapas ? data.total_etapas : 0,
+        nombre_ultimo_proceso: data.nombre_ultimo_proceso ? data.nombre_ultimo_proceso : "",
+        wifi_sta_connected: data.wifi_sta_connected ? data.wifi_sta_connected: false,
+        ssid_sta: data.ssid_sta ? data.ssid_sta: null
       }
     };
+
+    const button = document.getElementById("connection-indicator-extern");
+    const connectionDot = button.querySelector(".connection-dot");
+    const externalWifiStatus = document.getElementById("external-wifi-status");
+    if (data.wifi_sta_connected) {
+      button.classList.remove("offline");
+      button.classList.add("online");
+      connectionDot.innerHTML = `
+        <path d="M0 7L1.17157 5.82843C2.98259 4.01741 5.43884 3 8 3C10.5612 3 13.0174 4.01742 14.8284 5.82843L16 7L14.5858 8.41421L13.4142 7.24264C11.9783 5.8067 10.0307 5 8 5C5.96928 5 4.02173 5.8067 2.58579 7.24264L1.41421 8.41421L0 7Z" fill="currentColor"/>
+        <path d="M4.24264 11.2426L2.82843 9.82843L4 8.65685C5.06086 7.59599 6.49971 7 8 7C9.50029 7 10.9391 7.59599 12 8.65686L13.1716 9.82843L11.7574 11.2426L10.5858 10.0711C9.89999 9.38527 8.96986 9 8 9C7.03014 9 6.1 9.38527 5.41421 10.0711L4.24264 11.2426Z" fill="currentColor"/>
+        <path d="M8 15L5.65685 12.6569L6.82842 11.4853C7.13914 11.1746 7.56057 11 8 11C8.43942 11 8.86085 11.1746 9.17157 11.4853L10.3431 12.6569L8 15Z" fill="currentColor"/>
+      `;
+      connectionDot.setAttribute("viewBox", "0 0 16 16");
+      connectionDot.setAttribute("width", "20");
+      connectionDot.setAttribute("height", "20");
+      externalWifiStatus.textContent = `${data.ssid_sta}`;
+    } else {
+      button.classList.remove("online");
+      button.classList.add("offline");
+      connectionDot.innerHTML = `
+          <path d="M13 16H16L3 0H0L3.38948 4.17167C2.58157 4.61063 1.83348 5.16652 1.17157 5.82842L0 7L1.41421 8.41421L2.58579 7.24264C3.20071 6.62772 3.90945 6.12819 4.67837 5.75799L5.98803 7.36989C5.24898 7.65114 4.56994 8.08691 4 8.65685L2.82843 9.82842L4.24264 11.2426L5.41421 10.0711C5.94688 9.5384 6.62695 9.18703 7.35855 9.05668L8.9375 11H8.00355L8 11C7.56057 11 7.13914 11.1746 6.82842 11.4853L5.65685 12.6568L8 15L10.3103 12.6897L13 16Z" fill="currentColor"/>
+          <path d="M10.3673 5.37513C11.5055 5.74521 12.5521 6.38051 13.4142 7.24264L14.5858 8.41421L16 7L14.8284 5.82842C13.1228 4.12278 10.8448 3.12107 8.44586 3.01028L10.3673 5.37513Z" fill="currentColor"/>
+        `;
+        connectionDot.setAttribute("viewBox", "0 0 16 16");
+        connectionDot.setAttribute("width", "20");
+        connectionDot.setAttribute("height", "20");
+        externalWifiStatus.textContent = `Wifi externo`;
+    }
 
     if (window.state.start !== data.start) {
         if (data.start) {
@@ -840,12 +1189,6 @@ function updateUIElements(data) {
     updateIndicators();
   }
 
-
-  // Actualiza state de WIFI
-    if (data.wifiNetworks) {
-      state.wifiNetworks = data.wifiNetworks;
-      renderWifiTable();
-    }
   // Actualiza state de USERS
     if (data.users) {
       state.users = data.users;
@@ -899,28 +1242,211 @@ function updateSensorDataOnly(data) {
 
 function updateConnectionStatus(connected) {
   const button = document.getElementById("connection-indicator");
+  const buttonExtern = document.getElementById("connection-indicator-extern");
+  const externalWifiStatus = document.getElementById("external-wifi-status");
+  const connectionDotExtern = buttonExtern.querySelector(".connection-dot");
 
   if (button) {
+    const connectionDot = button.querySelector(".connection-dot");
+    
     if (connected && !isDemoMode) {
       button.classList.remove("offline");
       button.classList.add("online");
-      const connectionTexts = document.querySelectorAll(".connection-text");
+      
+      // Cambiar al icono WiFi conectado
+      if (connectionDot) {
+        connectionDot.innerHTML = `
+          <path d="M0 7L1.17157 5.82843C2.98259 4.01741 5.43884 3 8 3C10.5612 3 13.0174 4.01742 14.8284 5.82843L16 7L14.5858 8.41421L13.4142 7.24264C11.9783 5.8067 10.0307 5 8 5C5.96928 5 4.02173 5.8067 2.58579 7.24264L1.41421 8.41421L0 7Z" fill="currentColor"/>
+          <path d="M4.24264 11.2426L2.82843 9.82843L4 8.65685C5.06086 7.59599 6.49971 7 8 7C9.50029 7 10.9391 7.59599 12 8.65686L13.1716 9.82843L11.7574 11.2426L10.5858 10.0711C9.89999 9.38527 8.96986 9 8 9C7.03014 9 6.1 9.38527 5.41421 10.0711L4.24264 11.2426Z" fill="currentColor"/>
+          <path d="M8 15L5.65685 12.6569L6.82842 11.4853C7.13914 11.1746 7.56057 11 8 11C8.43942 11 8.86085 11.1746 9.17157 11.4853L10.3431 12.6569L8 15Z" fill="currentColor"/>
+        `;
+        connectionDot.setAttribute("viewBox", "0 0 16 16");
+        connectionDot.setAttribute("width", "20");
+        connectionDot.setAttribute("height", "20");
+      }
+      
+      const connectionTexts = button.querySelectorAll(".connection-text");
       connectionTexts.forEach((text) => {
         text.classList.remove("offline");
-        text.textContent = "Online";
         text.classList.add("online");
       });
+
+      // Mostrar formulario WiFi cuando esté conectado
+      showWiFiConfigPanel();
     } else {
       button.classList.remove("online");
       button.classList.add("offline");
-      const connectionTexts = document.querySelectorAll(".connection-text");
+
+      buttonExtern.classList.remove("online");
+      buttonExtern.classList.add("offline");
+      
+      // Cambiar al icono WiFi desconectado (tachado)
+      if (connectionDot) {
+        connectionDot.innerHTML = `
+          <path d="M13 16H16L3 0H0L3.38948 4.17167C2.58157 4.61063 1.83348 5.16652 1.17157 5.82842L0 7L1.41421 8.41421L2.58579 7.24264C3.20071 6.62772 3.90945 6.12819 4.67837 5.75799L5.98803 7.36989C5.24898 7.65114 4.56994 8.08691 4 8.65685L2.82843 9.82842L4.24264 11.2426L5.41421 10.0711C5.94688 9.5384 6.62695 9.18703 7.35855 9.05668L8.9375 11H8.00355L8 11C7.56057 11 7.13914 11.1746 6.82842 11.4853L5.65685 12.6568L8 15L10.3103 12.6897L13 16Z" fill="currentColor"/>
+          <path d="M10.3673 5.37513C11.5055 5.74521 12.5521 6.38051 13.4142 7.24264L14.5858 8.41421L16 7L14.8284 5.82842C13.1228 4.12278 10.8448 3.12107 8.44586 3.01028L10.3673 5.37513Z" fill="currentColor"/>
+        `;
+        connectionDot.setAttribute("viewBox", "0 0 16 16");
+        connectionDot.setAttribute("width", "20");
+        connectionDot.setAttribute("height", "20");
+      }
+      
+      const connectionTexts = button.querySelectorAll(".connection-text");
       connectionTexts.forEach((text) => {
         //remueve la clase online
         text.classList.remove("online");
-        text.textContent = "Offline";
         text.classList.add("offline");
       });
+
+
+      buttonExtern.classList.remove("online");
+      buttonExtern.classList.add("offline");
+      connectionDotExtern.innerHTML = `
+      <path d="M13 16H16L3 0H0L3.38948 4.17167C2.58157 4.61063 1.83348 5.16652 1.17157 5.82842L0 7L1.41421 8.41421L2.58579 7.24264C3.20071 6.62772 3.90945 6.12819 4.67837 5.75799L5.98803 7.36989C5.24898 7.65114 4.56994 8.08691 4 8.65685L2.82843 9.82842L4.24264 11.2426L5.41421 10.0711C5.94688 9.5384 6.62695 9.18703 7.35855 9.05668L8.9375 11H8.00355L8 11C7.56057 11 7.13914 11.1746 6.82842 11.4853L5.65685 12.6568L8 15L10.3103 12.6897L13 16Z" fill="currentColor"/>
+      <path d="M10.3673 5.37513C11.5055 5.74521 12.5521 6.38051 13.4142 7.24264L14.5858 8.41421L16 7L14.8284 5.82842C13.1228 4.12278 10.8448 3.12107 8.44586 3.01028L10.3673 5.37513Z" fill="currentColor"/>
+      `;
+      connectionDotExtern.setAttribute("viewBox", "0 0 16 16");
+      connectionDotExtern.setAttribute("width", "20");
+      connectionDotExtern.setAttribute("height", "20");
+      externalWifiStatus.textContent = `Wifi externo`;
+
+      // Ocultar formulario WiFi y mostrar mensaje de desconexión
+      if (isDemoMode) {
+        showWiFiConfigPanel();
+      } else {
+        showWiFiDisconnectedMessage();
+      }
     }
+  }
+}
+
+// ============ FUNCIONES PARA GESTIÓN DE PANEL WIFI ============
+function showWiFiConfigPanel() {
+  const wifiConfigPanel = document.querySelector('.wifi-config-panel');
+  const wifiInfoPanel = document.querySelector('.wifi-info-panel');
+  const wifiNetworksPanel = document.getElementById('wifiNetworksPanel');
+  const wifiNetworksFormPanel = document.getElementById('wifiNetworksFormPanel');
+  const wifiDisconnectedMessage = document.getElementById('wifiDisconnectedMessage');
+
+  if (wifiConfigPanel) {
+    wifiConfigPanel.style.display = 'block';
+  }
+
+  if (wifiNetworksFormPanel) {
+    wifiNetworksFormPanel.style.display = 'block';
+  }
+
+  if (wifiInfoPanel) {
+    wifiInfoPanel.style.di
+    splay = 'block';
+  }
+  if (wifiNetworksPanel) {
+    wifiNetworksPanel.style.display = 'block';
+  }
+
+  // Mostrar panel de redes disponibles cuando hay conexión
+  if (wifiNetworksPanel && typeof showWiFiNetworksPanel === 'function') {
+    showWiFiNetworksPanel();
+  }
+
+  if (wifiDisconnectedMessage) {
+    wifiDisconnectedMessage.style.display = 'none';
+  }
+
+  console.log('📡 Mostrando paneles WiFi');
+}
+
+function showWiFiDisconnectedMessage() {
+  const wifiConfigPanel = document.querySelector('.wifi-config-panel');
+  const wifiInfoPanel = document.querySelector('.wifi-info-panel');
+  const wifiNetworksPanel = document.getElementById('wifiNetworksPanel');
+  const wifiNetworksFormPanel = document.getElementById('wifiNetworksFormPanel');
+  let wifiDisconnectedMessage = document.getElementById('wifiDisconnectedMessage');
+
+  // Ocultar paneles de configuración y redes
+  if (wifiNetworksFormPanel) {
+    wifiNetworksFormPanel.style.display = 'none';
+  }
+  if (wifiConfigPanel) {
+    wifiConfigPanel.style.display = 'none';
+  }
+  
+  if (wifiInfoPanel) {
+    wifiInfoPanel.style.display = 'none';
+  }
+
+  if (wifiNetworksPanel) {
+    wifiNetworksPanel.style.display = 'none';
+  }
+
+  // Crear mensaje de desconexión si no existe
+  if (!wifiDisconnectedMessage) {
+    const conexionesDiv = document.getElementById('conexiones');
+    if (conexionesDiv) {
+      wifiDisconnectedMessage = document.createElement('div');
+      wifiDisconnectedMessage.id = 'wifiDisconnectedMessage';
+      wifiDisconnectedMessage.className = 'panel wifi-disconnected-panel';
+      wifiDisconnectedMessage.innerHTML = `
+        <div class="wifi-disconnected-content">
+          <p class="wifi-disconnected-description">
+            El dispositivo no está conectado a la red WiFi o no se puede establecer comunicación.
+          </p>
+          <div class="wifi-disconnected-actions">
+            <div class="wifi-disconnected-steps">
+              <h4>Pasos para conectar:</h4>
+              <ol>
+                <li>Asegúrese de que el esté encendido</li>
+                <li>Conecte su dispositivo a la red WiFi</li>
+                <li>Verifique que esté en la dirección: <code>192.168.4.1</code></li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Insertar después del h2
+      const h2 = conexionesDiv.querySelector('h2');
+      if (h2) {
+        h2.insertAdjacentElement('afterend', wifiDisconnectedMessage);
+      } else {
+        conexionesDiv.appendChild(wifiDisconnectedMessage);
+      }
+    }
+  }
+
+  // Mostrar mensaje de desconexión
+  if (wifiDisconnectedMessage) {
+    wifiDisconnectedMessage.style.display = 'block';
+  }
+
+  console.log('📶❌ Mostrando mensaje de desconexión WiFi ');
+}
+
+// Función para reintentar conexión
+function retryConnection() {
+  console.log('🔄 Reintentando conexión WiFi...');
+  
+  // Mostrar estado de carga en el botón
+  const retryBtn = document.querySelector('.wifi-retry-btn');
+  if (retryBtn) {
+    const btnIcon = retryBtn.querySelector('.btn-icon');
+    const btnText = retryBtn.querySelector('.btn-text');
+    
+    retryBtn.disabled = true;
+    btnIcon.textContent = '⏳';
+    btnText.textContent = 'Reintentando...';
+    
+    // Simular reintento durante 3 segundos
+    setTimeout(() => {
+      retryBtn.disabled = false;
+      btnIcon.textContent = '🔄';
+      btnText.textContent = 'Reintentar Conexión';
+      
+      // Forzar una nueva verificación de conexión
+      pollSensorData().catch(() => {
+        console.log('❌ Reintento fallido - Sigue desconectado');
+      });
+    }, 3000);
   }
 }
 
@@ -947,9 +1473,29 @@ function updateDashboardState(data){
     state.modo = data.automatic_updates.modo; //0 manual, 1 automatico
     state.etapa = data.automatic_updates.etapa ? data.automatic_updates.etapa : 0;
     state.total_etapas = data.automatic_updates.total_etapas ? data.automatic_updates.total_etapas : 0;
+    state.nombre_ultimo_proceso = data.automatic_updates.nombre_ultimo_proceso ? data.automatic_updates.nombre_ultimo_proceso : "";
+
+    //wifi
+    state.wifi_sta_connected = data.automatic_updates.wifi_sta_connected ? data.automatic_updates.wifi_sta_connected: false;
+    state.ssid_sta = data.automatic_updates.ssid_sta ? data.automatic_updates.ssid_sta: null;
 }
 
 function updateProcessState(data) {
+    //if (window.state.start === true && data.automatic_updates.start === false && window.state.nombre_ultimo_proceso !== "") {
+    if (window.state.start === true && data.automatic_updates.start === false) {
+        // Si el proceso se detuvo, mostrar modal para modificar datos del proceso como nombre, kilos, comentarios, etc.
+        console.log("⏹️ Proceso detenido - realizando acciones de cierre");
+        
+        // Pequeño delay para asegurar que el estado se actualice correctamente
+        setTimeout(() => {
+            if (typeof showProcessEditModal === 'function') {
+                showProcessEditModal();
+            } else {
+                console.error("❌ Función showProcessEditModal no disponible. Asegúrate de que curves.js esté cargado.");
+            }
+        }, 1000);
+    }
+
     if (window.state.start !== data.automatic_updates.start) {
         window.state.start = data.automatic_updates.start;
         if (data.automatic_updates.start) {
@@ -1071,7 +1617,7 @@ function disableControlButtons(data) {
       if (temperatureBtn && window.state.modo === 1) {
         temperatureBtn.disabled = true;
       }
-      if (processStageIndicator && window.state.modo === 1) {
+      if (processStageIndicator) {
         processStageIndicator.style.display = "block";
       }
     } else {
@@ -1090,7 +1636,7 @@ function disableControlButtons(data) {
       if (temperatureBtn) {
         temperatureBtn.disabled = false;
       }
-      if (processStageIndicator && window.state.modo === 1) {
+      if (processStageIndicator) {
         processStageIndicator.style.display = "none";
       }
       
@@ -1240,12 +1786,20 @@ window.ENDPOINTS = apiManager.ENDPOINTS;
 window.getAllGraphData = (filename = null) => apiManager.getAllGraphData(filename);
 window.getRecentGraphData = (limit, filename = null) => apiManager.getRecentGraphData(limit, filename);
 window.getFilteredGraphData = (limit, filename = null) => apiManager.getFilteredGraphData(limit, filename);
-window.getCurvasFiles = () => apiManager.getCurvasFiles();
+window.getCurvasFiles = (filterParams = null) => apiManager.getCurvasFiles(filterParams);
 window.getRecetasFiles = () => apiManager.getRecetasFiles();
 window.getRecipeDetail = (filename) => apiManager.getRecipeDetail(filename);
 window.getCurveDetail = (filename) => apiManager.getCurveDetail(filename);
 window.deleteFile = (filename) => apiManager.deleteFile(filename);
 window.startAutomaticProcess = (filename) => apiManager.startAutomaticProcess(filename);
+window.updateProcessData = (processData) => apiManager.updateProcessData(processData);
+window.updateRecipeData = (recipeData) => apiManager.updateRecipeData(recipeData);
+window.setCurrentDate = (dateString) => apiManager.setCurrentDate(dateString);
+window.setWiFiConfig = (ssid, password) => apiManager.setWiFiConfig(ssid, password);
+window.scanWiFiNetworks = () => apiManager.scanWiFiNetworks();
+window.connectToWiFiNetwork = (ssid, password, save) => apiManager.connectToWiFiNetwork(ssid, password, save);
+window.disconnectFromWiFiNetwork = () => apiManager.disconnectFromWiFiNetwork();
+window.getWiFiStatus = () => apiManager.getWiFiStatus();
 
 
 // ============ EVENT LISTENERS ============

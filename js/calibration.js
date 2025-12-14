@@ -5,7 +5,7 @@ document.getElementById('calibrate-pressure').addEventListener('click', async fu
         const message = {
             CMD_calibrar_presion: true
         };
-        const res = await openModal(() => apiManager.sendCommand(message), true, 'Calibrando presión...');
+        const res = await openModal(() => apiManager.sendCommand(message, true, 'Calibrando presión...'));
 
         if (res) {
             const progress = document.getElementById('pressure-progress');

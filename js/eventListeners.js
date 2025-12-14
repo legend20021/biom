@@ -25,7 +25,9 @@ async function clickOnRecirculation(param, byPass = false) {
             await openModal(() => apiManager.sendCommand(message, value, value ?'Recirculación activada': 'Recirculación desactivada'));
             
             // Desbloquear después de confirmar
-            unlockUserInteraction();
+            setTimeout(() => {
+                unlockUserInteraction();
+            }, 2000);
         }
         
         state.recirculacion = value;
@@ -71,7 +73,9 @@ async function clickOnTemperature(param, byPass = false) {
             await openModal(() => apiManager.sendCommand(message, value, value ? 'Temperatura activada': 'Temperatura desactivada'));
             
             // Desbloquear después de confirmar
-            unlockUserInteraction();
+            setTimeout(() => {
+                unlockUserInteraction();
+            }, 2000);
         }
         
         state.control_temperatura = value;
@@ -123,7 +127,9 @@ async function clickOnNaturalPressure(param, byPass = false) {
             await openModal(() => apiManager.sendCommand(message, value, value ? 'Presion natural activada': 'Presion natural desactivada'));
             
             // Desbloquear después de confirmar
-            unlockUserInteraction();
+            setTimeout(() => {
+                unlockUserInteraction();
+            }, 2000);
         }
         
         naturalPressureBtn.checked = value;
@@ -188,7 +194,9 @@ async function clickOnCarbonicMaceration(param, byPass = false) {
             await openModal(() => apiManager.sendCommand(message, value, value ? 'Maceracion activada': 'Maceracion desactivada'));
             
             // Desbloquear después de confirmar
-            unlockUserInteraction();
+            setTimeout(() => {
+                unlockUserInteraction();
+            }, 2000);
         }
         
         carbonicMacerationBtn.checked = value;
@@ -254,7 +262,9 @@ document.querySelectorAll('.input-group1').forEach(group => {
                 await openModal(() => apiManager.sendCommand(message, true, 'Valor enviado'));
                 
                 // Desbloquear después de confirmar
-                unlockUserInteraction();
+                setTimeout(() => {
+                    unlockUserInteraction();
+                }, 2000);
             } catch (error) {
                 // Desbloquear si se cancela el modal
                 unlockUserInteraction();
@@ -294,7 +304,11 @@ async function actionPlay(byPass = false) {
             );
             toggleActionButtons();
             // Desbloquear después de confirmar
-            unlockUserInteraction();
+            setTimeout(() => {
+                unlockUserInteraction();
+            }, 2000);
+            //redirige a la seccion dashboard con la funcion showSection(event)
+            navigateToSection('dashboard');
         }
     } catch (error) {
         toggleActionButtons();
@@ -321,7 +335,9 @@ async function actionStop(byPass = false) {
             resetControlInputs();
             toggleActionButtons();
             // Desbloquear después de confirmar
-            unlockUserInteraction();
+            setTimeout(() => {
+                unlockUserInteraction();
+            }, 2000);
         }
     } catch (error) {
         toggleActionButtons();
@@ -347,7 +363,9 @@ async function actionClose(byPass = false) {
             resetControlInputs();
             toggleActionButtons();
             // Desbloquear después de confirmar
-            unlockUserInteraction();
+            setTimeout(() => {
+                unlockUserInteraction();
+            }, 2000);
         }
     } catch (error) {
         toggleActionButtons();

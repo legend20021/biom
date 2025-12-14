@@ -1,5 +1,5 @@
 // ========================================
-// GESTOR DE RECETAS PARA BIOMASTER ESP32
+// GESTOR DE RECETAS PARA BIOMASTER
 // ========================================
 
 class RecipeManager {
@@ -8,33 +8,23 @@ class RecipeManager {
     this.recipes = [];
     this.isLoading = false;
     this.lastUpdate = null;
-    this.recipesContainers = {
-      manual: null,
-      parametrizada: null,
-      predeterminada: null
-    };
+    this.recipesContainer = null;
     
     this.init();
   }
 
   async init() {
     
-    // Buscar contenedores de recetas por modo
-    this.recipesContainers = {
-      manual: document.querySelector('.recipes-section .recipes-list-manual'),      // Primera sección (manual)
-      parametrizada: document.querySelector('.recipes-section .recipes-list'), // Segunda sección (parametrizada)
-      predeterminada: document.querySelector('.recipes-section .recipes-list-predeterminada')  // Tercera sección (predeterminada)
-    };
+    // Buscar contenedor unificado de recetas
+    this.recipesContainer = document.querySelector('#recipesListUnified');
     
-    // Verificar que al menos un contenedor esté disponible
-    const containersFound = Object.values(this.recipesContainers).some(container => container !== null);
-    
-    if (containersFound) {
+    // Verificar que el contenedor esté disponible
+    if (this.recipesContainer) {
       await this.loadRecipes();
       // Inicializar el filtro después de cargar las recetas
       setTimeout(() => this.initRecipeFilter(), 100);
     } else {
-      console.warn("⚠️ No se encontraron contenedores de recetas");
+      console.warn("⚠️ No se encontró el contenedor unificado de recetas");
     }
   }
 
@@ -80,58 +70,89 @@ class RecipeManager {
   }
 
   renderRecipes() {
+    // Ocultar el loader global una vez que empezamos a renderizar
+    const globalLoader = document.getElementById('recipesGlobalLoading');
+    if (globalLoader) {
+      globalLoader.style.display = 'none';
+    }
 
-    // Separar recetas por modo
-    const recipesByMode = {
-      manual: this.recipes.filter(recipe => (recipe.modo || 0) === 0),
-      parametrizada: this.recipes.filter(recipe => (recipe.modo || 0) === 1),
-      predeterminada: this.recipes.filter(recipe => (recipe.modo || 0) === 2)
-    };
-
-
-    // Renderizar cada tipo en su contenedor correspondiente
-    this.renderRecipesByMode('manual', recipesByMode.manual);
-    this.renderRecipesByMode('parametrizada', recipesByMode.parametrizada);
-    this.renderRecipesByMode('predeterminada', recipesByMode.predeterminada);
-  }
-
-  renderRecipesByMode(mode, recipes) {
-    const container = this.getContainerForMode(mode);
-    
-    if (!container) {
-      console.warn(`⚠️ Contenedor para modo ${mode} no encontrado`);
+    // Verificar que el contenedor exista
+    if (!this.recipesContainer) {
+      console.warn("⚠️ Contenedor de recetas no encontrado");
       return;
     }
 
     // Limpiar contenedor
-    container.innerHTML = '';
+    this.recipesContainer.innerHTML = '';
 
-    if (recipes.length === 0) {
-      this.showEmptyStateForMode(container, mode);
+    // Verificar si hay recetas
+    if (this.recipes.length === 0) {
+      this.showGlobalEmptyState();
       return;
     }
 
-    // Crear elementos para cada receta del modo específico
-    recipes.forEach((recipe, index) => {
-      const recipeElement = this.createRecipeElement(recipe, index);
-      container.appendChild(recipeElement);
-    });
+    // Obtener el filtro actual
+    const filterSelect = document.getElementById('recipesFilter');
+    const currentFilter = filterSelect ? filterSelect.value : 'all';
+
+    // Filtrar recetas según la selección
+    let filteredRecipes = this.recipes;
+    
+    if (currentFilter !== 'all') {
+      const modeMapping = {
+        'created': 0,      // Recetas manuales/creadas
+        'parametrized': 1, // Recetas parametrizadas
+        'predetermined': 2 // Recetas predeterminadas
+      };
+      
+      const targetMode = modeMapping[currentFilter];
+      if (targetMode !== undefined) {
+        filteredRecipes = this.recipes.filter(recipe => (recipe.modo || 0) === targetMode);
+      }
+    }
+
+    // Renderizar recetas filtradas
+    if (filteredRecipes.length === 0) {
+      this.showEmptyStateForFilter(currentFilter);
+    } else {
+      filteredRecipes.forEach((recipe, index) => {
+        const recipeElement = this.createRecipeElement(recipe, index);
+        this.recipesContainer.appendChild(recipeElement);
+      });
+    }
   }
 
-  getContainerForMode(mode) {
-    switch(mode) {
-      case 'manual':
-        return this.recipesContainers.manual;
-      
-      case 'parametrizada':
-        return this.recipesContainers.parametrizada;
-      
-      case 'predeterminada':
-        return this.recipesContainers.predeterminada;
-      
-      default:
-        return null;
-    }
+  showEmptyStateForFilter(filterType) {
+    if (!this.recipesContainer) return;
+    
+    const filterMessages = {
+      'all': {
+        title: 'No hay recetas disponibles',
+        message: 'No se encontraron recetas en el sistema. Crea tu primera receta para comenzar.'
+      },
+      'created': {
+        title: 'No hay recetas personalizadas',
+        message: 'Aún no has creado recetas personalizadas. Usa el botón "Crear Nueva Receta" para comenzar.'
+      },
+      'parametrized': {
+        title: 'No hay recetas parametrizadas',
+        message: 'No se encontraron recetas parametrizadas en el sistema.'
+      },
+      'predetermined': {
+        title: 'No hay recetas predeterminadas',
+        message: 'No se encontraron recetas predeterminadas en el sistema.'
+      }
+    };
+
+    const config = filterMessages[filterType] || filterMessages['all'];
+    
+    this.recipesContainer.innerHTML = `
+      <div class="recipe-empty-state">
+        <div class="empty-icon">📜</div>
+        <h4>${config.title}</h4>
+        <p>${config.message}</p>
+      </div>
+    `;
   }
 
   createRecipeElement(recipe, index) {
@@ -148,38 +169,49 @@ class RecipeManager {
   }
 
   showLoadingState() {
-    // Mostrar estado de carga solo en el contenedor de recetas parametrizadas (el principal)
-    if (this.recipesContainers.parametrizada) {
-      this.recipesContainers.parametrizada.innerHTML = RECIPE_TEMPLATES.loadingState();
+    // Mostrar el estado de carga global
+    const globalLoader = document.getElementById('recipesGlobalLoading');
+    if (globalLoader) {
+      globalLoader.style.display = 'block';
+    }
+    
+    // Limpiar el contenedor durante la carga
+    if (this.recipesContainer) {
+      this.recipesContainer.innerHTML = '';
     }
   }
 
   showErrorState(errorMessage) {
-    // Mostrar error solo en el contenedor de recetas parametrizadas (el principal)
-    if (this.recipesContainers.parametrizada) {
-      this.recipesContainers.parametrizada.innerHTML = RECIPE_TEMPLATES.errorState(errorMessage);
+    // Ocultar el estado de carga global
+    const globalLoader = document.getElementById('recipesGlobalLoading');
+    if (globalLoader) {
+      globalLoader.style.display = 'none';
+    }
+    
+    // Mostrar error en el contenedor unificado
+    if (this.recipesContainer) {
+      this.recipesContainer.innerHTML = RECIPE_TEMPLATES.errorState(errorMessage);
     }
   }
 
 
-  showEmptyStateForMode(container, mode) {
-    if (!container) return;
+  showGlobalEmptyState() {
+    // Ocultar el loader global
+    const globalLoader = document.getElementById('recipesGlobalLoading');
+    if (globalLoader) {
+      globalLoader.style.display = 'none';
+    }
     
-    const modeNames = {
-      manual: 'manuales',
-      parametrizada: 'parametrizadas', 
-      predeterminada: 'predeterminadas'
-    };
-    
-    const modeName = modeNames[mode] || mode;
-    
-    container.innerHTML = `
-      <div class="recipe-empty-state">
-        <div class="empty-icon">📜</div>
-        <h4>No hay recetas ${modeName}</h4>
-        <p>No se encontraron recetas de tipo ${modeName} en el sistema.</p>
-      </div>
-    `;
+    // Mostrar mensaje global en el contenedor unificado
+    if (this.recipesContainer) {
+      this.recipesContainer.innerHTML = `
+        <div class="recipe-empty-state">
+          <div class="empty-icon">📜</div>
+          <h4>No hay recetas disponibles</h4>
+          <p>No se encontraron recetas en el sistema. Crea tu primera receta para comenzar.</p>
+        </div>
+      `;
+    }
   }
 
   // ============ ACCIONES DE RECETAS ============
@@ -217,9 +249,6 @@ class RecipeManager {
 
     } catch (error) {
       console.error("❌ Error iniciando proceso automático:", error);
-      if (window.notificationManager) {
-        window.notificationManager.show(`Error al iniciar proceso: ${error.message}`, "error");
-      }
     }
   }
 
@@ -269,7 +298,7 @@ class RecipeManager {
     modal.id = 'recipeDetailsModal';
     
     // Generar secciones usando templates
-    const generalInfoHtml = RECIPE_TEMPLATES.generalInfo(recipeDetails, this.formatDuration.bind(this));
+    const generalInfoHtml = RECIPE_TEMPLATES.generalInfo(recipeDetails, this.formatDuration.bind(this), false);
     const setPointsHtml = RECIPE_TEMPLATES.setPointsSection(
       recipeDetails.setPoints ? this.renderSetPoints(recipeDetails.setPoints) : RECIPE_TEMPLATES.noSetPoints()
     );
@@ -336,7 +365,7 @@ class RecipeManager {
         return;
       }
 
-      // TODO: Implementar eliminación en el ESP32 via API
+      // TODO: Implementar eliminación en el Microcontrolador via API
       // Por ahora simular eliminación local
       
       // Eliminar de la lista local
@@ -353,9 +382,6 @@ class RecipeManager {
 
     } catch (error) {
       console.error("❌ Error eliminando receta:", error);
-      if (window.notificationManager) {
-        window.notificationManager.show(`Error al eliminar receta: ${error.message}`, "error");
-      }
     }
   }
 
@@ -402,50 +428,30 @@ class RecipeManager {
   // ============ FILTRADO DE SECCIONES ============
 
   /**
-   * Filtra y muestra las secciones de recetas según el tipo seleccionado
-   * @param {string} selectedType - Tipo de receta seleccionado ('created', 'parametrized', 'predetermined')
+   * Filtra y muestra las recetas según el tipo seleccionado
+   * @param {string} selectedType - Tipo de receta seleccionado ('all', 'created', 'parametrized', 'predetermined')
    */
   filterRecipesByType(selectedType) {
     
-    // Mapeo de valores del select a IDs de secciones
-    const sectionMapping = {
-      'created': 'createdRecipesSection',
-      'parametrized': 'parametrizedRecipesSection', 
-      'predetermined': 'predeterminedRecipesSection'
-    };
+    // Ocultar el loader global ya que las recetas ya están cargadas
+    const globalLoader = document.getElementById('recipesGlobalLoading');
+    if (globalLoader) {
+      globalLoader.style.display = 'none';
+    }
     
-    // Obtener todas las secciones de recetas
-    const allSections = Object.values(sectionMapping);
+    // Re-renderizar las recetas con el filtro aplicado
+    this.renderRecipes();
     
-    // Ocultar todas las secciones primero
-    allSections.forEach(sectionId => {
-      const section = document.getElementById(sectionId);
-      if (section) {
-        section.style.display = 'none';
-      }
-    });
-    
-    // Mostrar solo la sección seleccionada
-    const selectedSectionId = sectionMapping[selectedType];
-    if (selectedSectionId) {
-      const selectedSection = document.getElementById(selectedSectionId);
-      if (selectedSection) {
-        selectedSection.style.display = 'block';
-        
-        // Notificación opcional si está disponible
-        if (window.notificationManager) {
-          const typeNames = {
-            'created': 'Recetas Creadas',
-            'parametrized': 'Recetas Parametrizadas', 
-            'predetermined': 'Recetas Predeterminadas'
-          };
-          window.notificationManager.show(`Mostrando: ${typeNames[selectedType]}`, "info");
-        }
-      } else {
-        console.warn(`📜 ⚠️ Sección no encontrada: ${selectedSectionId}`);
-      }
-    } else {
-      console.warn(`📜 ⚠️ Tipo no reconocido: ${selectedType}`);
+    // Notificación opcional si está disponible
+    if (window.notificationManager) {
+      const typeNames = {
+        'all': 'Todas las Recetas',
+        'created': 'Recetas Personalizadas',
+        'parametrized': 'Recetas Parametrizadas', 
+        'predetermined': 'Recetas Predeterminadas'
+      };
+      const displayName = typeNames[selectedType] || 'Recetas';
+      window.notificationManager.show(`Mostrando: ${displayName}`, "info");
     }
   }
 
@@ -459,8 +465,10 @@ class RecipeManager {
     if (filterSelect) {
       const initialValue = filterSelect.value;
       
-      // Aplicar el filtro inicial
-      this.filterRecipesByType(initialValue);
+      // Las recetas ya se renderizaron con renderRecipes(), solo aplicar filtro si no es 'all'
+      if (initialValue !== 'all') {
+        this.filterRecipesByType(initialValue);
+      }
     } else {
       console.warn("📜 ⚠️ Select de filtro de recetas no encontrado");
     }
@@ -503,7 +511,7 @@ function initRecipeFilter() {
 // Función para agregar listeners de limpieza de errores
 function addFormErrorListeners() {
   // Lista de campos principales que pueden tener errores
-  const mainFields = ['recipeName', 'coffeeType', 'pressureType', 'recipeMode', 'recipeDescription'];
+  const mainFields = ['recipeName', 'coffeeType', 'pressureType', 'processType', 'recipeMode', 'recipeDescription'];
   
   mainFields.forEach(fieldId => {
     const field = document.getElementById(fieldId);
@@ -651,7 +659,6 @@ function closeCreateRecipeModal() {
   const modal = document.getElementById('createRecipeModal');
   if (modal) {
     modal.remove();
-    console.log("📝 Modal de creación cerrado y removido");
   }
 }
 
@@ -809,7 +816,6 @@ function updateRemoveButtons() {
 
 // Función para calcular la duración total de los setpoints
 function calculateTotalDuration() {
-  console.log("🔢 Calculando duración total de setpoints...");
   
   const setPointsList = document.getElementById('setPointsList');
   if (!setPointsList) {
@@ -834,7 +840,6 @@ function calculateTotalDuration() {
       const hours = parseInt(hoursInput.value) || 0;
       const minutes = parseInt(minutesInput.value) || 0;
       
-      console.log(`📊 SetPoint ${setPointIndex}: ${hours}h ${minutes}m`);
       
       totalHours += hours;
       totalMinutes += minutes;
@@ -854,7 +859,6 @@ function calculateTotalDuration() {
     const durationText = `${totalHours}h ${totalMinutes}m`;
     durationElement.textContent = durationText;
     
-    console.log(`✅ Duración total calculada: ${durationText}`);
 
     // Guardar la duración total en minutos (decimal) para uso posterior
     const totalDurationInMinutes = (totalHours * 60) + totalMinutes;
@@ -868,7 +872,6 @@ function calculateTotalDuration() {
 
 // Función para guardar nueva receta
 async function saveNewRecipe() {
-  console.log("💾 Guardando nueva receta...");
   
   try {
     // Recopilar datos del formulario
@@ -895,7 +898,7 @@ async function saveNewRecipe() {
       throw new Error("ApiManager no está disponible");
     }
     
-    // Enviar datos al ESP32 via API
+    // Enviar datos al Microcontrolador via API
     const result = await apiManager.createRecipe(recipeData);
     
     if (result.success) {
@@ -938,6 +941,7 @@ function collectRecipeFormData() {
         recipeName: document.getElementById('recipeName')?.value || '',
         coffeeType: document.getElementById('coffeeType')?.value || '',
         pressureType: document.getElementById('pressureType')?.value || '',
+        processType: parseInt(document.getElementById('processType')?.value || '0'),  // ✅ Nuevo campo processType
         modo: parseInt(document.getElementById('recipeMode')?.value || '1'),
         description: document.getElementById('recipeDescription')?.value || '',
         duration: calculatedDuration, // Usar duración calculada automáticamente
@@ -968,7 +972,7 @@ function collectRecipeFormData() {
 // Función para limpiar errores de formulario
 function clearFormErrors() {
   // Limpiar errores de campos principales
-  const fields = ['recipeName', 'coffeeType', 'pressureType', 'recipeMode'];
+  const fields = ['recipeName', 'coffeeType', 'pressureType', 'processType', 'recipeMode'];
   fields.forEach(fieldId => {
     clearFieldError(fieldId);
   });
@@ -1029,7 +1033,6 @@ function showFieldError(fieldId, message) {
 
 // Función para validar datos de la receta
 function validateRecipeData(data) {
-  console.log("🔍 Validando datos de receta...");
   
   // Limpiar errores anteriores
   clearFormErrors();
@@ -1054,6 +1057,16 @@ function validateRecipeData(data) {
     if (!data.pressureType) {
       showFieldError('pressureType', 'El tipo de presión es obligatorio');
       if (!firstErrorField) firstErrorField = 'pressureType';
+      hasErrors = true;
+    }
+
+    if (data.processType === undefined || data.processType === null || isNaN(data.processType) || data.processType < 0) {
+      showFieldError('processType', 'El tipo de proceso es obligatorio');
+      if (!firstErrorField) firstErrorField = 'processType';
+      hasErrors = true;
+    } else if (data.processType > 13) {
+      showFieldError('processType', 'Tipo de proceso no válido');
+      if (!firstErrorField) firstErrorField = 'processType';
       hasErrors = true;
     }
 
@@ -1161,7 +1174,6 @@ function validateRecipeData(data) {
       throw new Error("Por favor corrija los errores marcados en el formulario");
     }
     
-    console.log("✅ Validación completada exitosamente");
     return true;
     
   } catch (error) {
@@ -1178,12 +1190,294 @@ function validateRecipeData(data) {
 }
 
 
-// Inicializar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', function() {
-  // Usar un pequeño delay para asegurar que todo esté cargado
+// ============ FUNCIONES DE EDICIÓN DE INFORMACIÓN DE RECETA ============
+
+// Variable global para almacenar los valores originales durante la edición
+let originalRecipeValues = null;
+let currentRecipeDetails = null;
+
+function enableRecipeInfoEditing() {
+  console.log("✏️ Habilitando edición de información de receta");
+  
+  // Verificar que los elementos necesarios existan
+  const recipeNameDisplay = document.getElementById('recipeNameDisplay');
+  const coffeeTypeDisplay = document.getElementById('coffeeTypeDisplay');
+  const processTypeDisplay = document.getElementById('processTypeDisplay');
+  const processTypeEdit = document.getElementById('processTypeEdit');
+  const recipeFilename = document.getElementById('recipeFilename');
+  
+  if (!recipeNameDisplay || !coffeeTypeDisplay || !processTypeDisplay || !processTypeEdit || !recipeFilename) {
+    console.error("❌ No se encontraron todos los elementos necesarios para la edición");
+    console.log("Elementos encontrados:", {
+      recipeNameDisplay: !!recipeNameDisplay,
+      coffeeTypeDisplay: !!coffeeTypeDisplay,
+      processTypeDisplay: !!processTypeDisplay,
+      processTypeEdit: !!processTypeEdit,
+      recipeFilename: !!recipeFilename
+    });
+    return;
+  }
+  
+  // Almacenar valores originales
+  originalRecipeValues = {
+    filename: recipeFilename.value,
+    recipeName: recipeNameDisplay.textContent,
+    coffeeType: coffeeTypeDisplay.textContent,
+    processType: processTypeEdit.value
+  };
+  
+  console.log("📋 Valores originales almacenados:", originalRecipeValues);
+  
+  // Obtener el valor actual de processType del texto mostrado
+  const processTypeDisplayText = processTypeDisplay.textContent;
+  const processTypeValue = getProcessTypeValueFromText(processTypeDisplayText);
+  processTypeEdit.value = processTypeValue;
+  
+  console.log(`🔄 Tipo de proceso: "${processTypeDisplayText}" -> valor ${processTypeValue}`);
+  
+  // Cambiar a modo edición
+  toggleRecipeEditMode(true);
+  
+  // Limpiar errores previos
+  clearRecipeEditErrors();
+  
+  // Enfocar primer campo
   setTimeout(() => {
-    if (typeof initRecipeFilter === 'function') {
-      initRecipeFilter();
+    const recipeNameEdit = document.getElementById('recipeNameEdit');
+    if (recipeNameEdit) {
+      recipeNameEdit.focus();
+      console.log("🎯 Focus puesto en campo de nombre");
     }
   }, 100);
-});
+}
+
+function cancelRecipeInfoEditing() {
+  console.log("❌ Cancelando edición de información de receta");
+  
+  if (originalRecipeValues) {
+    // Restaurar valores originales
+    document.getElementById('recipeNameEdit').value = originalRecipeValues.recipeName;
+    document.getElementById('coffeeTypeEdit').value = originalRecipeValues.coffeeType;
+    document.getElementById('processTypeEdit').value = originalRecipeValues.processType;
+  }
+  
+  // Salir del modo edición
+  toggleRecipeEditMode(false);
+  
+  // Limpiar errores
+  clearRecipeEditErrors();
+  
+  // Limpiar variables globales
+  originalRecipeValues = null;
+}
+
+function saveRecipeInfoEditing() {
+  console.log("💾 Guardando edición de información de receta");
+  
+  // Recopilar datos del formulario incluyendo el filename
+  const editedData = {
+    filename: document.getElementById('recipeFilename').value,
+    recipeName: document.getElementById('recipeNameEdit').value.trim(),
+    coffeeType: document.getElementById('coffeeTypeEdit').value.trim(),
+    processType: parseInt(document.getElementById('processTypeEdit').value)
+  };
+  
+  // Validar datos
+  const isValid = validateRecipeEditData(editedData);
+  if (!isValid) {
+    return;
+  }
+  
+  // Log de los datos (como solicitado)
+  console.log("📋 Datos editados de la receta:", editedData);
+  
+  // Enviar datos al backend para actualizar archivo de receta
+  updateRecipeDataInBackend(editedData);
+  
+  // Actualizar los displays con los nuevos valores
+  document.getElementById('recipeNameDisplay').textContent = editedData.recipeName;
+  document.getElementById('coffeeTypeDisplay').textContent = editedData.coffeeType;
+  document.getElementById('processTypeDisplay').textContent = RECIPE_TEMPLATES._getProcessTypeText(editedData.processType);
+  
+  // Salir del modo edición
+  toggleRecipeEditMode(false);
+  
+  // Mostrar notificación de éxito
+  if (window.notificationManager) {
+    window.notificationManager.show("Información de receta actualizada", "success");
+  }
+  
+  // Limpiar variables globales
+  originalRecipeValues = null;
+  
+  console.log("✅ Edición guardada exitosamente");
+}
+
+async function updateRecipeDataInBackend(editedData) {
+  try {
+    console.log("📤 Enviando datos editados de receta al backend...");
+    
+    const response = await window.updateRecipeData(editedData);
+    
+    if (response && response.success) {
+      console.log("✅ Receta actualizada exitosamente en el backend:", response);
+      
+      if (window.notificationManager) {
+        window.notificationManager.show("Receta guardada en el servidor", "success");
+      }
+    } else {
+      console.error("❌ Error al actualizar receta en el backend:", response);
+      
+      if (window.notificationManager) {
+        window.notificationManager.show("Error al guardar en el servidor", "error");
+      }
+    }
+  } catch (error) {
+    console.error("❌ Error de red al actualizar receta:", error);
+    
+    if (window.notificationManager) {
+      window.notificationManager.show("Error de conexión al guardar", "error");
+    }
+  }
+}
+
+function toggleRecipeEditMode(isEditing) {
+  console.log(`🔄 Cambiando modo de edición: ${isEditing ? 'EDICIÓN' : 'VISTA'}`);
+  
+  // Cambiar visibilidad de elementos de información y sus contenedores
+  const elementsToToggle = [
+    { display: 'recipeNameDisplay', edit: 'recipeNameEdit' },
+    { display: 'coffeeTypeDisplay', edit: 'coffeeTypeEdit' },
+    { display: 'processTypeDisplay', edit: 'processTypeEdit' }
+  ];
+  
+  elementsToToggle.forEach(({ display, edit }) => {
+    const displayElement = document.getElementById(display);
+    const editElement = document.getElementById(edit);
+    
+    if (displayElement && editElement) {
+      displayElement.style.display = isEditing ? 'none' : 'inline';
+      editElement.style.display = isEditing ? 'inline' : 'none';
+      
+      // También cambiar el contenedor padre del input de edición (div wrapper)
+      const editContainer = editElement.closest('div[style*="flex-direction: column"]');
+      if (editContainer) {
+        editContainer.style.display = isEditing ? 'flex' : 'none';
+        console.log(`📦 Contenedor de ${edit}: ${editContainer.style.display}`);
+      }
+      
+      console.log(`📝 ${display}: ${displayElement.style.display}, ${edit}: ${editElement.style.display}`);
+    } else {
+      console.warn(`⚠️ Elemento no encontrado: ${display} o ${edit}`);
+    }
+  });
+  
+  // Cambiar botones de control
+  const editButton = document.querySelector('.btn-edit-info');
+  const saveButton = document.querySelector('.btn-save-info');
+  const cancelButton = document.querySelector('.btn-cancel-info');
+  
+  if (editButton) {
+    editButton.style.display = isEditing ? 'none' : 'inline-block';
+    console.log(`🔘 Botón editar: ${editButton.style.display}`);
+  } else {
+    console.warn('⚠️ Botón editar no encontrado');
+  }
+  
+  if (saveButton) {
+    saveButton.style.display = isEditing ? 'inline-block' : 'none';
+    console.log(`💾 Botón guardar: ${saveButton.style.display}`);
+  } else {
+    console.warn('⚠️ Botón guardar no encontrado');
+  }
+  
+  if (cancelButton) {
+    cancelButton.style.display = isEditing ? 'inline-block' : 'none';
+    console.log(`❌ Botón cancelar: ${cancelButton.style.display}`);
+  } else {
+    console.warn('⚠️ Botón cancelar no encontrado');
+  }
+}
+
+function validateRecipeEditData(data) {
+  // Limpiar errores anteriores
+  clearRecipeEditErrors();
+  
+  let hasErrors = false;
+  
+  // Validar nombre de receta
+  if (!data.recipeName) {
+    showRecipeEditError('recipeNameError', 'El nombre de la receta es obligatorio');
+    hasErrors = true;
+  } else if (data.recipeName.length > 30) {
+    showRecipeEditError('recipeNameError', 'El nombre no puede exceder 30 caracteres');
+    hasErrors = true;
+  }
+  
+  // Validar tipo de café
+  if (!data.coffeeType) {
+    showRecipeEditError('coffeeTypeError', 'El tipo de café es obligatorio');
+    hasErrors = true;
+  } else if (data.coffeeType.length > 30) {
+    showRecipeEditError('coffeeTypeError', 'El tipo de café no puede exceder 30 caracteres');
+    hasErrors = true;
+  }
+  
+  // Validar tipo de proceso
+  if (isNaN(data.processType) || data.processType < 0 || data.processType > 13) {
+    showRecipeEditError('processTypeError', 'Debe seleccionar un tipo de proceso válido');
+    hasErrors = true;
+  }
+  
+  return !hasErrors;
+}
+
+function showRecipeEditError(errorElementId, message) {
+  const errorElement = document.getElementById(errorElementId);
+  if (errorElement) {
+    errorElement.textContent = message;
+    errorElement.style.display = 'block';
+    errorElement.style.color = 'var(--error-color)';
+    errorElement.style.fontSize = '0.875rem';
+    errorElement.style.marginTop = '0.25rem';
+  }
+}
+
+function clearRecipeEditErrors() {
+  const errorIds = ['recipeNameError', 'coffeeTypeError', 'processTypeError'];
+  errorIds.forEach(id => {
+    const errorElement = document.getElementById(id);
+    if (errorElement) {
+      errorElement.style.display = 'none';
+      errorElement.textContent = '';
+    }
+  });
+}
+
+function getProcessTypeValueFromText(processTypeText) {
+  // Mapeo inverso de texto a valor numérico
+  const processTypeMapping = {
+    'No definido': 0,
+    'Lavado (Washed)': 1,
+    'Natural (Dry)': 2,
+    'Honey (Miel)': 3,
+    'Semilavado (Wet-Hulled)': 4,
+    'Anaeróbico': 5,
+    'Maceración carbónica (Carbonic Maceration)': 6,
+    'Fermentación láctica': 7,
+    'Fermentación acética': 8,
+    'Doble fermentación (Double Fermentation)': 9,
+    'Proceso Koji': 10,
+    'Infusionados': 11,
+    'Rehidratación': 12,
+    'Procesos Mixtos/Híbridos': 13,
+    'No especificado': 0
+  };
+  
+  return processTypeMapping[processTypeText] || 0;
+}
+
+// Hacer funciones disponibles globalmente
+window.enableRecipeInfoEditing = enableRecipeInfoEditing;
+window.cancelRecipeInfoEditing = cancelRecipeInfoEditing;
+window.saveRecipeInfoEditing = saveRecipeInfoEditing;

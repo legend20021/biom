@@ -99,9 +99,9 @@ document.getElementById("sidebar").addEventListener("click", function(event) {
 
 
 //event listener para scrollTop para hacer scroll hacia arriba
-document.getElementById('scrollTop').addEventListener('click', function() {
-    scrollToTop();
-});
+// document.getElementById('scrollTop').addEventListener('click', function() {
+//     scrollToTop();
+// });
 
 // Función para hacer scroll hacia arriba
 function scrollToTop() {
@@ -157,6 +157,10 @@ function showSection(event, curveDetail = null) {
     if (sectionId === 'graficas-static' && curveDetail) {
         getInitialChartData(curveDetail);
     }
+
+    if (sectionId === 'conexiones') {
+        initWiFiConfiguration();
+    }
     if (sectionId === 'recetas') {
         // Verificar que la función existe antes de llamarla
         if (typeof loadInitReceipes === 'function') {
@@ -164,13 +168,6 @@ function showSection(event, curveDetail = null) {
         } else {
             console.error('❌ loadInitReceipes no está definida. Verifica que recipes.js esté cargado.');
         }
-        
-        // Inicializar el filtro de recetas
-        setTimeout(() => {
-            if (typeof initRecipeFilter === 'function') {
-                initRecipeFilter();
-            }
-        }, 50);
     }
     if (sectionId === 'curvas') {
         // Verificar que la función existe antes de llamarla
@@ -179,6 +176,13 @@ function showSection(event, curveDetail = null) {
         } else {
             console.error('❌ loadInitCurves no está definida. Verifica que curves.js esté cargado.');
         }
+        
+        // Inicializar filtros de curvas para resetear estado
+        setTimeout(() => {
+            if (typeof initializeCurveFilters === 'function') {
+                initializeCurveFilters();
+            }
+        }, 100);
     }
 }
 
