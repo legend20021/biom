@@ -1,7 +1,7 @@
 {
-    "name": "BIOMASTER Pro V2 IA",
-    "short_name": "BIOMASTER",
-    "description": "Sistema de control avanzado para biofermentación - Penagos y Hermanos",
+    "name": "Zenit ICUZ",
+    "short_name": "ICUZ",
+    "description": "Sistema de control avanzado para biofermentación - ZENIT",
     "version": "2.0.0",
     "start_url": "/",
     "display": "standalone",
@@ -14,13 +14,13 @@
     "categories": ["productivity", "utilities", "business"],
     "icons": [
         {
-            "src": "./icons/pyh.png",
+            "src": "./icons/zenit-isotipo.png",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "any maskable"
         },
         {
-            "src": "./icons/pyh.png",
+            "src": "./icons/zenit-isotipo.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any maskable"
@@ -58,7 +58,7 @@
     ],
     "protocol_handlers": [
         {
-            "protocol": "web+biomaster",
+            "protocol": "web+ICUZ",
             "url": "/?action=%s"
         }
     ]

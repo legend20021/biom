@@ -41,6 +41,10 @@ echo "=== COMPRIMIENDO ARCHIVOS PRINCIPALES ==="
 compress_file "index.html"
 echo "✅ index.html comprimido (versión HTTP Polling - SIN WebSocket)"
 
+# El index-default.html para acceso sin headers
+compress_file "index-default.html"
+echo "✅ index-default.html comprimido"
+
 # Comprimir otros archivos
 compress_file "manifest.json"
 compress_file "sw.js"

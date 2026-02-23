@@ -1,7 +1,3 @@
-// ========================================
-// GESTIÓN DE CURVAS PARA BIOMASTER 
-// ========================================
-
 class CurveManager {
   constructor(apiManager, notificationManager) {
     this.apiManager = apiManager;

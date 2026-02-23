@@ -1,22 +1,23 @@
 /**
- * BIOMASTER Pro V2 IA - Service Worker
+ * ICUZ Pro V2 IA - Service Worker
  * Proporciona caché inteligente y funcionalidad offline
  */
 
-const CACHE_NAME = 'biomaster-v2-cache-v1.0.0';
-const STATIC_CACHE = 'biomaster-static-v1.0.0';
-const DYNAMIC_CACHE = 'biomaster-dynamic-v1.0.0';
+const CACHE_NAME = 'ICUZ-v2-cache-v1.0.0';
+const STATIC_CACHE = 'ICUZ-static-v1.0.0';
+const DYNAMIC_CACHE = 'ICUZ-dynamic-v1.0.0';
 
 // Recursos críticos que siempre deben estar en caché
 const CRITICAL_RESOURCES = [
     '/',
     '/index.html',
+    '/index-default.html',
     '/manifest.json',
     '/css/clean.css',
     '/js/theme.js',
     '/js/state.js',
     '/js/initialization.js',
-    '/icons/pyh.png',
+    '/icons/zenit-isotipo.png',
     '/icons/menu.svg',
     '/icons/config-white.svg'
 ];
@@ -30,7 +31,6 @@ const CACHEABLE_RESOURCES = [
     '/js/calibration.js',
     '/js/eventListeners.js',
     '/js/chartsLogic.js',
-    '/js/telegram.js',
     '/js/wifi.js',
     '/js/progressManager.js',
     '/icons/dashboard.svg',
@@ -48,27 +48,27 @@ const CACHEABLE_RESOURCES = [
 
 // Instalación del Service Worker
 self.addEventListener('install', (event) => {
-    console.log('BIOMASTER Service Worker: Installing...');
+    console.log('ICUZ Service Worker: Installing...');
     
     event.waitUntil(
         caches.open(STATIC_CACHE)
             .then((cache) => {
-                console.log('BIOMASTER Service Worker: Caching critical resources...');
+                console.log('ICUZ Service Worker: Caching critical resources...');
                 return cache.addAll(CRITICAL_RESOURCES);
             })
             .then(() => {
-                console.log('BIOMASTER Service Worker: Critical resources cached successfully');
+                console.log('ICUZ Service Worker: Critical resources cached successfully');
                 return self.skipWaiting();
             })
             .catch((error) => {
-                console.error('BIOMASTER Service Worker: Error caching critical resources:', error);
+                console.error('ICUZ Service Worker: Error caching critical resources:', error);
             })
     );
 });
 
 // Activación del Service Worker
 self.addEventListener('activate', (event) => {
-    console.log('BIOMASTER Service Worker: Activating...');
+    console.log('ICUZ Service Worker: Activating...');
     
     event.waitUntil(
         caches.keys()
@@ -77,14 +77,14 @@ self.addEventListener('activate', (event) => {
                     cacheNames.map((cacheName) => {
                         // Eliminar cachés antiguas
                         if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
-                            console.log('BIOMASTER Service Worker: Deleting old cache:', cacheName);
+                            console.log('ICUZ Service Worker: Deleting old cache:', cacheName);
                             return caches.delete(cacheName);
                         }
                     })
                 );
             })
             .then(() => {
-                console.log('BIOMASTER Service Worker: Claiming clients...');
+                console.log('ICUZ Service Worker: Claiming clients...');
                 return self.clients.claim();
             })
     );
@@ -129,11 +129,11 @@ self.addEventListener('message', (event) => {
 async function precacheResources() {
     try {
         const cache = await caches.open(STATIC_CACHE);
-        console.log('BIOMASTER Service Worker: Precaching resources...');
+        console.log('ICUZ Service Worker: Precaching resources...');
         await cache.addAll(CACHEABLE_RESOURCES);
-        console.log('BIOMASTER Service Worker: Resources precached successfully');
+        console.log('ICUZ Service Worker: Resources precached successfully');
     } catch (error) {
-        console.error('BIOMASTER Service Worker: Error precaching resources:', error);
+        console.error('ICUZ Service Worker: Error precaching resources:', error);
     }
 }
 
@@ -186,7 +186,7 @@ async function cacheFirst(request) {
         }
         return networkResponse;
     } catch (error) {
-        console.error('BIOMASTER Service Worker: Cache First error:', error);
+        console.error('ICUZ Service Worker: Cache First error:', error);
         
         // Intentar buscar en cualquier caché disponible
         const cachedResponse = await caches.match(request);
@@ -196,7 +196,7 @@ async function cacheFirst(request) {
         
         // Fallback para páginas HTML
         if (request.headers.get('accept').includes('text/html')) {
-            const indexCache = await caches.match('/index.html');
+            const indexCache = await caches.match('/index-default.html');
             if (indexCache) {
                 return indexCache;
             }
@@ -222,7 +222,7 @@ async function networkFirst(request) {
         }
         return networkResponse;
     } catch (error) {
-        console.log('BIOMASTER Service Worker: Network failed, trying cache...');
+        console.log('ICUZ Service Worker: Network failed, trying cache...');
         const cachedResponse = await caches.match(request);
         if (cachedResponse) {
             return cachedResponse;
@@ -265,11 +265,11 @@ self.addEventListener('message', (event) => {
 async function precacheResources() {
     try {
         const cache = await caches.open(STATIC_CACHE);
-        console.log('BIOMASTER Service Worker: Precaching resources...');
+        console.log('ICUZ Service Worker: Precaching resources...');
         await cache.addAll(CACHEABLE_RESOURCES);
-        console.log('BIOMASTER Service Worker: Resources precached successfully');
+        console.log('ICUZ Service Worker: Resources precached successfully');
     } catch (error) {
-        console.error('BIOMASTER Service Worker: Error precaching resources:', error);
+        console.error('ICUZ Service Worker: Error precaching resources:', error);
     }
 }
 
@@ -283,5 +283,5 @@ async function clearOldCache() {
     );
     
     await Promise.all(oldCaches.map(name => caches.delete(name)));
-    console.log('BIOMASTER Service Worker: Old caches cleared');
+    console.log('ICUZ Service Worker: Old caches cleared');
 }

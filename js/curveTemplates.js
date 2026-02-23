@@ -30,7 +30,6 @@ const CURVE_TEMPLATES = {
   // Estado de error (consistente con recetas)
   errorState: (message = "Error al cargar las curvas") => `
     <div class="recipe-error-state curve-error-state">
-      <div class="error-icon">❌</div>
       <h3>Error al cargar curvas</h3>
       <p>${message}</p>
       <button class="btn retry-btn" onclick="curveManager.loadCurves()">
@@ -73,7 +72,7 @@ const CURVE_TEMPLATES = {
         </div>
         <div class="recipe-actions">
           <div class="recipe-actions-dropdown">
-            <button class="btn dropdown-toggle" onclick="toggleCurveDropdown(this)">
+            <button class="btn" onclick="toggleCurveDropdown(this)">
               Opciones
             </button>
             <div class="dropdown-menu">

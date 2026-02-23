@@ -572,7 +572,7 @@ function updateChartTheme() {
     
 
   } catch (error) {
-    console.error('BIOMASTER: Error al actualizar tema del chart:', error);
+    console.error('ICUZ: Error al actualizar tema del chart:', error);
   }
 }
 
@@ -1597,7 +1597,7 @@ function getInitialChartData(curveDetail = null) {
             <div class="process-header">
               <div class="process-header-content">
                 <button class="back-button" onclick="navigateToSection('curvas')" title="Volver a Curvas">
-                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="m12 19-7-7 7-7"/>
                     <path d="M19 12H5"/>
                   </svg>

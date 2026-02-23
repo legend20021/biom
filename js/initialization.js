@@ -173,11 +173,11 @@ function initializeHeader() {
     // Determinar qué sección está activa
     const activeSection = document.querySelector('.main-content .content[style*="block"]');
     const globalHeaderInfo = document.getElementById('globalHeaderInfo');
-    
+    const headerMobile = document.getElementById('header-mobile');
     if (!globalHeaderInfo) return;
     
     // Lista de secciones que necesitan el header-info
-    const sectionsWithHeader = ['graficas', 'usuarios', 'conexiones', 'ayuda', 'curvas', 'recetas'];
+    const sectionsWithHeader = ['graficas', 'usuarios', 'conexiones', 'ayuda', 'log', 'curvas', 'recetas'];
     
     if (activeSection && sectionsWithHeader.includes(activeSection.id)) {
         // Mostrar el header global
@@ -185,8 +185,17 @@ function initializeHeader() {
         globalHeaderInfo.classList.add('visible');
     } else {
         // Ocultar el header global
-        globalHeaderInfo.style.display = 'none';
-        globalHeaderInfo.classList.remove('visible');
+        if (activeSection.id === 'dashboard' && window.state.diagnosis) {
+            globalHeaderInfo.style.display = 'flex';
+            globalHeaderInfo.classList.add('visible');
+            headerMobile.style.display = 'none';
+        } else {
+            globalHeaderInfo.style.display = 'none';
+            globalHeaderInfo.classList.remove('visible');
+            if (window.window.innerWidth <= 850 && !window.state.diagnosis) {
+                headerMobile.style.display = 'grid';
+            }
+        }
     }
     
     updateTimer(state.tiempo_horas, state.tiempo_minutos, 0); // Inicializar el timer a 00:00:00
@@ -244,6 +253,47 @@ function hideLoader() {
   setTimeout(() => {
     loader.remove();
   }, 500);
+}
+
+// Función para verificar fecha de calibración
+async function checkCalibrationDate() {
+  try {
+    console.log('🔍 Verificando fecha de calibración...');
+    
+    if (!window.apiManager) {
+      console.warn('ApiManager no disponible para verificar calibración');
+      return;
+    }
+    
+    const response = await apiManager.getCalibrationDate();
+    
+    if (response.success && response.fecha && response.fecha !== '') {
+      const calibrationDate = new Date(response.fecha.split('-').reverse().join('-')); // Convertir DD-MM-YYYY a YYYY-MM-DD
+      const currentDate = new Date();
+      const diffTime = Math.abs(currentDate - calibrationDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      console.log(`📅 Última calibración: ${response.fecha} (${response.tipo})`);
+      console.log(`⏰ Días desde calibración: ${diffDays}`);
+      
+      if (diffDays > 5) {
+        if (window.notificationManager) {
+          window.notificationManager.show(
+            `Calibración requerida: Han pasado ${diffDays} días desde la última calibración o inicio de proceso`,
+            'persistent',
+            123333
+          );
+          console.log(`🔔 Notificación de calibración mostrada: ${diffDays} días`);
+        }
+      } else {
+        console.log(`✅ Calibración reciente: ${diffDays} días (dentro del rango permitido)`);
+      }
+    } else {
+      console.log('ℹ️ No hay fecha de calibración registrada');
+    }
+  } catch (error) {
+    console.error('❌ Error verificando fecha de calibración:', error);
+  }
 }
 
 // Esperar a que todo el contenido esté cargado
@@ -317,6 +367,8 @@ async function sendCurrentDateToMicrocontrolador() {
         
         if (response && response.success) {
             console.log('✅ Fecha enviada correctamente al Microcontrolador:', response);
+            // Verificar fecha de calibración después de que se inicialice el ApiManager
+            setTimeout(checkCalibrationDate, 4000);
         } else {
             console.error('❌ Error en respuesta del Microcontrolador:', response);
         }
@@ -341,13 +393,8 @@ function initializeDateSync() {
     // Enviar fecha inmediatamente al cargar
     sendCurrentDateToMicrocontrolador();
     
-    // También enviar fecha cada vez que el usuario regrese a la pestaña
-    // (en caso de que haya cambiado de día)
-    document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) {
-            const currentDate = getCurrentDateFormatted();
-            console.log('👁️ Pestaña visible - verificando fecha:', currentDate);
-            sendCurrentDateToMicrocontrolador();
-        }
-    });
+    // Configurar envío automático cada hora
+    setInterval(() => {
+        sendCurrentDateToMicrocontrolador();
+    }, 1 * 60 * 60 * 1000); // 1 hora en milisegundos
 }

@@ -1,5 +1,5 @@
 // ========================================
-// GESTOR DE RECETAS PARA BIOMASTER
+// GESTOR DE RECETAS PARA ZENIT ICUZ
 // ========================================
 
 class RecipeManager {

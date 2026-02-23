@@ -1,8 +1,4 @@
-// ========================================
-// SISTEMA HTTP POLLING PARA BIOMASTER Microcontrolador
-// ========================================
 
-// Variables para control de HTTP Polling
 let pollingInterval = null;
 let userInteractionLock = false;
 let simulationInterval = null;
@@ -55,11 +51,14 @@ class ApiManager {
       updateRecipe: `${this.API_BASE_URL}/api/recipe/update`,
       updateProcess: `${this.API_BASE_URL}/api/process/update`,
       setDate: `${this.API_BASE_URL}/api/config/date`,
+      calibrationDate: `${this.API_BASE_URL}/api/config/calibration-date`,
       wifiConfig: `${this.API_BASE_URL}/api/config/wifi`,
       wifiScan: `${this.API_BASE_URL}/api/wifi/scan`,
       wifiConnect: `${this.API_BASE_URL}/api/wifi/connect`,
       wifiDisconnect: `${this.API_BASE_URL}/api/wifi/disconnect`,
-      wifiStatus: `${this.API_BASE_URL}/api/wifi/status`
+      wifiStatus: `${this.API_BASE_URL}/api/wifi/status`,
+      logs: `${this.API_BASE_URL}/api/logs`,
+      authLogin: `${this.API_BASE_URL}/api/auth/login`
     };
     this.config = {
       timeout: 20000,
@@ -76,6 +75,39 @@ class ApiManager {
   setDemoMode(isDemo) {
     this.ApiDemoMode = isDemo;
     console.log(`🎭 Modo DEMO ${isDemo ? 'activado' : 'desactivado'}`);
+  }
+
+  // ============ MÉTODO DE AUTENTICACIÓN ============
+  async login(username, password) {
+    if (this.ApiDemoMode) {
+       // En demo, credenciales hardcodeadas para pruebas
+       if(username === 'admin' && password === 'admin') {
+         return { success: true, message: "Login demo exitoso", token: "DEMO_TOKEN_123" };
+       }
+       throw new Error("Credenciales inválidas (Demo: use admin/admin)");
+    }
+    
+    console.log("🔐 Autenticando usuario:", username);
+    return await this.makeRequest(this.ENDPOINTS.authLogin, {
+      method: 'POST',
+      body: JSON.stringify({ username, password })
+    });
+  }
+
+  // ============ MÉTODO DE CAMBIO DE CONTRASEÑA ============
+  async changePassword(oldPassword, newPassword) {
+    if (this.ApiDemoMode) {
+        if(oldPassword === 'admin') {
+            return { success: true, message: "Contraseña cambiada (Simulación)" };
+        }
+        throw new Error("Contraseña anterior incorrecta (Demo)");
+    }
+
+    console.log("🔐 Solicitando cambio de contraseña...");
+    return await this.makeRequest('/api/auth/change-password', {
+        method: 'POST',
+        body: JSON.stringify({ oldPassword, newPassword })
+    });
   }
 
   // ============ MÉTODOS BÁSICOS DE API ============
@@ -731,6 +763,31 @@ class ApiManager {
     });
   }
 
+  // ============ MÉTODO PARA OBTENER FECHA DE CALIBRACIÓN ============
+  async getCalibrationDate() {
+    if (this.ApiDemoMode) {
+      console.log('🎭 Obteniendo fecha de calibración DEMO');
+      
+      // Simular diferentes escenarios en modo demo
+      const scenarios = [
+        { success: true, fecha: "10-12-2024", tipo: "ph_bajo" }, // 6 días atrás (mostrará notificación)
+        { success: true, fecha: "14-12-2024", tipo: "ph_medio" }, // 2 días atrás (no mostrará notificación)
+        { success: true, fecha: "", tipo: "" } // Sin calibración
+      ];
+      
+      // Elegir escenario aleatoriamente o usar el primero para testing
+      const scenario = scenarios[0]; // Cambiar por scenarios[Math.floor(Math.random() * scenarios.length)] para aleatorio
+      
+      return scenario;
+    }
+    
+    // Modo real - hacer request HTTP
+    console.log("📅 Obteniendo fecha de calibración del Microcontrolador");
+    return await this.makeRequest(this.ENDPOINTS.calibrationDate, {
+      method: 'GET'
+    });
+  }
+
   // ============ MÉTODO PARA CONFIGURAR WIFI EN Microcontrolador ============
   async setWiFiConfig(ssid = null, password = null) {
     // Validar que al menos uno de los parámetros esté presente
@@ -754,7 +811,7 @@ class ApiManager {
       return {
         success: true,
         message: "Configuración WiFi actualizada correctamente (DEMO)",
-        ssid: ssid || "BIOMASTER_DEMO",
+        ssid: ssid || "ICUZ_DEMO",
         restarted: true
       };
     }
@@ -873,7 +930,7 @@ class ApiManager {
         success: true,
         ap: {
           enabled: true,
-          ssid: "BIOMASTER_DEMO",
+          ssid: "ICUZ_DEMO",
           ip: "192.168.4.1",
           clients: 1
         },
@@ -892,6 +949,287 @@ class ApiManager {
     console.log("📊 Obteniendo estado de conexiones WiFi...");
     
     return await this.makeRequest(this.ENDPOINTS.wifiStatus, {
+      method: 'GET'
+    });
+  }
+
+  // ============ MÉTODO PARA OBTENER LOGS DEL SISTEMA ============
+  async getLogs() {
+    // Nota: El backend limita la respuesta a los últimos 150 logs para optimizar memoria
+    if (this.ApiDemoMode) {
+      console.log("🎭 Obteniendo logs del sistema DEMO");
+      
+      // Generar logs demo realistas
+      const demoLogs = [
+        {
+          timestamp: Date.now() - 300000, // 5 minutos atrás
+          level: "INFO",
+          category: "PROCESS",
+          code: 1001,
+          message: "[12:30:45] Proceso manual iniciado exitosamente. Nombre: proceso_1703001234",
+          level_num: 1,
+          category_num: 1
+        },
+        {
+          timestamp: Date.now() - 240000, // 4 minutos atrás
+          level: "INFO",
+          category: "PROCESS",
+          code: 2001,
+          message: "[12:31:15] CMD_control_temperatura: 1",
+          level_num: 1,
+          category_num: 1
+        },
+        {
+          timestamp: Date.now() - 180000, // 3 minutos atrás
+          level: "WARN",
+          category: "SENSOR",
+          code: 2010,
+          message: "[12:32:00] Temperatura fuera de rango: 32.5",
+          level_num: 2,
+          category_num: 2
+        },
+        {
+          timestamp: Date.now() - 120000, // 2 minutos atrás
+          level: "INFO",
+          category: "NETWORK",
+          code: 1030,
+          message: "[12:32:45] Cliente conectado: 192.168.4.2",
+          level_num: 1,
+          category_num: 3
+        },
+        {
+          timestamp: Date.now() - 60000, // 1 minuto atrás
+          level: "INFO",
+          category: "STORAGE",
+          code: 1040,
+          message: "[12:33:30] Cache datos escrito: 10 puntos",
+          level_num: 1,
+          category_num: 4
+        },
+        {
+          timestamp: Date.now() - 30000, // 30 segundos atrás
+          level: "ERROR",
+          category: "SENSOR",
+          code: 2020,
+          message: "[12:34:15] Sensor pH no responde",
+          level_num: 3,
+          category_num: 2
+        },
+        {
+          timestamp: Date.now() - 10000, // 10 segundos atrás
+          level: "INFO",
+          category: "SYSTEM",
+          code: 3002,
+          message: "[12:34:35] Fecha del sistema configurada. Timestamp: 1703001234567",
+          level_num: 1,
+          category_num: 0
+        },
+        {
+          timestamp: Date.now() - 300000, // 5 minutos atrás
+          level: "INFO",
+          category: "PROCESS",
+          code: 1001,
+          message: "[12:30:45] Proceso manual iniciado exitosamente. Nombre: proceso_1703001234",
+          level_num: 1,
+          category_num: 1
+        },
+        {
+          timestamp: Date.now() - 240000, // 4 minutos atrás
+          level: "INFO",
+          category: "PROCESS",
+          code: 2001,
+          message: "[12:31:15] CMD_control_temperatura: 1",
+          level_num: 1,
+          category_num: 1
+        },
+        {
+          timestamp: Date.now() - 180000, // 3 minutos atrás
+          level: "WARN",
+          category: "SENSOR",
+          code: 2010,
+          message: "[12:32:00] Temperatura fuera de rango: 32.5",
+          level_num: 2,
+          category_num: 2
+        },
+        {
+          timestamp: Date.now() - 120000, // 2 minutos atrás
+          level: "INFO",
+          category: "NETWORK",
+          code: 1030,
+          message: "[12:32:45] Cliente conectado: 192.168.4.2",
+          level_num: 1,
+          category_num: 3
+        },
+        {
+          timestamp: Date.now() - 60000, // 1 minuto atrás
+          level: "INFO",
+          category: "STORAGE",
+          code: 1040,
+          message: "[12:33:30] Cache datos escrito: 10 puntos",
+          level_num: 1,
+          category_num: 4
+        },
+        {
+          timestamp: Date.now() - 30000, // 30 segundos atrás
+          level: "ERROR",
+          category: "SENSOR",
+          code: 2020,
+          message: "[12:34:15] Sensor pH no responde",
+          level_num: 3,
+          category_num: 2
+        },
+        {
+          timestamp: Date.now() - 10000, // 10 segundos atrás
+          level: "INFO",
+          category: "SYSTEM",
+          code: 3002,
+          message: "[12:34:35] Fecha del sistema configurada. Timestamp: 1703001234567",
+          level_num: 1,
+          category_num: 0
+        },
+        {
+          timestamp: Date.now() - 300000, // 5 minutos atrás
+          level: "INFO",
+          category: "PROCESS",
+          code: 1001,
+          message: "[12:30:45] Proceso manual iniciado exitosamente. Nombre: proceso_1703001234",
+          level_num: 1,
+          category_num: 1
+        },
+        {
+          timestamp: Date.now() - 240000, // 4 minutos atrás
+          level: "INFO",
+          category: "PROCESS",
+          code: 2001,
+          message: "[12:31:15] CMD_control_temperatura: 1",
+          level_num: 1,
+          category_num: 1
+        },
+        {
+          timestamp: Date.now() - 180000, // 3 minutos atrás
+          level: "WARN",
+          category: "SENSOR",
+          code: 2010,
+          message: "[12:32:00] Temperatura fuera de rango: 32.5",
+          level_num: 2,
+          category_num: 2
+        },
+        {
+          timestamp: Date.now() - 120000, // 2 minutos atrás
+          level: "INFO",
+          category: "NETWORK",
+          code: 1030,
+          message: "[12:32:45] Cliente conectado: 192.168.4.2",
+          level_num: 1,
+          category_num: 3
+        },
+        {
+          timestamp: Date.now() - 60000, // 1 minuto atrás
+          level: "INFO",
+          category: "STORAGE",
+          code: 1040,
+          message: "[12:33:30] Cache datos escrito: 10 puntos",
+          level_num: 1,
+          category_num: 4
+        },
+        {
+          timestamp: Date.now() - 30000, // 30 segundos atrás
+          level: "ERROR",
+          category: "SENSOR",
+          code: 2020,
+          message: "[12:34:15] Sensor pH no responde",
+          level_num: 3,
+          category_num: 2
+        },
+        {
+          timestamp: Date.now() - 10000, // 10 segundos atrás
+          level: "INFO",
+          category: "SYSTEM",
+          code: 3002,
+          message: "[12:34:35] Fecha del sistema configurada. Timestamp: 1703001234567",
+          level_num: 1,
+          category_num: 0
+        },
+        {
+          timestamp: Date.now() - 300000, // 5 minutos atrás
+          level: "INFO",
+          category: "PROCESS",
+          code: 1001,
+          message: "[12:30:45] Proceso manual iniciado exitosamente. Nombre: proceso_1703001234",
+          level_num: 1,
+          category_num: 1
+        },
+        {
+          timestamp: Date.now() - 240000, // 4 minutos atrás
+          level: "INFO",
+          category: "PROCESS",
+          code: 2001,
+          message: "[12:31:15] CMD_control_temperatura: 1",
+          level_num: 1,
+          category_num: 1
+        },
+        {
+          timestamp: Date.now() - 180000, // 3 minutos atrás
+          level: "WARN",
+          category: "SENSOR",
+          code: 2010,
+          message: "[12:32:00] Temperatura fuera de rango: 32.5",
+          level_num: 2,
+          category_num: 2
+        },
+        {
+          timestamp: Date.now() - 120000, // 2 minutos atrás
+          level: "INFO",
+          category: "NETWORK",
+          code: 1030,
+          message: "[12:32:45] Cliente conectado: 192.168.4.2",
+          level_num: 1,
+          category_num: 3
+        },
+        {
+          timestamp: Date.now() - 60000, // 1 minuto atrás
+          level: "INFO",
+          category: "STORAGE",
+          code: 1040,
+          message: "[12:33:30] Cache datos escrito: 10 puntos",
+          level_num: 1,
+          category_num: 4
+        },
+        {
+          timestamp: Date.now() - 30000, // 30 segundos atrás
+          level: "ERROR",
+          category: "SENSOR",
+          code: 2020,
+          message: "[12:34:15] Sensor pH no responde",
+          level_num: 3,
+          category_num: 2
+        },
+        {
+          timestamp: Date.now() - 10000, // 10 segundos atrás
+          level: "INFO",
+          category: "SYSTEM",
+          code: 3002,
+          message: "[12:34:35] Fecha del sistema configurada. Timestamp: 1703001234567",
+          level_num: 1,
+          category_num: 0
+        }
+      ];
+
+      return {
+        logs: demoLogs,
+        total_logs_stored: demoLogs.length,
+        logs_returned: demoLogs.length,
+        timestamp_global: "1703001234",
+        sistema_iniciado: Date.now() - 3600000, // 1 hora atrás
+        log_start_time: Date.now() - 3600000,
+        log_version: 1,
+        system_info: "ZENIT_ICUZ_DEMO"
+      };
+    }
+
+    // Modo real - hacer request HTTP
+    console.log("📋 Obteniendo logs del sistema...");
+    return await this.makeRequest(this.ENDPOINTS.logs, {
       method: 'GET'
     });
   }
@@ -1352,8 +1690,6 @@ function showWiFiConfigPanel() {
   if (wifiDisconnectedMessage) {
     wifiDisconnectedMessage.style.display = 'none';
   }
-
-  console.log('📡 Mostrando paneles WiFi');
 }
 
 function showWiFiDisconnectedMessage() {
@@ -1577,31 +1913,15 @@ function updateProcessButtons() {
 }
 
 function disableControlButtons(data) {
-    const naturalPressureBtn = document.getElementById("naturalPressureBtn");
-    const carbonicMacerationBtn = document.getElementById("carbonicMacerationBtn");
-    const calibratePressureBtn = document.getElementById("calibrate-pressure");
+    
     const calibratePh4 = document.getElementById("ph4-btn");
     const calibratePh7 = document.getElementById("ph7-btn");
     const calibratePh10 = document.getElementById("ph10-btn");
-    
-    const recirculationToggle = document.getElementById("recirculationToggle");
-    const temperatureBtn = document.getElementById("temperatureBtn");
-    const processStageIndicator = document.getElementById("processStage");
-
-
     // Verificar si hay calibración de pH en progreso
     const isPhCalibrating = (typeof isPhCalibrationInProgress !== 'undefined' && isPhCalibrationInProgress);
     
+    // Deshablilitar/habilitar calibracion
     if (data.automatic_updates.start) {
-      if (calibratePressureBtn) {
-        calibratePressureBtn.disabled = true;
-      }
-      if (naturalPressureBtn) {
-        naturalPressureBtn.disabled = true;
-      }
-      if (carbonicMacerationBtn) {
-        carbonicMacerationBtn.disabled = true;
-      }
       if (calibratePh4) {
         calibratePh4.disabled = true;
       }
@@ -1611,35 +1931,7 @@ function disableControlButtons(data) {
       if (calibratePh10) {
         calibratePh10.disabled = true;
       }
-      if (recirculationToggle && window.state.modo === 1) {
-        recirculationToggle.disabled = true;
-      }
-      if (temperatureBtn && window.state.modo === 1) {
-        temperatureBtn.disabled = true;
-      }
-      if (processStageIndicator) {
-        processStageIndicator.style.display = "block";
-      }
     } else {
-      if (calibratePressureBtn) {
-        calibratePressureBtn.disabled = false;
-      }
-      if (naturalPressureBtn) {
-        naturalPressureBtn.disabled = false;
-      }
-      if (carbonicMacerationBtn) {
-        carbonicMacerationBtn.disabled = false;
-      }
-      if (recirculationToggle) {
-        recirculationToggle.disabled = false;
-      }
-      if (temperatureBtn) {
-        temperatureBtn.disabled = false;
-      }
-      if (processStageIndicator) {
-        processStageIndicator.style.display = "none";
-      }
-      
       // Solo habilitar botones de pH si no hay calibración en progreso
       if (!isPhCalibrating) {
         if (calibratePh4) {
@@ -1653,6 +1945,103 @@ function disableControlButtons(data) {
         }
       }
     }
+
+    // Deshabilitar otros controles si el proceso está en marcha
+    if (!window.state.diagnosis) {
+      changeDisableState(true, data);
+      if (data.automatic_updates.start) {
+        changeDisableState(false, data);
+      }
+    }
+}
+
+function changeDisableState(value, data) {
+  const naturalPressureBtn = document.getElementById("naturalPressureBtn");
+  const carbonicMacerationBtn = document.getElementById("carbonicMacerationBtn");
+  const recirculationToggle = document.getElementById("recirculationToggle");
+  const temperatureBtn = document.getElementById("temperatureBtn");
+  
+  const temperatureInputElement = document.getElementById("temperatureInput");
+  const naturalPressureInputElement = document.getElementById("naturalPressureInput");
+  const carbonicMacerationInputElement = document.getElementById("carbonicMacerationInput");
+  
+  const calibratePressureBtn = document.getElementById("calibrate-pressure");
+  const processStageIndicator = document.getElementById("processStage");
+
+  // if (calibratePressureBtn) {
+  //   calibratePressureBtn.disabled = value;
+  // }
+  if (naturalPressureBtn) {
+    naturalPressureBtn.disabled = value;
+  }
+  if (carbonicMacerationBtn) {
+    carbonicMacerationBtn.disabled = value;
+  }
+  if (data.automatic_updates.start) {
+    if (recirculationToggle) {
+      recirculationToggle.disabled = window.state.modo === 1 && data.automatic_updates.start;
+    }
+    if (temperatureBtn) {
+      temperatureBtn.disabled = window.state.modo === 1 && data.automatic_updates.start;
+    }
+  } else {
+    if (recirculationToggle) {
+      recirculationToggle.disabled = true;
+    }
+    if (temperatureBtn) {
+      temperatureBtn.disabled = true;
+    }
+  }
+  if (temperatureInputElement) {
+    temperatureInputElement.disabled = value;
+  }
+  if (naturalPressureInputElement) {
+    naturalPressureInputElement.disabled = value;
+  }
+  if (carbonicMacerationInputElement) {
+    carbonicMacerationInputElement.disabled = value;
+  }
+  if (processStageIndicator) {
+    processStageIndicator.style.display = value ? "block" : "none";
+  }
+}
+
+function changeDisableStateForced(value) {
+  const naturalPressureBtn = document.getElementById("naturalPressureBtn");
+  const carbonicMacerationBtn = document.getElementById("carbonicMacerationBtn");
+  const recirculationToggle = document.getElementById("recirculationToggle");
+  const temperatureBtn = document.getElementById("temperatureBtn");
+  
+  const temperatureInputElement = document.getElementById("temperatureInput");
+  const naturalPressureInputElement = document.getElementById("naturalPressureInput");
+  const carbonicMacerationInputElement = document.getElementById("carbonicMacerationInput");
+  
+  // const calibratePressureBtn = document.getElementById("calibrate-pressure");
+
+  // if (calibratePressureBtn) {
+  //   calibratePressureBtn.disabled = value;
+  // }
+  if (naturalPressureBtn) {
+    naturalPressureBtn.disabled = value;
+  }
+  if (carbonicMacerationBtn) {
+    carbonicMacerationBtn.disabled = value;
+  }
+  if (recirculationToggle) {
+    recirculationToggle.disabled = value;
+  }
+  if (temperatureBtn) {
+    temperatureBtn.disabled = value;
+  }
+  if (temperatureInputElement) {
+    temperatureInputElement.disabled = value;
+  }
+  if (naturalPressureInputElement) {
+    naturalPressureInputElement.disabled = value;
+  }
+  if (carbonicMacerationInputElement) {
+    carbonicMacerationInputElement.disabled = value;
+  }
 }
 
 
@@ -1772,6 +2161,7 @@ window.toggleDemoMode = toggleDemoMode;
 window.lockUserInteraction = lockUserInteraction;
 window.unlockUserInteraction = unlockUserInteraction;
 window.updateSensorDataOnly = updateSensorDataOnly;
+window.changeDisableStateForced = changeDisableStateForced;
 
 // ============ EXPORTAR APIMANAGER Y FUNCIONES DE API ============
 const apiManager = new ApiManager(notificationManager);
@@ -1806,7 +2196,7 @@ window.getWiFiStatus = () => apiManager.getWiFiStatus();
 
 // Inicializar cuando la página carga
 window.addEventListener("load", () => {
-    console.log("🚀 Iniciando sistema HTTP Polling para BIOMASTER");
+    console.log("🚀 Iniciando sistema HTTP Polling para ZENIT ICUZ");
     restoreDemoStatus()
     initHttpPolling();
     // Actualizar botón demo al cargar

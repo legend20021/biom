@@ -386,3 +386,102 @@ function resetControlInputs() {
 window.addEventListener('load', () => {
     resetControlInputs();
 });
+
+
+// Referencias DOM (Ajustadas al index.html real)
+// const firmwareInput = document.getElementById('fw_file');
+// const filesystemInput = document.getElementById('fs_file');
+// const consoleContainer = document.getElementById('otaConsole');
+
+// Console Logger Helper
+const otaLogger = {
+    log: (msg, type = 'sys') => {
+        const consoleContainer = document.getElementById('otaConsole');
+        if (!consoleContainer) return;
+        const div = document.createElement('div');
+        div.className = `log-entry log-${type}`;
+        div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        consoleContainer.appendChild(div);
+        consoleContainer.scrollTop = consoleContainer.scrollHeight;
+    },
+    clear: () => {
+        const consoleContainer = document.getElementById('otaConsole');
+        if (consoleContainer) consoleContainer.innerHTML = '';
+        // Restaurar mensaje inicial
+        const div = document.createElement('div');
+        div.className = 'log-sys';
+        div.textContent = '> Consola limpia. Lista para nuevas operaciones.';
+        if (consoleContainer) consoleContainer.appendChild(div);
+    }
+};
+
+// Exponer funciones al scope global (window) ya que se llaman desde HTML (onsubmit/onclick)
+window.clearOtaConsole = otaLogger.clear;
+
+window.handleOtaUpload = async function(event, type) {
+    // 1. Prevenir el envío tradicional del formulario
+    if (event) event.preventDefault();
+
+    // 2. Obtener referencias frescas a los inputs usando los IDs correctos del HTML
+    const inputId = type === 'firmware' ? 'fw_file' : 'fs_file';
+    const input = document.getElementById(inputId);
+    
+    if (!input || !input.files.length) {
+        otaLogger.log(`⚠️ Error: Selecciona un archivo .bin para ${type}`, 'err');
+        return;
+    }
+
+    const file = input.files[0];
+    const formData = new FormData();
+    
+    // Enviamos con nombre de campo diferenciado
+    if (type === 'filesystem') {
+        formData.append('filesystem', file);
+    } else {
+        formData.append('firmware', file);
+    }
+
+    otaLogger.log(`🚀 Iniciando carga de ${type}: ${file.name} (${(file.size/1024).toFixed(1)} KB)`, 'sys');
+
+    try {
+        const xhr = new XMLHttpRequest();
+        // Usar la URL base configurada en apiManager
+        const url = `${apiManager.API_BASE_URL}/update`; 
+        
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percent = Math.round((e.loaded / e.total) * 100);
+                if (percent % 10 === 0 || percent === 100) {
+                     otaLogger.log(`⏳ Subiendo ${type}: ${percent}%`, 'sys');
+                }
+            }
+        });
+
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                otaLogger.log(`✅ Carga completada. El dispositivo se reiniciará.`, 'ok');
+                otaLogger.log(`Respuesta: ${xhr.responseText}`, 'ok');
+                input.value = ''; // Limpiar input
+                
+                // Reconectar automáticamente
+                setTimeout(() => {
+                    otaLogger.log(`🔄 Intentando reconexión...`, 'sys');
+                    location.reload();
+                }, 15000);
+            } else {
+                otaLogger.log(`❌ Error ${xhr.status}: ${xhr.responseText || xhr.statusText}`, 'err');
+            }
+        };
+
+        xhr.onerror = function() {
+            otaLogger.log(`❌ Error de red al conectar con ${url}`, 'err');
+        };
+
+        xhr.open('POST', url);
+        xhr.send(formData);
+
+
+    } catch (error) {
+        otaLogger.log(`❌ Excepción: ${error.message}`, 'err');
+    }
+}

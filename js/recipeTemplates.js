@@ -16,7 +16,6 @@ const RECIPE_TEMPLATES = {
   
   errorState: (errorMessage) => `
     <div class="recipe-error-state">
-      <div class="error-icon">❌</div>
       <h3>Error al cargar recetas</h3>
       <p>${errorMessage}</p>
       <button class="btn retry-btn" onclick="recipeManager.loadRecipes()">
@@ -40,7 +39,7 @@ const RECIPE_TEMPLATES = {
     </div>
     <div class="recipe-actions">
       <div class="recipe-actions-dropdown">
-        <button class="btn dropdown-toggle" onclick="toggleRecipeDropdown(this)">
+        <button class="btn" onclick="toggleRecipeDropdown(this)">
           Opciones
         </button>
         <div class="dropdown-menu">

@@ -1,8 +1,3 @@
-/**
- * BIOMASTER Pro V2 IA - Global State Management
- * Gestión centralizada del estado de la aplicación
- */
-
 // pH color mapping - Constantes de colores para valores de pH
 const phColors = {
     0: 'rgb(255, 0, 0)',

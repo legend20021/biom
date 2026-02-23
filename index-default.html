@@ -8,7 +8,7 @@
   <!-- Prevenir renderizado antes de que los estilos estén listos -->
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-  <title>ICUZ</title>
+  <title>ICUZ Pro V2 IA</title>
 
   <!-- Preload de recursos críticos -->
   <link rel="preload" href="./css/clean.css" as="style"
@@ -19,6 +19,7 @@
 
   <style>
     /* Variables CSS críticas para tema claro y oscuro */
+
     :root {
       --background-primary: #f8fafc;
       --background-secondary: #f1f5f9;
@@ -36,7 +37,6 @@
       --text-primary: #f1f5f9;
       --background-image-isotipo: url('./icons/zenit-isotipo-white.png');
     }
-
     * {
       margin: 0;
       padding: 0;
@@ -61,8 +61,6 @@
       color: var(--text-primary);
       transition: background-color 0.3s ease, color 0.3s ease;
     }
-    /* Estilos críticos para evitar FOUC */
-    
 
     /* Mostrar contenido cuando los estilos estén listos */
     html.styles-loaded body,
@@ -209,7 +207,7 @@
   <link rel="apple-touch-icon" href="./icons/zenit-isotipo.png">
 
   <!-- Meta tags para SEO y performance -->
-  <meta name="description" content="Sistema de control avanzado para biofermentación con HTTP Polling - ICUZ">
+  <meta name="description" content="Sistema de control avanzado para biofermentación con HTTP Polling - ICUZ Pro V2 IA">
   <meta name="keywords" content="biofermentación, control, sensores, IoT, agricultura, HTTP polling">
   <meta name="author" content="Zenit">
   <meta name="robots" content="index, follow">
@@ -348,6 +346,7 @@
         if (intervalId) {
           clearInterval(intervalId);
           intervalId = null;
+          console.log('ICUZ: Texto dinámico detenido');
         }
       }
       
@@ -397,20 +396,6 @@
     <div class="menu-button" id="menuButton" onclick="toggleMenu()">
       <img class="custom-icon" src="./icons/menu.svg" alt="Menú" loading="lazy">
     </div>
-    <div class="control-button" id="controlButton" onclick="toggleActionButtons()">
-      <img class="custom-icon" src="./icons/config-white.svg" alt="Configuración" loading="lazy">
-    </div>
-    <div class="control-button play-button" id="playButton" onclick="actionPlay()">
-      <img class="custom-icon" src="./icons/play.svg" alt="Menú" loading="lazy">
-    </div>
-    <div class="control-button stop-button" id="stopButton" onclick="actionStop()">
-      <img class="custom-icon" src="./icons/stop.svg" alt="Menú" loading="lazy">
-    </div>
-    <div class="control-button close-button" id="closeButton" onclick="actionClose()">
-      <img class="custom-icon" src="./icons/close.svg" alt="Menú" loading="lazy">
-    </div>
-
-
     <div class="sidebar" id="sidebar">
       <!-- Logo y branding -->
       <div class="logo-section">
@@ -437,39 +422,6 @@
               Proceso Actual
             </a>
           </li>
-          <li class="nav-item fade-in-up" data-section="recetas" onclick="showSection(event)">
-            <a href="#recetas" class="nav-link" data-section="recetas" >
-              <span class="nav-icon" data-section="recetas">
-                <img class="custom-icon" src="./icons/recipe.svg" alt="Recetas" loading="lazy" data-section="recetas">
-              </span>
-              Recetas
-            </a>
-          </li>
-          <li class="nav-item fade-in-up" data-section="curvas" onclick="showSection(event)">
-            <a href="#curvas" class="nav-link" data-section="curvas" >
-              <span class="nav-icon" data-section="curvas">
-                <img class="custom-icon" src="./icons/flask.svg" alt="Curvas" loading="lazy" data-section="curvas">
-              </span>
-              Curvas
-            </a>
-          </li>
-
-          <li class="nav-item fade-in-up" data-section="conexiones" onclick="showSection(event)">
-            <a href="#conexiones" class="nav-link" data-section="conexiones" >
-              <span class="nav-icon" data-section="conexiones">
-                <img class="custom-icon" src="./icons/wifi.svg" alt="WiFi" loading="lazy" data-section="conexiones">
-              </span>
-              WiFi
-            </a>
-          </li>
-          <li class="nav-item fade-in-up" data-section="diagnostico" onclick="showSection(event)">
-            <a href="#diagnostico" class="nav-link" data-section="diagnostico" >
-              <span class="nav-icon" data-section="diagnostico">
-                <img class="custom-icon" src="./icons/diagnostic.svg" alt="Diagnóstico" loading="lazy" data-section="diagnostico">
-              </span>
-              Diagnóstico
-            </a>
-          </li>
           <li class="nav-item fade-in-up" data-section="ayuda" onclick="showSection(event)">
             <a href="#ayuda" class="nav-link"  data-section="ayuda">
               <span class="nav-icon" data-section="ayuda">
@@ -478,15 +430,6 @@
               Ayuda
             </a>
           </li>
-          <li class="nav-item fade-in-up" data-section="log" onclick="showSection(event)">
-            <a href="#log" class="nav-link"  data-section="log">
-              <span class="nav-icon" data-section="log">
-                <img class="custom-icon" src="./icons/logs.svg" alt="Logs" loading="lazy" data-section="log">
-              </span>
-              Logs
-            </a>
-          </li>
-          <!-- Botón de Admin (Login) -->
           <li class="nav-item fade-in-up">
             <a href="#" class="nav-link" onclick="adminManager.showLoginModal(); return false;">
               <span class="nav-icon">
@@ -505,16 +448,6 @@
               <span class="theme-text" id="themeText">Tema Oscuro</span>
             </a>
           </li>
-
-          <!-- Botón de demo -->
-          <li class="nav-item fade-in-up demo-toggle-item">
-            <a href="#" class="nav-link demo-toggle-btn" id="demoToggle" onclick="toggleDemoMode()">
-              <span class="nav-icon">
-                <span class="demo-icon" id="demoIcon">🧪</span>
-              </span>
-              <span class="demo-text" id="demoText">Demo</span>
-            </a>
-          </li>
         </ul>
       </nav>
     </div>
@@ -526,14 +459,10 @@
 
     <div class="main-content">
 
-      <div class="demo-indicator" id="demoIndicator" style="display: none;">
-        <span class="demo-text">Modo Demo Activado</span>
-      </div>
-      <div class="content" id="dashboard" style="display: block">
-        <!-- Indicador de modo demo HTTP -->
+      <div class="content default" id="dashboard" style="display: grid">
 
         <div class="header-mobile" id="header-mobile">
-          <img src="./icons/zenit-logo.png" alt="Zenit Logo" loading="lazy">
+          <img src="./icons/zenit-isotipo.png" alt="Zenit Logo" loading="lazy">
         </div>
 
         <div class="indicators">
@@ -593,95 +522,43 @@
 
 
           <div class="indicator-card">
-            <span class="open-calibration" onclick="toggleCalibration('pressure-calibration')">
-              <img class="custom-icon" src="./icons/config.svg" alt="Configurar presión" loading="lazy">
-            </span>
             <div class="indicator-title help-icon position-relative" title="Calibra la presión del sistema">
               Presión del Sistema
             </div>
             <div class="indicator-title indicator-title-responsive help-icon position-relative" title="Calibra la presión del sistema">
               Presión
             </div>
-            <div class="progress-container">
-              <div class="progress-bar" id="pressureProgress"></div>
-            </div>
             <div class="indicator-data">
               <span class="current-value" id="pressureValue">0 PSI</span>
               <span class="setpoint"><span id="pressureSetpoint">0 PSI</span></span>
-            </div>
-            <div id="pressure-calibration" class="hideCalibration w-100">
-              <button class="btn" id="calibrate-pressure">
-                <i class="fas fa-sync-alt"></i> Calibrar
-              </button>
-              <div class="progress-container-back">
-                <div class="progress-bar-back">
-                  <div class="progress-back" id="pressure-progress"></div>
-                </div>
-              </div>
             </div>
           </div>
 
 
           <div class="indicator-card">
-            <span class="open-calibration" onclick="toggleCalibration('ph-calibration')">
-              <img class="custom-icon" src="./icons/config.svg" alt="Configurar pH" loading="lazy">
-            </span>
             <div class="indicator-title help-icon position-relative" title="Calibra el Ph del sistema">
               pH Lixiviados
             </div>
             <div class="indicator-title indicator-title-responsive help-icon position-relative" title="Calibra el Ph del sistema">
               pH Lix
             </div>
-            <div class="progress-container">
-              <div class="progress-bar" id="phProgress"></div>
-            </div>
             <div class="indicator-data">
               <span class="current-value" id="phValue">0.0</span>
               <span class="setpoint"><span>Escala: 0-14</span></span>
-            </div>
-
-            <div id="ph-calibration" class="hideCalibration w-100">
-              <div class="ph-buttons">
-                <button id="ph4-btn" class="btn" onclick="calibratePH(4)">pH 4</button>
-                <button id="ph7-btn" class="btn" onclick="calibratePH(7)">pH 7</button>
-                <button id="ph10-btn" class="btn" onclick="calibratePH(10)">pH 10</button>
-              </div>
-              <div class="progress-container-back">
-                <div class="progress-bar-back">
-                  <div class="progress-back" id="ph-progress"></div>
-                </div>
-              </div>
             </div>
           </div>
 
 
           <!-- Tarjeta: Temperatura del Lixiviado -->
           <div class="indicator-card">
-            <span class="open-calibration" onclick="toggleCalibration('temp-m-calibration')">
-              <img class="custom-icon" src="./icons/config.svg" alt="Configurar temperatura masa" loading="lazy">
-            </span>
             <div class="indicator-title help-icon position-relative" title="Calibra la temperatura de masa">
               Temperatura de Masa
             </div>
             <div class="indicator-title indicator-title-responsive help-icon position-relative" title="Calibra la temperatura de masa">
               T. Masa
             </div>
-            <div class="progress-container">
-              <div class="progress-bar" id="tempProgress"></div>
-            </div>
             <div class="indicator-data">
               <span class="current-value" id="tempValue">0.0°C</span>
-              <!-- <span class="setpoint"><span id="tempSetpoint">28.0°C</span></span> -->
-            </div>
-
-            <div id="temp-m-calibration" class="temp-control-group hideCalibration w-100">
-              <div class="input-control">
-                <input type="number" id="masa-temp-input" min="0" max="100" step="0.1"
-                  placeholder="Ingrese la temperatura" />
-                <button class="btn" onclick="calibrateMasaTemp()">
-                  <i class="fas fa-sync-alt"></i> Calibrar
-                </button>
-              </div>
             </div>
 
           </div>
@@ -689,125 +566,25 @@
 
           <!-- Tarjeta: Temperatura del Lixiviado -->
           <div class="indicator-card">
-            <span class="open-calibration" onclick="toggleCalibration('temp-l-calibration')">
-              <img class="custom-icon" src="./icons/config.svg" alt="Configurar temperatura lixiviado" loading="lazy">
-            </span>
             <div class="indicator-title help-icon position-relative" title="Calibra la temperatura de lixiviado">
               Temperatura de Lixiviado
             </div>
             <div class="indicator-title indicator-title-responsive help-icon position-relative" title="Calibra la temperatura de lixiviado">
               T. Lix
             </div>
-            <div class="progress-container">
-              <div class="progress-bar" id="tempLixProgress"></div>
-            </div>
             <div class="indicator-data">
               <span class="current-value" id="tempLixValue">0.0°C</span>
               <span class="setpoint"><span id="tempLixSetpoint">28.0°C</span></span>
-            </div>
-
-            <div id="temp-l-calibration" class="temp-control-group hideCalibration w-100">
-              <div class="input-control">
-                <input type="number" id="lix-temp-input" min="0" max="100" step="0.1"
-                  placeholder="Ingrese la temperatura" />
-                <button class="btn" onclick="calibrateLixTemp()">
-                  <i class="fas fa-sync-alt"></i> Calibrar
-                </button>
-              </div>
             </div>
           </div>
         </div>
 
         <div id="diagnosis-header">
           <h2>Diagnóstico</h2>
-          <div class="panel">
-            <p class="diagnosis-description">
-              Esta sección permite activar los activadores del proceso de fermentación y verificar su estado. 
-              <strong>Advertencia:</strong> No se puede iniciar el diagnóstico cuando hay un proceso activo en ejecución.
-            </p>
-          </div>
-        </div>
-        
-        <div class="control-variables-container">
-
-          <div class="control-cards" id="controlCards">
-            <div class="control-cards-container">
-              <div>
-                <!-- Recirculación -->
-                <div class="card">
-                  <div class="card-header">
-                    <div class="card-text">
-                      <h4>Recirculación</h4>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="recirculationToggle" />
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-                </div>
-
-                <!-- Control de Temperatura -->
-                <div class="card">
-                  <div class="card-header">
-                    <div class="card-text">
-                      <h4>Temperatura</h4>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="temperatureBtn" />
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-                  <div class="input-group1" id="temperatureInput">
-                    <input id="temperatureInputElement" type="number" placeholder="Temperatura (0-100)" min="0" max="100" />
-                    <button class="send-btn btn">Enviar</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="control-cards" id="controlCards">
-            <div class="control-cards-container">
-              <div>
-                <div class="control-group">
-                  <div class="control-header">
-                    <div class="card-text">
-                      <h4>Presión Natural</h4>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="naturalPressureBtn" />
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-                  <div class="input-group1" id="naturalPressureInput">
-                    <input id="naturalPressureInputElement" type="number" placeholder="PSI (0-10)" min="0" max="10" />
-                    <button class="send-btn btn">Enviar</button>
-                  </div>
-                </div>
-
-                <div class="control-group">
-                  <div class="control-header">
-                    <div class="card-text">
-                      <h4>Maceración Carbónica</h4>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="carbonicMacerationBtn" />
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-                  <div class="input-group1" id="carbonicMacerationInput">
-                    <input type="number" id="carbonicMacerationInputElement" placeholder="PSI (0-10)" min="0" max="10" />
-                    <button class="send-btn btn">Enviar</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
 
       </div>
-
 
       <div class="content" id="graficas" style="display: none">
         <div class="chart-page">
@@ -954,117 +731,10 @@
         </div>
       </div>
 
-      <div class="content" id="conexiones" style="display: none">
-        <h2>Conexiones WIFI</h2>
-        
-        <!-- Sección de Redes Disponibles -->
-        <div class="panel wifi-networks-panel" id="wifiNetworksPanel">
-          <h3>🔍 Redes WiFi Disponibles</h3>
-          <p class="wifi-description">Conecta a red WiFi externa para acceso a internet manteniendo tu punto de acceso activo.</p>
-          
-          <!-- Estado de escaneo -->
-          <div class="wifi-scan-status" id="wifiScanStatus">
-            <div class="wifi-scan-loading">
-              <span class="wifi-scan-spinner">🔄</span>
-              <span>Escaneando redes disponibles...</span>
-            </div>
-          </div>
-          
-          <!-- Lista de redes -->
-          <div class="wifi-networks-list" id="wifiNetworksList">
-            <!-- Las redes se cargarán dinámicamente aquí -->
-          </div>
-          
-          <!-- Botón para actualizar manualmente -->
-          <div class="wifi-scan-controls">
-            <button type="button" class="btn wifi-submit-btn"  id="refreshWiFiScan">
-                <span class="btn-text">Actualizar Lista</span>
-              </button>
-          </div>
-          <div class="wifi-scan-controls" id="disconectContainer">
-          </div>
-        </div>
-        
-        <!-- Formulario de Configuración WiFi -->
-        <div class="panel wifi-config-panel" id="wifiNetworksFormPanel">
-          <h3>Configuración del Punto de Acceso WiFi</h3>
-          <p class="wifi-description">Configure el nombre de la red WiFi y la contraseña. Los campos son opcionales - solo complete los que desea cambiar. <strong>El nombre de la red será el nombre del punto de acceso (http://nombre_red.local)</strong></p>
-          
-          <form id="wifiConfigForm" class="wifi-form">
-            <!-- Campo SSID -->
-            <div class="wifi-field-group">
-              <label for="wifiSSID" class="wifi-label">
-                <span class="wifi-label-text">Nombre de la Red WiFi (SSID)</span>
-                <span class="wifi-label-optional">Opcional</span>
-              </label>
-              <input 
-                type="text" 
-                id="wifiSSID" 
-                name="ssid"
-                class="wifi-input" 
-                placeholder="Ej: ICUZ_CAFE" 
-                maxlength="32"
-                autocomplete="off"
-              />
-              <div class="wifi-field-info">
-                <span class="wifi-char-count" id="ssidCharCount">0/32 caracteres</span>
-                <span class="wifi-field-description">Entre 1 y 32 caracteres</span>
-              </div>
-              <div class="wifi-field-error" id="ssidError"></div>
-            </div>
-
-            <!-- Campo Password -->
-            <div class="wifi-field-group">
-              <label for="wifiPassword" class="wifi-label">
-                <span class="wifi-label-text">Contraseña WiFi</span>
-                <span class="wifi-label-optional">Opcional</span>
-              </label>
-              <div class="wifi-password-container">
-                <input 
-                  type="password" 
-                  id="wifiPASSWORD" 
-                  name="password"
-                  class="wifi-input wifi-password-input" 
-                  placeholder="Ingrese nueva contraseña" 
-                  maxlength="63"
-                  autocomplete="new-password"
-                />
-                <button type="button" class="wifi-toggle-password" id="togglePassword" title="Mostrar/ocultar contraseña">
-                  <span class="password-icon">👁️</span>
-                </button>
-              </div>
-              <div class="wifi-field-info">
-                <span class="wifi-char-count" id="passwordCharCount">0/63 caracteres</span>
-                <span class="wifi-field-description">Entre 8 y 63 caracteres</span>
-              </div>
-              <div class="wifi-field-error" id="passwordError"></div>
-            </div>
-
-            <!-- Botones de acción -->
-            <div class="wifi-actions">
-              <button type="submit" class="btn wifi-submit-btn" id="wifiSubmitBtn">
-                <span class="btn-text">Actualizar Configuración WiFi</span>
-              </button>
-              <button type="button" class="btn wifi-clear-btn" id="wifiClearBtn">
-                <span class="btn-text">Limpiar Campos</span>
-              </button>
-            </div>
-
-            <!-- Estado de la operación -->
-            <div class="wifi-status" id="wifiStatus" style="display: none;">
-              <div class="wifi-status-content">
-                <span class="wifi-status-icon" id="wifiStatusIcon"></span>
-                <span class="wifi-status-message" id="wifiStatusMessage"></span>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
 
       <div class="content" id="ayuda" style="display: none">
         <h2>Sección de ayuda</h2>
 
-        <!-- Seccion de ayuda en forma de elementos de acordeon con 4 contenedores explicando diferentes funcionalidades -->
         <div class="accordion-container">
           <div class="accordion-item">
             <div class="accordion-header" onclick="toggleAccordion(this)">
@@ -1223,185 +893,6 @@
         <!-- Fin boton play pausa stop---------------------------------------------------------- -->
       </div>
 
-      <!-- Sección de Curvas (Fermentaciones) -->
-      <div class="content" id="curvas" style="display: none">
-        <h2>Curvas Guardadas</h2>
-        
-        <!-- Sección de Control Superior -->
-        <div class="curves-control-section">
-          <div class="curves-filter-container">
-            <label for="curvesFilterAttribute" class="filter-label">Filtrar por:</label>
-            <select id="curvesFilterAttribute" class="curves-filter-select" onchange="handleCurveAttributeChange(this.value)">
-              <option value="">Seleccionar filtro</option>
-              <option value="nombre">Nombre</option>
-              <option value="tipo_proceso">Tipo de Proceso</option>
-              <option value="fecha">Fecha</option>
-            </select>
-          </div>
-          
-          <!-- Campo dinámico para nombre -->
-          <div class="curves-dynamic-filter" id="curveNameFilter" style="display: none;">
-            <div class="curves-filter-field">
-              <label for="curveNameInput" class="filter-label">Nombre de la curva:</label>
-              <input type="text" id="curveNameInput" class="curves-input" placeholder="Ingrese el nombre a buscar">
-            </div>
-          </div>
-          
-          <!-- Campo dinámico para tipo de proceso -->
-          <div class="curves-dynamic-filter" id="curveProcessFilter" style="display: none;">
-            <div class="curves-filter-field">
-              <label for="curveProcessSelect" class="filter-label">Tipo de proceso:</label>
-              <select id="curveProcessSelect" class="curves-filter-select">
-                <option value="">Seleccionar tipo</option>
-                <option value="0">No definido</option>
-                <option value="1">Lavado (Washed)</option>
-                <option value="2">Natural (Dry)</option>
-                <option value="3">Honey (Miel)</option>
-                <option value="4">Semilavado (Wet-Hulled)</option>
-                <option value="5">Anaeróbico</option>
-                <option value="6">Maceración carbónica (Carbonic Maceration)</option>
-                <option value="7">Fermentación láctica</option>
-                <option value="8">Fermentación acética</option>
-                <option value="9">Doble fermentación (Double Fermentation)</option>
-                <option value="10">Proceso Koji</option>
-                <option value="11">Infusionados</option>
-                <option value="12">Rehidratación</option>
-                <option value="13">Procesos Mixtos/Híbridos</option>
-              </select>
-            </div>
-          </div>
-          
-          <!-- Campo dinámico para fecha -->
-          <div class="curves-dynamic-filter" id="curveDateFilter" style="display: none;">
-            <div class="curves-filter-field">
-              <label class="filter-label">Rango de fechas:</label>
-              <div class="date-range-container">
-                <div class="date-input-group">
-                  <label for="curveDateFrom" class="date-label">Desde:</label>
-                  <input type="date" id="curveDateFrom" class="curves-date-input">
-                </div>
-                <div class="date-input-group">
-                  <label for="curveDateTo" class="date-label">Hasta:</label>
-                  <input type="date" id="curveDateTo" class="curves-date-input">
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Botón de búsqueda -->
-          <div class="curves-actions-container" id="curveSearchActions" style="display: none;">
-            <button class="btn search-curves-btn" onclick="searchCurves()">
-              <span class="btn-icon">🔍</span>
-              Buscar Curvas
-            </button>
-            <button class="btn clear-filter-btn" onclick="clearCurveFilters()">
-              <span class="btn-icon">🗑️</span>
-              Limpiar Filtros
-            </button>
-          </div>
-        </div>
-        
-        <div class="curves-container">
-          <!-- El contenido será cargado dinámicamente por curves.js -->
-          <div class="curve-loading-state">
-            <div class="loading-spinner"></div>
-            <h3>Cargando curvas...</h3>
-            <p>Obteniendo la lista de curvas guardadas desde el sistema...</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Sección de Recetas -->
-      <div class="content" id="recetas" style="display: none">
-        <h2>Gestión de Recetas</h2>
-        
-        <!-- Sección de Control Superior -->
-        <div class="recipes-control-section">
-          <div class="recipes-filter-container">
-            <label for="recipesFilter" class="filter-label">Filtrar por:</label>
-            <select id="recipesFilter" class="recipes-filter-select" onchange="filterRecipesByType(this.value)">
-              <option value="all" selected>Todas las Recetas</option>
-              <option value="created">Recetas Personalizadas</option>
-              <option value="parametrized">Recetas Parametrizadas</option>
-              <option value="predetermined">Recetas Predeterminadas</option>
-            </select>
-          </div>
-          <div class="recipes-actions-container">
-            <button class="btn create-recipe-btn-main" onclick="openRecipeModal()">
-              Crear Nueva Receta
-            </button>
-          </div>
-        </div>
-
-        <!-- Estado de carga global para todas las recetas -->
-        <div class="recipes-global-loading" id="recipesGlobalLoading">
-          <div class="curve-loading-state">
-            <div class="loading-spinner">
-            </div>
-            <h3>Cargando recetas...</h3>
-            <p>Obteniendo la lista de recetas desde el sistema...</p>
-          </div>
-        </div>
-
-        <!-- Contenedor Unificado de Recetas -->
-        <div class="recipes-section" id="recipesMainSection">
-          <div class="recipes-list-unified" id="recipesListUnified">
-            <!-- Contenido será reemplazado por recipes.js -->
-          </div>
-        </div>
-      </div>
-
-      <div class="content" id="upload" style="display: none">
-        <h2>Actualizar código</h2>
-        
-        <div class="ota-container">
-          <div class="panel ota-card">
-            <h3>Actualizar Firmware (Código)</h3>
-            <p>Sube el archivo compilado <code>.ino.bin</code> para actualizar la lógica del microcontrolador.</p>
-            <form onsubmit="handleOtaUpload(event, 'firmware')">
-                <input type="file" id="fw_file" accept=".bin" class="ota-file-input">
-                <button type="submit" class="btn btn-primary" id="btn_fw">SUBIR FIRMWARE</button>
-            </form>
-          </div>
-
-          <div class="panel ota-card">
-            <h3>Actualizar Filesystem (Web)</h3>
-            <p>Sube el archivo comprimido <code>.spiffs.bin</code> para actualizar la interfaz web.</p>
-            <form onsubmit="handleOtaUpload(event, 'filesystem')">
-                <input type="file" id="fs_file" accept=".bin" class="ota-file-input">
-                <button type="submit" class="btn btn-warning" id="btn_fs">SUBIR FILESYSTEM</button>
-            </form>
-          </div>
-        </div>
-
-        <div class="panel ota-console-panel">
-          <h3>Consola de Proceso</h3>
-          <div id="otaConsole" class="ota-console">
-            <div class="log-sys">> Consola OTA iniciada. Sistema listo para actualizaciones.</div>
-          </div>
-          <button class="btn btn-secondary clear-console-btn" onclick="clearOtaConsole()">Limpiar Consola</button>
-        </div>
-      </div>
-
-      <div class="content" id="log" style="display: none">
-        <h2>Logs del Sistema</h2>
-        
-        <!-- Estado de carga de logs -->
-        <div class="logs-loading-state" id="logsLoadingState">
-          <div class="curve-loading-state">
-            <div class="loading-spinner"></div>
-            <h3>Cargando logs...</h3>
-            <p>Obteniendo registros del sistema...</p>
-          </div>
-        </div>
-        
-        <!-- Contenedor principal de logs -->
-        <div class="logs-container" id="logsContainer">
-          <!-- El contenido será cargado dinámicamente por buttonLogic.js -->
-        </div>
-      </div>
-
-
     </div>
     
     <footer>Zenit Group © 2026</footer>
@@ -1449,23 +940,6 @@
       </div>
     </div>
 
-    <!-- Modal de confirmación -->
-    <div id="confirmationModal" class="modal-overlay">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>Confirmar acción</h3>
-          <button class="close-btn" onclick="closeModal()">×</button>
-        </div>
-        <div class="modal-body">
-          <p id="confirmation-modal-text">¿Estás seguro de que deseas realizar esta acción?</p>
-        </div>
-        <div class="modal-footer">
-          <button class="btn cancel-btn" onclick="closeModal()">Cancelar</button>
-          <button class="btn accept-btn" onclick="confirmAction()">Aceptar</button>
-        </div>
-      </div>
-    </div>
-
 
     <!-- Notificaciones del sistema -->
     <div id="notification" class="notification"></div>
@@ -1476,11 +950,6 @@
     <script defer src="./js/state.js"></script>
     <script defer src="./js/progressManager.js"></script>
     <script defer src="./js/notification.js"></script>
-    <script defer src="./js/recipeTemplates.js"></script>
-    <script defer src="./js/recipes.js"></script>
-    <script defer src="./js/curveTemplates.js"></script>
-    <script defer src="./js/curves.js"></script>
-    <script defer src="./js/logs.js"></script>
     <script defer src="./js/http-polling.js"></script>
     <script defer src="./js/initialization.js"></script>
 
@@ -1510,9 +979,7 @@
     <!-- Scripts no críticos que se cargan de forma diferida -->
 
     <script defer src="./js/buttonLogic.js"></script>
-    <script defer src="./js/calibration.js"></script>
     <script defer src="./js/eventListeners.js"></script>
-    <script defer src="./js/wifi.js"></script>
     <script defer src="./js/admin.js"></script>
 </body>
 

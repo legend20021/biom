@@ -40,7 +40,7 @@ function closeSidebar() {
     menuButton.classList.remove("active");
 }
 
-// Event listener para cerrar el sidebar al hacer clic en el overlay
+// Event listener para cerrar el sidebar al hacer clic en el overlay y manejar rutas iniciales
 document.addEventListener("DOMContentLoaded", function() {
     const overlay = document.getElementById("sidebarOverlay");
     const mainContent = document.querySelector(".main-content");
@@ -52,9 +52,42 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     if (mainContent) {
         mainContent.classList.remove("sidebar-open");
-
     }
+
+    // Verificar si hay una ruta inicial específica (como upload)
+    handleInitialRouting();
 });
+
+// Función para manejar el enrutamiento inicial basado en la URL
+function handleInitialRouting() {
+    // Revisar tanto el path (/upload) como el hash (#upload) y query param (?section=upload)
+    const path = window.location.pathname;
+    const hash = window.location.hash;
+    const href = window.location.href; // Revisión completa por si acaso
+
+    // Detectar intención de ir a upload
+    if (path.includes('/upload') || hash.includes('upload') || href.includes('upload')) {
+        console.log("📂 Ruta de actualización detectada, navegando a sección upload...");
+        
+        // Usamos setTimeout para asegurar que el resto de componentes se hayan inicializado
+        setTimeout(() => {
+            // Verificar si navigateToSection está disponible
+            if (typeof navigateToSection === 'function') {
+                // Forzar la navegación a la sección upload
+                navigateToSection('upload');
+            } else {
+                // Fallback manual si la función no está lista
+                const uploadSection = document.getElementById('upload');
+                if (uploadSection) {
+                    // Ocultar otras secciones
+                    document.querySelectorAll('.main-content .content').forEach(s => s.style.display = 'none');
+                    // Mostrar upload
+                    uploadSection.style.display = 'block';
+                }
+            }
+        }, 100);
+    }
+}
 
 // Event listener para cerrar el sidebar con la tecla ESC
 document.addEventListener("keydown", function(event) {
@@ -117,10 +150,27 @@ scrollToTop(); // Llamada inicial para asegurar que el scroll esté al inicio
 function showSection(event, curveDetail = null) {
 
     // Para mostrar detalles de una curva anterior igual se carga la sección de gráfica, el parametro para esa sección es grafica-static
-
     event.preventDefault();
-    const sectionId = event.target.getAttribute('data-section');
+    let sectionId = event.target.getAttribute('data-section');
     const sections = document.querySelectorAll('.main-content .content');
+    const diagnosisHeader = document.getElementById('diagnosis-header');
+
+    
+
+    if (sectionId === 'diagnostico') {
+        sectionId = 'dashboard';
+        window.state.diagnosis = true;
+        if (window.state.start && window.state.diagnosis) {
+            notificationManager.show("Hay un proceso activo. No se puede realizar un diagnóstico.", "error");
+            return;
+        }
+        window.changeDisableStateForced(false);
+        diagnosisHeader.style.display = 'block';
+    } else {
+        window.state.diagnosis = false;
+        window.changeDisableStateForced(true);
+        diagnosisHeader.style.display = 'none';
+    }
 
     // Ocultar todas las secciones
     sections.forEach(section => {
@@ -158,9 +208,25 @@ function showSection(event, curveDetail = null) {
         getInitialChartData(curveDetail);
     }
 
+    const indicatorsContainer = document.querySelectorAll('#dashboard .indicators');
+    if (window.state.diagnosis) {
+        indicatorsContainer.forEach(indicator => {
+            indicator.style.display = 'none';
+        });
+    } else {
+        indicatorsContainer.forEach(indicator => {
+            indicator.style.display = 'grid';
+        });
+    }
+
     if (sectionId === 'conexiones') {
         initWiFiConfiguration();
     }
+
+    if (sectionId === 'log') {
+        getLogsData();
+    }
+
     if (sectionId === 'recetas') {
         // Verificar que la función existe antes de llamarla
         if (typeof loadInitReceipes === 'function') {
@@ -187,6 +253,13 @@ function showSection(event, curveDetail = null) {
 }
 
 // Mostrar por defecto la sección "dashboard"
+// // si tiene la clase default lo pone como grid y sino lo pone como block
+// const dashboardElement = document.getElementById('dashboard');
+// if (dashboardElement.classList.contains('default')) {
+//     document.getElementById('dashboard').style.display = 'grid';
+// } else {
+//     document.getElementById('dashboard').style.display = 'block';
+// }
 document.getElementById('dashboard').style.display = 'block';
 
 // Función simplificada para navegar a una sección específica (útil para botones de navegación)
